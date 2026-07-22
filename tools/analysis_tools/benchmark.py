@@ -59,14 +59,14 @@ def parse_args():
     return args
 
 
-def measure_inference_speed(cfg, checkpoint, max_iter, log_interval,
+def measure_inference_speed(cfg, checkpoint, max_processed, log_interval,
                             is_fuse_conv_bn, use_fp16):
     """Inference speed statistics.
 
     Args:
         cfg (object): Test config object.
         checkpoint (str): Checkpoint file path.
-        max_iter (int): Num of max iter.
+        max_processed (int): Num of max processed images.
         log_interval (int): Interval of logging.
         is_fuse_conv_bn (bool): Whether to fuse conv and bn,
             this will slightly increase the inference speed
@@ -82,14 +82,14 @@ def measure_inference_speed(cfg, checkpoint, max_iter, log_interval,
     cfg.data.test.test_mode = True
 
     # build the dataloader
-    samples_per_gpu = cfg.data.test.pop('samples_per_gpu', 1)
+    samples_per_gpu = cfg.data.test_dataloader.get('samples_per_gpu', 1)
     if samples_per_gpu > 1:
         # Replace 'ImageToTensor' to 'DefaultFormatBundle'
         cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
     dataset = build_dataset(cfg.data.test)
     data_loader = build_dataloader(
         dataset,
-        samples_per_gpu=1,
+        samples_per_gpu=samples_per_gpu,
         # Because multiple processes will occupy additional CPU resources,
         # FPS statistics will be more unstable when workers_per_gpu is not 0.
         # It is reasonable to set workers_per_gpu to 0.
@@ -119,29 +119,33 @@ def measure_inference_speed(cfg, checkpoint, max_iter, log_interval,
     pure_inf_time = 0
     fps = 0
 
-    # benchmark with 2000 image and take the average
+    # benchmark with at least `max_processed` images (default 2000) and take the average
+    total_processed = 0
+    batch_samples = -1
     for i, data in enumerate(data_loader):
         torch.cuda.synchronize()
         start_time = time.perf_counter()
 
         with torch.no_grad():
-            model(return_loss=False, rescale=True, **data)
+            batch_samples = len(model(return_loss=False, rescale=True, **data))
 
         torch.cuda.synchronize()
         elapsed = time.perf_counter() - start_time
 
         if i >= num_warmup:
+            total_processed += batch_samples
             pure_inf_time += elapsed
-            if (i + 1) % log_interval == 0:
-                fps = (i + 1 - num_warmup) / pure_inf_time
+            if (i - num_warmup + 1) % log_interval == 0:
+                fps = total_processed / pure_inf_time
                 print(
-                    f'Done image [{i + 1:<3}/ {max_iter}], '
+                    f'Done image [{total_processed:<3}/ {max_processed}], '
+                    f'total time: {pure_inf_time:.3f} s, '
                     f'fps: {fps:.1f} img / s, '
                     f'times per image: {1000 / fps:.1f} ms / img',
                     flush=True)
 
-        if (i + 1) == max_iter:
-            fps = (i + 1 - num_warmup) / pure_inf_time
+        if total_processed >= max_processed:
+            fps = total_processed / pure_inf_time
             print(
                 f'Overall fps: {fps:.1f} img / s, '
                 f'times per image: {1000 / fps:.1f} ms / img',

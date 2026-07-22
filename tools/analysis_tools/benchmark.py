@@ -10,6 +10,7 @@ from mmcv.cnn import fuse_conv_bn
 from mmcv.parallel import MMDistributedDataParallel
 from mmcv.runner import init_dist, load_checkpoint, wrap_fp16_model
 from mmdet.datasets import build_dataloader, replace_ImageToTensor
+from mmrotate.utils import compat_cfg
 
 from mmrotate.datasets import build_dataset
 from mmrotate.models import build_detector
@@ -212,6 +213,7 @@ def main():
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
+    cfg = compat_cfg(cfg)
 
     if args.launcher == 'none':
         raise NotImplementedError('Only supports distributed mode')

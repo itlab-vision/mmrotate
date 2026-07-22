@@ -1,6 +1,11 @@
 # dataset settings
 dataset_type = 'DOTADataset'
-data_root = 'data/split_1024_dota1_0/'
+
+# Uncomment the required option
+data_root = 'data/split_ss_dota_1_0/'
+# data_root = 'data/split_ss_dota_1_5/'
+# data_root = 'data/split_ss_dota_2_0/'
+
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -28,8 +33,8 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
+    samples_per_gpu=2,  # only works for train_dataloader
+    workers_per_gpu=2,  # works for any _dataloader
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'trainval/annfiles/',
@@ -37,11 +42,15 @@ data = dict(
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'trainval/annfiles/',
-        img_prefix=data_root + 'trainval/images/',
+        ann_file=data_root + 'val/annfiles/',
+        img_prefix=data_root + 'val/images/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'test/images/',
-        img_prefix=data_root + 'test/images/',
-        pipeline=test_pipeline))
+        ann_file=data_root + 'val/annfiles/',   # replace with actual testing set
+        img_prefix=data_root + 'val/images/',   # replace with actual testing set
+        pipeline=test_pipeline),
+    # train_dataloader=dict(samples_per_gpu=2, workers_per_gpu=2),
+    # val_dataloader=dict(samples_per_gpu=4, workers_per_gpu=4),
+    test_dataloader=dict(samples_per_gpu=1),
+)

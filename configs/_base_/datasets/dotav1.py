@@ -42,13 +42,13 @@ data = dict(
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'val/annfiles/',
-        img_prefix=data_root + 'val/images/',
+        ann_file=data_root + 'trainval/annfiles/',
+        img_prefix=data_root + 'trainval/images/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'val/annfiles/',   # replace with actual testing set
-        img_prefix=data_root + 'val/images/',   # replace with actual testing set
+        ann_file=data_root + 'test/annfiles/',   # replace with actual testing set
+        img_prefix=data_root + 'test/images/',   # replace with actual testing set
         pipeline=test_pipeline),
     # train_dataloader=dict(samples_per_gpu=2, workers_per_gpu=2),
     # val_dataloader=dict(samples_per_gpu=4, workers_per_gpu=4),

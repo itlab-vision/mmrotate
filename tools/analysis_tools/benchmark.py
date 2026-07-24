@@ -84,6 +84,7 @@ def measure_inference_speed(cfg, checkpoint, max_processed, log_interval,
 
     # build the dataloader
     samples_per_gpu = cfg.data.test_dataloader.get('samples_per_gpu', 1)
+    workers_per_gpu = cfg.data.test_dataloader.get('workers_per_gpu', 0)
     if samples_per_gpu > 1:
         # Replace 'ImageToTensor' to 'DefaultFormatBundle'
         cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
@@ -94,7 +95,7 @@ def measure_inference_speed(cfg, checkpoint, max_processed, log_interval,
         # Because multiple processes will occupy additional CPU resources,
         # FPS statistics will be more unstable when workers_per_gpu is not 0.
         # It is reasonable to set workers_per_gpu to 0.
-        workers_per_gpu=0,
+        workers_per_gpu=workers_per_gpu,
         dist=True,
         shuffle=False)
 

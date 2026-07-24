@@ -114,10 +114,10 @@ def main():
         raise ValueError('The output file must be a pkl file.')
 
     cfg = Config.fromfile(args.config)
+    cfg = compat_cfg(cfg)
+
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
-
-    cfg = compat_cfg(cfg)
 
     if args.format_only and cfg.mp_start_method != 'spawn':
         warnings.warn(

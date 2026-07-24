@@ -212,9 +212,10 @@ def main():
     args = parse_args()
 
     cfg = Config.fromfile(args.config)
+    cfg = compat_cfg(cfg)
+
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
-    cfg = compat_cfg(cfg)
 
     if args.launcher == 'none':
         raise NotImplementedError('Only supports distributed mode')

@@ -147,12 +147,14 @@ def measure_inference_speed(cfg, checkpoint, max_processed, log_interval,
                     flush=True)
 
         if total_processed >= max_processed:
-            fps = total_processed / pure_inf_time
-            print(
-                f'Overall fps: {fps:.1f} img / s, '
-                f'times per image: {1000 / fps:.1f} ms / img',
-                flush=True)
             break
+    
+    fps = total_processed / pure_inf_time
+    print(
+        f'Overall fps: {fps:.1f} img / s, '
+        f'times per image: {1000 / fps:.1f} ms / img',
+        flush=True)
+
     return fps
 
 

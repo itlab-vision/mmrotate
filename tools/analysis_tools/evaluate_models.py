@@ -37,8 +37,8 @@ def parse_args():
         help='Dataloader workers for mAP evaluation')
     parser.add_argument(
         '--tasks', 
-        choices=['map', 'benchmark', 'both'], 
-        default='both',
+        choices=['map', 'benchmark', 'map+benchmark'], 
+        default='map+benchmark',
         help='Tasks to run for each model')
     parser.add_argument(
         '--work-dir', 
@@ -179,7 +179,7 @@ def main():
             print(f"{'='*80}")
             
             # Evaluate mAP
-            if args.tasks in ['map', 'both']:
+            if args.tasks in ['map', 'map+benchmark']:
                 print("\n[+] Running mAP evaluation...")
                 cmd_map = (
                     f"python -W ignore ./tools/test.py {config} {checkpoint_path} "
@@ -198,7 +198,7 @@ def main():
                     print(f"\n[OK] Extracted mAP: {model_info['mAP']}")
 
             # Evaluate FPS (Benchmark)
-            if args.tasks in ['benchmark', 'both']:
+            if args.tasks in ['benchmark', 'map+benchmark']:
                 print("\n[+] Running Benchmark...")
                 env = os.environ.copy()
                 env["PYTHONWARNINGS"] = "ignore"

@@ -44,6 +44,11 @@ def parse_args():
         '--work-dir', 
         default='work_dirs',
         help='Directory to save the final JSON report')
+    parser.add_argument(
+        '--models', 
+        nargs='+', 
+        default=[],
+        help='Specific model names to evaluate. If empty, runs all models.')
     
     return parser.parse_args()
 
@@ -136,6 +141,10 @@ def main():
         
         for model in data['Models']:
             name = model.get('Name', '')
+
+            if args.models and name not in args.models:
+                continue
+
             config = model.get('Config', '')
             weights_url = model.get('Weights', '')
             

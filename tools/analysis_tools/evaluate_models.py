@@ -52,11 +52,13 @@ def check_directories(version, split):
     dirs = {
         'ss': {
             'img': f"data/split_ss_dota_{v_str}/{split}/images",
-            'ann': f"data/split_ss_dota_{v_str}/{split}/annfiles"
+            'ann': f"data/split_ss_dota_{v_str}/{split}/annfiles",
+            'ann_hbb': f"data/split_ss_dota_{v_str}/{split}/annfiles_hbb"
         },
         'ms': {
             'img': f"data/split_ms_dota_{v_str}/{split}/images",
-            'ann': f"data/split_ms_dota_{v_str}/{split}/annfiles"
+            'ann': f"data/split_ms_dota_{v_str}/{split}/annfiles",
+            'ann_hbb': f"data/split_ms_dota_{v_str}/{split}/annfiles_hbb"
         }
     }
     
@@ -150,7 +152,11 @@ def main():
                 
             scale = 'ms' if '_ms_' in name else 'ss'
             img_prefix = data_dirs[scale]['img']
-            ann_file = data_dirs[scale]['ann']
+            
+            if '_hbb_' in name:
+                ann_file = data_dirs[scale]['ann_hbb']
+            else:
+                ann_file = data_dirs[scale]['ann']
             
             model_info = {
                 'name': name,

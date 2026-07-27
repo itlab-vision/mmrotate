@@ -18,10 +18,12 @@ DOTA_1_0_ITEMS = [
     ('train', 'train/images', 'train/images part_2', '1JBWCHdyZOd9ULX0ng5C9haAt3FMPXa3v'),
     ('train', 'train/images', 'train/images part_3', '1pEmwJtugIWhiwgBqOtplNUtTG2T454zn'),
     ('train', 'train/labelTxt', 'train/labelTxt', '1I-faCP-DOxf6mxcjUTc8mYVPqUgSQxx6'),
+    ('train', 'train/labelTxtHbb', 'train/labelTxtHbb', '1sS9hveKtYAiTsGVxC4msF5qJjhn3wYpY'),
 
     # Validation set
     ('val', 'val/images', 'val/images part_1', '1uCCCFhFQOJLfjBpcL5MC0DHJ9lgOaXWP'),
     ('val', 'val/labelTxt', 'val/labelTxt', '1uFwxA4B7H8zcI1oD11bj0U8z88qroMlG'),
+    ('val', 'val/labelTxtHbb', 'val/labelTxtHbb', '1roMkDBK9753uS5tCmtYlRTyzrObjjJ83'),
 
     # Testing set
     ('test', 'test/images', 'test/images part_1', '1fwiTNqRRen09E-O9VSpcMV2e6_d4GGVK'),
@@ -34,12 +36,12 @@ DOTA_1_5_ITEMS = [
     ('train', 'train/images', 'train/images part_2', '1JBWCHdyZOd9ULX0ng5C9haAt3FMPXa3v'),
     ('train', 'train/images', 'train/images part_3', '1pEmwJtugIWhiwgBqOtplNUtTG2T454zn'),
     ('train', 'train/labelTxt', 'train/labelTxt', '12uPWoADKggo9HGaqGh2qOmcXXn-zKjeX'),
-    # HBB_LINK: ('train', 'train/labelTxtHbb', 'train/labelTxtHbb', '1-vLCMhIW9CV2cmCPPBbDR9_hdecf5bLb'),
+    ('train', 'train/labelTxtHbb', 'train/labelTxtHbb', '1-vLCMhIW9CV2cmCPPBbDR9_hdecf5bLb'),
 
     # Validation set
     ('val', 'val/images', 'val/images part_1', '1uCCCFhFQOJLfjBpcL5MC0DHJ9lgOaXWP'),
     ('val', 'val/labelTxt', 'val/labelTxt', '1FkCSOCy4ieNg1UZj1-Irfw6-Jgqa37cC'),
-    # HBB_LINK: ('val', 'val/labelTxtHbb', 'val/labelTxtHbb', '1XDWNx3FkH9layL8jVUkEHJ_-CY8K4zse'),
+    ('val', 'val/labelTxtHbb', 'val/labelTxtHbb', '1XDWNx3FkH9layL8jVUkEHJ_-CY8K4zse'),
 
     # Testing set
     ('test', 'test/images', 'test/images part_1', '1fwiTNqRRen09E-O9VSpcMV2e6_d4GGVK'),
@@ -117,7 +119,7 @@ def download_file(gdown_module, file_id: str, output_path: Path):
 
 
 def extract_and_place(archive_path: Path, target_dir: Path):
-    """Extract .zip or .tar archive and move files to target directory."""
+    """Extract .zip or .tar archive and move inner files to target directory."""
     target_dir.mkdir(parents=True, exist_ok=True)
     extract_tmp = TEMP_DIR / 'extract_tmp'
 
@@ -141,9 +143,15 @@ def extract_and_place(archive_path: Path, target_dir: Path):
             print(f'ERROR: Failed to extract {archive_path}: {e}')
             return
 
-    images_subdir = extract_tmp / 'images'
-    source_dir = images_subdir if images_subdir.is_dir() else extract_tmp
+    # Determine source directory
+    # If archive contains a single top-level directory (e.g. 'images/' or 'labelTxtHbb/'), navigate into it
+    top_level_contents = list(extract_tmp.iterdir())
+    if len(top_level_contents) == 1 and top_level_contents[0].is_dir():
+        source_dir = top_level_contents[0]
+    else:
+        source_dir = extract_tmp
 
+    # Copy/move files into target directory
     for item in source_dir.iterdir():
         dest = target_dir / item.name
         if item.is_file():
@@ -172,6 +180,11 @@ def process_version(gdown_module, version_name: str, base_dir: Path, items: list
     skipped_items = []
 
     for idx, (split_type, rel_target, display_name, file_id) in enumerate(filtered_items, 1):
+        # Skip items without Google Drive ID
+        if not file_id:
+            print(f'\n[{idx}/{total_items}] [{version_name}] "{display_name}" has no Google Drive ID provided. Skipping.')
+            continue
+
         full_target_dir = base_dir / rel_target
         manifest_key = f'{version_name}|{rel_target}|{file_id}'
 

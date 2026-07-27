@@ -6,6 +6,7 @@ import json
 import re
 import argparse
 import subprocess
+import torch
 from datetime import datetime
 
 def parse_args():
@@ -121,6 +122,10 @@ def main():
     
     os.makedirs(args.work_dir, exist_ok=True)
     
+    gpu_name = "CPU or No GPU detected"
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+    
     data_dirs = check_directories(args.dota_version, args.data_split)
     
     metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
@@ -233,6 +238,9 @@ def main():
     with open(out_filepath, 'w', encoding='utf-8') as f:
         json.dump({
             'run_config': vars(args),
+            'hardware': {
+                'gpu_name': gpu_name
+            },
             'results': results_db
         }, f, indent=4, ensure_ascii=False)
         

@@ -6,6 +6,7 @@
   "ann_dirs": [
     "data/DOTA_1_0/val/labelTxt/"
   ],
+  "ann_hbb_dir": "data/DOTA_1_0/val/labelTxtHbb/",
   "sizes": [
     1024
   ],

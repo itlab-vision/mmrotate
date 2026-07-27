@@ -50,6 +50,11 @@ def add_parser(parser):
         type=str,
         default=None,
         help='annotations dirs, optional')
+    parser.add_argument(
+        '--ann-hbb-dir',
+        type=str,
+        default=None,
+        help='HBB annotations dir, will save to annfiles_hbb')
 
     # argument for splitting image
     parser.add_argument(
@@ -544,9 +549,9 @@ def main():
         sizes += [int(size / rate) for size in args.sizes]
         gaps += [int(gap / rate) for gap in args.gaps]
     save_imgs = osp.join(args.save_dir, 'images')
-    save_files = osp.join(args.save_dir, 'annfiles')
+    save_anns = osp.join(args.save_dir, 'annfiles')
     os.makedirs(save_imgs)
-    os.makedirs(save_files)
+    os.makedirs(save_anns)
     logger = setup_logger(args.save_dir)
 
     print('Loading original data!!!')
@@ -569,7 +574,7 @@ def main():
         no_padding=args.no_padding,
         padding_value=padding_value,
         save_dir=save_imgs,
-        anno_dir=save_files,
+        anno_dir=save_anns,
         img_ext=args.save_ext,
         lock=manager.Lock(),
         prog=manager.Value('i', 0),
@@ -587,6 +592,54 @@ def main():
     stop = time.time()
     print(f'Finish splitting images in {int(stop - start)} second!!!')
     print(f'Total images number: {len(patch_infos)}')
+
+    # Process HBB annotations if provided
+    if args.ann_hbb_dir is not None:
+        print(f'\nLoading HBB annotations from: {args.ann_hbb_dir}')
+        save_anns_hbb = osp.join(args.save_dir, 'annfiles_hbb')
+        os.makedirs(save_anns_hbb)
+        
+        # Load HBB annotations
+        infos_hbb = []
+        for img_dir in args.img_dirs:
+            _infos = load_dota(img_dir=img_dir, ann_dir=args.ann_hbb_dir, nproc=args.nproc)
+            infos_hbb.extend(_infos)
+        
+        print('Start splitting HBB annotations!!!')
+        start_hbb = time.time()
+        
+        worker_hbb = partial(
+            single_split,
+            sizes=sizes,
+            gaps=gaps,
+            img_rate_thr=args.img_rate_thr,
+            iof_thr=args.iof_thr,
+            no_padding=args.no_padding,
+            padding_value=padding_value,
+            save_dir=save_imgs,  # Same images dir
+            anno_dir=save_anns_hbb,  # Different ann dir
+            img_ext=args.save_ext,
+            lock=manager.Lock(),
+            prog=manager.Value('i', 0),
+            total=len(infos_hbb),
+            logger=logger)
+        
+        # Get image dirs for HBB
+        img_dirs_hbb = []
+        for img_dir in args.img_dirs:
+            img_dirs_hbb.extend([img_dir for _ in range(len(infos_hbb))])
+        
+        if args.nproc > 1:
+            pool = Pool(args.nproc)
+            patch_infos_hbb = pool.map(worker_hbb, zip(infos_hbb, img_dirs_hbb))
+            pool.close()
+        else:
+            patch_infos_hbb = list(map(worker_hbb, zip(infos_hbb, img_dirs_hbb)))
+        
+        patch_infos_hbb = reduce(lambda x, y: x + y, patch_infos_hbb)
+        stop_hbb = time.time()
+        print(f'Finish splitting HBB annotations in {int(stop_hbb - start_hbb)} second!!!')
+        print(f'Total HBB images number: {len(patch_infos_hbb)}')
 
 
 if __name__ == '__main__':

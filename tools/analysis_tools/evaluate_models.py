@@ -22,10 +22,15 @@ def parse_args():
         default='val',
         help='Dataset split to use')
     parser.add_argument(
-        '--samples-per-gpu', 
+        '--map-samples-per-gpu', 
         type=int, 
         default=2,
-        help='Batch size per GPU')
+        help='Batch size per GPU for mAP evaluation')
+    parser.add_argument(
+        '--benchmark-samples-per-gpu', 
+        type=int, 
+        default=1,
+        help='Batch size per GPU for benchmark (FPS calculation)')
     parser.add_argument(
         '--benchmark-workers-per-gpu', 
         type=int, 
@@ -192,7 +197,7 @@ def main():
                     f"python -W ignore ./tools/test.py {config} {checkpoint_path} "
                     f"--eval mAP "
                     f"--cfg-options data.test_dataloader.workers_per_gpu={args.map_workers_per_gpu} "
-                    f"data.test_dataloader.samples_per_gpu={args.samples_per_gpu} "
+                    f"data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} "
                     f"data.test.ann_file={ann_file} "
                     f"data.test.img_prefix={img_prefix}"
                 )
@@ -224,7 +229,7 @@ def main():
                     f"tools/analysis_tools/benchmark.py {config} {checkpoint_path} "
                     f"--launcher pytorch --log-interval 5 "
                     f"--cfg-options data.test_dataloader.workers_per_gpu={args.benchmark_workers_per_gpu} "
-                    f"data.test_dataloader.samples_per_gpu={args.samples_per_gpu} "
+                    f"data.test_dataloader.samples_per_gpu={args.benchmark_samples_per_gpu} "
                     f"data.test.ann_file={ann_file} "
                     f"data.test.img_prefix={img_prefix}"
                 )

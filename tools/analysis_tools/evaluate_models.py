@@ -234,6 +234,7 @@ def prepare_model_paths(model_entry, data_dirs):
         return None
 
     scale = 'ms' if '_ms_' in name else 'ss'
+    rotation = 'rr' if '_rr_' in name else 'none'
     img_prefix = data_dirs[scale]['img']
     ann_file = data_dirs[scale]['ann_hbb'] if '_hbb_' in name else data_dirs[scale]['ann']
     checkpoint_path = os.path.join('checkpoints', os.path.basename(weights_url))
@@ -245,6 +246,7 @@ def prepare_model_paths(model_entry, data_dirs):
         'weights_url': weights_url,
         'checkpoint_path': checkpoint_path,
         'scale': scale,
+        'rotation': rotation,
         'angle': angle,
         'img_prefix': img_prefix,
         'ann_file': ann_file
@@ -330,6 +332,7 @@ def process_model(model_entry, data_dirs, collection_name, args, errors_db):
         'config': paths['config'],
         'weights_url': paths['weights_url'],
         'scale': paths['scale'],
+        'rotation': paths['rotation'],
         'angle': paths['angle']
     }
 

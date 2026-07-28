@@ -209,6 +209,13 @@ def main():
         if not data or 'Models' not in data:
             continue
             
+        collection_name = None
+        if 'Collections' in data and isinstance(data['Collections'], list) and len(data['Collections']) > 0:
+            collection_name = data['Collections'][0].get('Name')
+
+        if not collection_name:
+            collection_name = os.path.basename(os.path.dirname(mf_path))
+            
         group_results = []
         
         for model in data['Models']:
@@ -243,7 +250,7 @@ def main():
             }
             
             print(f"\n{'='*80}")
-            print(f"Processing model: {name}")
+            print(f"Processing model: {name} (Collection: {collection_name})")
             print(f"{'='*80}")
             
             # Evaluate mAP
@@ -310,7 +317,7 @@ def main():
             group_results.append(model_info)
             
         if group_results:
-            results_db[mf_path] = group_results
+            results_db[collection_name] = group_results
 
     # Save results to JSON
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

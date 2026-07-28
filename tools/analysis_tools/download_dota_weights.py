@@ -54,6 +54,56 @@ def print_summary(downloaded_items, skipped_items, failed_items):
     logger.info('\n' + '=' * 80 + '\n')
 
 
+def process_model(model, checkpoint_dir, downloaded_items, skipped_items, failed_items):
+    """Filters model entry and handles download/skip/failure logic for its weights."""
+    name = model.get('Name', 'Unknown Model')
+    config = model.get('Config', '')
+    weights_url = model.get('Weights', '')
+    meta = model.get('Metadata', {})
+    training_data = meta.get('Training Data', '').lower()
+
+    if 'dota' not in training_data and 'dota' not in config.lower():
+        return
+
+    if not weights_url.startswith('http'):
+        return
+
+    filename = os.path.basename(weights_url)
+    save_path = os.path.join(checkpoint_dir, filename)
+
+    item_info = {
+        'name': name,
+        'url': weights_url,
+        'filename': filename
+    }
+
+    if os.path.exists(save_path):
+        logger.info(f"Skipping:  {filename}")
+        skipped_items.append(item_info)
+        return
+
+    logger.info(f"Downloading: {filename}")
+
+    try:
+        result = subprocess.run(
+            ['wget', '-q', '--show-progress', weights_url, '-O', save_path]
+        )
+
+        if result.returncode == 0:
+            downloaded_items.append(item_info)
+        else:
+            if os.path.exists(save_path):
+                os.remove(save_path)
+                logger.error(f"\nRemoved invalid/HTML file created by failed download: {filename}\n")
+
+            item_info['error_code'] = result.returncode
+            failed_items.append(item_info)
+    except Exception as e:
+        logger.error(f"Error while running wget: {e}")
+        item_info['error_code'] = 'Exception'
+        failed_items.append(item_info)
+
+
 def main():
     init_logger()
 
@@ -81,52 +131,10 @@ def main():
             continue
             
         for model in data['Models']:
-            name = model.get('Name', 'Unknown Model')
-            config = model.get('Config', '')
-            weights_url = model.get('Weights', '')
-            meta = model.get('Metadata', {})
-            training_data = meta.get('Training Data', '').lower()
-
-            if 'dota' not in training_data and 'dota' not in config.lower():
-                continue
-            
-            if weights_url.startswith('http'):
-                filename = os.path.basename(weights_url)
-                save_path = os.path.join(checkpoint_dir, filename)
-                
-                item_info = {
-                    'name': name,
-                    'url': weights_url,
-                    'filename': filename
-                }
-                
-                if os.path.exists(save_path):
-                    logger.info(f"Skipping:  {filename}")
-                    skipped_items.append(item_info)
-                    continue
-                
-                logger.info(f"Downloading: {filename}")
-                
-                try:
-                    result = subprocess.run(
-                        ['wget', '-q', '--show-progress', weights_url, '-O', save_path]
-                    )
-                    
-                    if result.returncode == 0:
-                        downloaded_items.append(item_info)
-                    else:
-                        if os.path.exists(save_path):
-                            os.remove(save_path)
-                            logger.error(f"\nRemoved invalid/HTML file created by failed download: {filename}\n")
-                        
-                        item_info['error_code'] = result.returncode
-                        failed_items.append(item_info)
-                except Exception as e:
-                    logger.error(f"Error while running wget: {e}")
-                    item_info['error_code'] = 'Exception'
-                    failed_items.append(item_info)
+            process_model(model, checkpoint_dir, downloaded_items, skipped_items, failed_items)
                     
     print_summary(downloaded_items, skipped_items, failed_items)
+
 
 if __name__ == '__main__':
     main()

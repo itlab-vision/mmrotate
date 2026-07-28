@@ -9,6 +9,7 @@ import subprocess
 import torch
 from datetime import datetime
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='mmrotate evaluate models metrics')
     parser.add_argument(
@@ -58,6 +59,7 @@ def parse_args():
     
     return parser.parse_args()
 
+
 def check_directories(version, split):
     """
     Validates the existence of required DOTA dataset directories for both 
@@ -93,6 +95,7 @@ def check_directories(version, split):
         
     print("All required data directories exist.")
     return dirs
+
 
 def check_checkpoints(metafiles, target_models):
     """
@@ -143,7 +146,8 @@ def check_checkpoints(metafiles, target_models):
         print("\nPlease download the missing checkpoints into 'checkpoints/' directory before running.")
         sys.exit(1)
 
-    print(f"All required checkpoints for models exist. Proceeding...")
+    print("All required checkpoints for models exist. Proceeding...")
+
 
 def run_command(cmd, env=None):
     """
@@ -183,14 +187,167 @@ def run_command(cmd, env=None):
         return False, "", str(e)
 
 
+def extract_collection_name(data, mf_path):
+    """Extracts collection name from metafile YAML or falls back to parent folder name."""
+    if 'Collections' in data and isinstance(data['Collections'], list) and len(data['Collections']) > 0:
+        coll_name = data['Collections'][0].get('Name')
+        if coll_name:
+            return coll_name
+    return os.path.basename(os.path.dirname(mf_path))
+
+
+def prepare_model_paths(model_entry, data_dirs):
+    """Extracts model metadata and constructs dataset/checkpoint paths."""
+    name = model_entry.get('Name', '')
+    config = model_entry.get('Config', '')
+    weights_url = model_entry.get('Weights', '')
+    meta = model_entry.get('Metadata', {})
+    training_data = meta.get('Training Data', '').lower()
+
+    if 'dota' not in training_data and 'dota' not in config.lower():
+        return None
+
+    scale = 'ms' if '_ms_' in name else 'ss'
+    img_prefix = data_dirs[scale]['img']
+    ann_file = data_dirs[scale]['ann_hbb'] if '_hbb_' in name else data_dirs[scale]['ann']
+    checkpoint_path = os.path.join('checkpoints', os.path.basename(weights_url))
+
+    return {
+        'name': name,
+        'config': config,
+        'weights_url': weights_url,
+        'checkpoint_path': checkpoint_path,
+        'scale': scale,
+        'img_prefix': img_prefix,
+        'ann_file': ann_file
+    }
+
+
+def evaluate_mAP(paths, args):
+    """Executes mAP evaluation for a given model and parses the output."""
+    print("\n[+] Running mAP evaluation...")
+    cmd_map = (
+        f"python -W ignore ./tools/test.py {paths['config']} {paths['checkpoint_path']} "
+        f"--eval mAP "
+        f"--cfg-options data.test_dataloader.workers_per_gpu={args.map_workers_per_gpu} "
+        f"data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} "
+        f"data.test.ann_file={paths['ann_file']} "
+        f"data.test.img_prefix={paths['img_prefix']}"
+    )
+    success, out_map, err_msg = run_command(cmd_map)
+
+    if success:
+        map_match = re.search(r"'mAP':\s*([0-9.]+)", out_map)
+        if map_match:
+            raw_map = float(map_match.group(1))
+            if raw_map <= 1.0:
+                raw_map *= 100
+            val = round(raw_map, 2)
+            print(f"\n[OK] Extracted mAP: {val}")
+            return val, None
+        else:
+            print("\n[-] Failed to extract mAP from output.")
+            return None, "Regex match failed. Output might be malformed."
+    else:
+        print(f"\n[-] mAP evaluation failed: {err_msg}")
+        return None, err_msg
+
+
+def evaluate_benchmark(paths, args):
+    """Executes benchmark (FPS calculation) for a given model and parses the output."""
+    print("\n[+] Running Benchmark...")
+    env = os.environ.copy()
+    env["PYTHONWARNINGS"] = "ignore"
+    cmd_bench = (
+        f"python -m torch.distributed.launch --nproc_per_node=1 --master_port=29500 "
+        f"tools/analysis_tools/benchmark.py {paths['config']} {paths['checkpoint_path']} "
+        f"--launcher pytorch --log-interval 5 "
+        f"--cfg-options data.test_dataloader.workers_per_gpu={args.benchmark_workers_per_gpu} "
+        f"data.test_dataloader.samples_per_gpu={args.benchmark_samples_per_gpu} "
+        f"data.test.ann_file={paths['ann_file']} "
+        f"data.test.img_prefix={paths['img_prefix']}"
+    )
+    success, out_bench, err_msg = run_command(cmd_bench, env=env)
+
+    if success:
+        fps_match = re.search(r"Overall fps:\s*([0-9.]+)", out_bench)
+        if fps_match:
+            val = float(fps_match.group(1))
+            print(f"\n[OK] Extracted FPS: {val}")
+            return val, None
+        else:
+            print("\n[-] Failed to extract FPS.")
+            return None, "Regex match failed. Output might be malformed."
+    else:
+        print(f"\n[-] Benchmark failed: {err_msg}")
+        return None, err_msg
+
+
+def process_model(model_entry, data_dirs, collection_name, args, errors_db):
+    """Handles evaluation pipeline for a single model entry."""
+    name = model_entry.get('Name', '')
+    if args.models and name not in args.models:
+        return None
+
+    paths = prepare_model_paths(model_entry, data_dirs)
+    if not paths:
+        return None
+
+    print(f"\n{'='*80}")
+    print(f"Processing model: {name} (Collection: {collection_name})")
+    print(f"{'='*80}")
+
+    model_info = {
+        'name': name,
+        'config': paths['config'],
+        'weights_url': paths['weights_url'],
+        'scale': paths['scale']
+    }
+
+    # Evaluate mAP
+    if args.tasks in ['map', 'map+benchmark']:
+        mAP, err = evaluate_mAP(paths, args)
+        model_info['mAP'] = mAP
+        if err:
+            errors_db.setdefault(name, {})['mAP'] = err
+
+    # Evaluate FPS
+    if args.tasks in ['benchmark', 'map+benchmark']:
+        fps, err = evaluate_benchmark(paths, args)
+        model_info['FPS'] = fps
+        if err:
+            errors_db.setdefault(name, {})['Benchmark'] = err
+
+    return model_info
+
+
+def save_report(results_db, errors_db, gpu_name, args):
+    """Saves final evaluation results and metadata to JSON file."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    v_str = args.dota_version.replace('.', '_')
+    out_filename = f"models_stats_dota{v_str}_{args.data_split}_{args.tasks}_{timestamp}.json"
+    out_filepath = os.path.join(args.work_dir, out_filename)
+
+    with open(out_filepath, 'w', encoding='utf-8') as f:
+        json.dump({
+            'run_config': vars(args),
+            'hardware': {
+                'gpu_name': gpu_name
+            },
+            'results': results_db,
+            'errors': errors_db
+        }, f, indent=4, ensure_ascii=False)
+
+    print(f"\n{'='*80}")
+    print(f"Evaluation finished. Results saved to: {out_filepath}")
+    print(f"{'='*80}\n")
+
+
 def main():
     args = parse_args()
     os.makedirs(args.work_dir, exist_ok=True)
     
-    gpu_name = "CPU or No GPU detected"
-    if torch.cuda.is_available():
-        gpu_name = torch.cuda.get_device_name(0)
-    
+    gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU detected"
     data_dirs = check_directories(args.dota_version, args.data_split)
     metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
     
@@ -209,138 +366,19 @@ def main():
         if not data or 'Models' not in data:
             continue
             
-        collection_name = None
-        if 'Collections' in data and isinstance(data['Collections'], list) and len(data['Collections']) > 0:
-            collection_name = data['Collections'][0].get('Name')
-
-        if not collection_name:
-            collection_name = os.path.basename(os.path.dirname(mf_path))
-            
+        collection_name = extract_collection_name(data, mf_path)
         group_results = []
-        
-        for model in data['Models']:
-            name = model.get('Name', '')
 
-            if args.models and name not in args.models:
-                continue
+        for model_entry in data['Models']:
+            model_info = process_model(model_entry, data_dirs, collection_name, args, errors_db)
+            if model_info:
+                group_results.append(model_info)
 
-            config = model.get('Config', '')
-            weights_url = model.get('Weights', '')
-            meta = model.get('Metadata', {})
-            training_data = meta.get('Training Data', '').lower()
-            
-            if 'dota' not in training_data and 'dota' not in config.lower():
-                continue
-                
-            checkpoint_path = os.path.join('checkpoints', os.path.basename(weights_url))
-                
-            scale = 'ms' if '_ms_' in name else 'ss'
-            img_prefix = data_dirs[scale]['img']
-            
-            if '_hbb_' in name:
-                ann_file = data_dirs[scale]['ann_hbb']
-            else:
-                ann_file = data_dirs[scale]['ann']
-            
-            model_info = {
-                'name': name,
-                'config': config,
-                'weights_url': weights_url,
-                'scale': scale
-            }
-            
-            print(f"\n{'='*80}")
-            print(f"Processing model: {name} (Collection: {collection_name})")
-            print(f"{'='*80}")
-            
-            # Evaluate mAP
-            if args.tasks in ['map', 'map+benchmark']:
-                print("\n[+] Running mAP evaluation...")
-                cmd_map = (
-                    f"python -W ignore ./tools/test.py {config} {checkpoint_path} "
-                    f"--eval mAP "
-                    f"--cfg-options data.test_dataloader.workers_per_gpu={args.map_workers_per_gpu} "
-                    f"data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} "
-                    f"data.test.ann_file={ann_file} "
-                    f"data.test.img_prefix={img_prefix}"
-                )
-                success, out_map, err_msg = run_command(cmd_map)
-                
-                if success:
-                    map_match = re.search(r"'mAP':\s*([0-9.]+)", out_map)
-                    if map_match:
-                        raw_map = float(map_match.group(1))
-                        if raw_map <= 1.0:
-                            raw_map *= 100
-                        model_info['mAP'] = round(raw_map, 2)
-                        print(f"\n[OK] Extracted mAP: {model_info['mAP']}")
-                    else:
-                        model_info['mAP'] = None
-                        if name not in errors_db: errors_db[name] = {}
-                        errors_db[name]['mAP'] = "Regex match failed. Output might be malformed."
-                        print("\n[-] Failed to extract mAP from output.")
-                else:
-                    model_info['mAP'] = None
-                    if name not in errors_db: errors_db[name] = {}
-                    errors_db[name]['mAP'] = err_msg
-                    print(f"\n[-] mAP evaluation failed: {err_msg}")
-
-            # Evaluate FPS (Benchmark)
-            if args.tasks in ['benchmark', 'map+benchmark']:
-                print("\n[+] Running Benchmark...")
-                env = os.environ.copy()
-                env["PYTHONWARNINGS"] = "ignore"
-                cmd_bench = (
-                    f"python -m torch.distributed.launch --nproc_per_node=1 --master_port=29500 "
-                    f"tools/analysis_tools/benchmark.py {config} {checkpoint_path} "
-                    f"--launcher pytorch --log-interval 5 "
-                    f"--cfg-options data.test_dataloader.workers_per_gpu={args.benchmark_workers_per_gpu} "
-                    f"data.test_dataloader.samples_per_gpu={args.benchmark_samples_per_gpu} "
-                    f"data.test.ann_file={ann_file} "
-                    f"data.test.img_prefix={img_prefix}"
-                )
-                success, out_bench, err_msg = run_command(cmd_bench, env=env)
-                
-                if success:
-                    fps_match = re.search(r"Overall fps:\s*([0-9.]+)", out_bench)
-                    if fps_match:
-                        model_info['FPS'] = float(fps_match.group(1))
-                        print(f"\n[OK] Extracted FPS: {model_info['FPS']}")
-                    else:
-                        model_info['FPS'] = None
-                        if name not in errors_db: errors_db[name] = {}
-                        errors_db[name]['Benchmark'] = "Regex match failed. Output might be malformed."
-                        print("\n[-] Failed to extract FPS.")
-                else:
-                    model_info['FPS'] = None
-                    if name not in errors_db: errors_db[name] = {}
-                    errors_db[name]['Benchmark'] = err_msg
-                    print(f"\n[-] Benchmark failed: {err_msg}")
-                    
-            group_results.append(model_info)
-            
         if group_results:
             results_db[collection_name] = group_results
 
-    # Save results to JSON
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    v_str = args.dota_version.replace('.', '_')
-    out_filename = f"models_stats_dota{v_str}_{args.data_split}_{args.tasks}_{timestamp}.json"
-    out_filepath = os.path.join(args.work_dir, out_filename)
-    
-    with open(out_filepath, 'w', encoding='utf-8') as f:
-        json.dump({
-            'run_config': vars(args),
-            'hardware': {
-                'gpu_name': gpu_name
-            },
-            'results': results_db,
-            'errors': errors_db
-        }, f, indent=4, ensure_ascii=False)
-        
-    print(f"\n{'='*80}")
-    print(f"Evaluation finished. Results saved to: {out_filepath}")
-    print(f"{'='*80}\n")
+    save_report(results_db, errors_db, gpu_name, args)
+
 
 if __name__ == '__main__':
     main()

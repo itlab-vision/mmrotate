@@ -59,6 +59,11 @@ def parse_args():
     return parser.parse_args()
 
 def check_directories(version, split):
+    """
+    Validates the existence of required DOTA dataset directories for both 
+    Single-Scale (ss) and Multi-Scale (ms) splits.
+    Terminates execution if any required data paths are missing.
+    """
     v_str = version.replace('.', '_')
     dirs = {
         'ss': {
@@ -80,13 +85,65 @@ def check_directories(version, split):
                 missing.append(dirs[scale][p_type])
                 
     if missing:
-        print("Error: The following required data directories are missing:")
+        print("\nError: The following required data directories are missing:")
         for m in missing:
             print(f"  - {m}")
+        print("\nPlease check your dataset paths and ensure DOTA data is split correctly.")
         sys.exit(1)
         
-    print("All required data directories exist. Proceeding...")
+    print("All required data directories exist.")
     return dirs
+
+def check_checkpoints(metafiles, target_models):
+    """
+    Scans all metafile configs and verifies that required model checkpoints exist locally.
+    Terminates execution if any required checkpoints are missing.
+    """
+    missing_checkpoints = []
+    found_models_count = 0
+
+    for mf_path in metafiles:
+        with open(mf_path, 'r', encoding='utf-8') as f:
+            try:
+                data = yaml.safe_load(f)
+            except yaml.YAMLError:
+                continue
+
+        if not data or 'Models' not in data:
+            continue
+
+        for model in data['Models']:
+            name = model.get('Name', '')
+
+            if target_models and name not in target_models:
+                continue
+
+            config = model.get('Config', '')
+            weights_url = model.get('Weights', '')
+            meta = model.get('Metadata', {})
+            training_data = meta.get('Training Data', '').lower()
+
+            if 'dota' not in training_data and 'dota' not in config.lower():
+                continue
+
+            found_models_count += 1
+            checkpoint_path = os.path.join('checkpoints', os.path.basename(weights_url))
+            if not os.path.exists(checkpoint_path):
+                missing_checkpoints.append((name, checkpoint_path))
+
+    if found_models_count == 0:
+        print("Error: No matching models found to evaluate based on arguments.")
+        sys.exit(1)
+
+    if missing_checkpoints:
+        print("\nError: The following required model checkpoints are missing:")
+        for name, path in missing_checkpoints:
+            print(f"  - Model: {name}")
+            print(f"    Path:  {path}")
+        print("\nPlease download the missing checkpoints into 'checkpoints/' directory before running.")
+        sys.exit(1)
+
+    print(f"All required checkpoints for models exist. Proceeding...")
 
 def run_command(cmd, env=None):
     """
@@ -136,6 +193,8 @@ def main():
     
     data_dirs = check_directories(args.dota_version, args.data_split)
     metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
+    
+    check_checkpoints(metafiles, args.models)
                      
     results_db = {}
     errors_db = {}
@@ -167,9 +226,6 @@ def main():
                 continue
                 
             checkpoint_path = os.path.join('checkpoints', os.path.basename(weights_url))
-            if not os.path.exists(checkpoint_path):
-                print(f"\nWarning: Checkpoint {checkpoint_path} not found. Skipping {name}.")
-                continue
                 
             scale = 'ms' if '_ms_' in name else 'ss'
             img_prefix = data_dirs[scale]['img']

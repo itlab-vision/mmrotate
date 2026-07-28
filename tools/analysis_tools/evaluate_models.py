@@ -6,12 +6,15 @@ import json
 import re
 import argparse
 import subprocess
+import logging
 import torch
 from datetime import datetime
 
+logger = logging.getLogger("evaluator")
+
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='mmrotate evaluate models metrics')
+    parser = argparse.ArgumentParser(description='MMRotate model evaluation and metric benchmarking script.')
     parser.add_argument(
         '--dota-version', 
         choices=['1.0', '1.5', '2.0'], 
@@ -21,7 +24,7 @@ def parse_args():
         '--data-split', 
         choices=['val', 'test'], 
         default='val',
-        help='Dataset split to use')
+        help='Dataset split to evaluate on')
     parser.add_argument(
         '--map-samples-per-gpu', 
         type=int, 
@@ -36,7 +39,7 @@ def parse_args():
         '--benchmark-workers-per-gpu', 
         type=int, 
         default=0,
-        help='Dataloader workers for benchmark')
+        help='Dataloader workers for benchmark evaluation')
     parser.add_argument(
         '--map-workers-per-gpu', 
         type=int, 
@@ -46,25 +49,50 @@ def parse_args():
         '--tasks', 
         choices=['map', 'benchmark', 'map+benchmark'], 
         default='map+benchmark',
-        help='Tasks to run for each model')
+        help='Evaluation tasks to run for each model')
     parser.add_argument(
         '--work-dir', 
         default='work_dirs',
-        help='Directory to save the final JSON report')
+        help='Directory where reports and execution logs will be saved')
     parser.add_argument(
         '--models', 
         nargs='+', 
         default=[],
-        help='Specific model names to evaluate. If empty, runs all models.')
+        help='Specific model names to evaluate. Runs all models if empty.')
     
     return parser.parse_args()
+
+
+def generate_out_prefix(args):
+    """Generates a structured output file path prefix based on CLI arguments and current timestamp."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    v_str = args.dota_version.replace('.', '_')
+    base_name = f"models_stats_dota{v_str}_{args.data_split}_{args.tasks}_{timestamp}"
+    return os.path.join(args.work_dir, base_name)
+
+
+def init_logger(log_filepath):
+    """Initializes global logger handlers for synchronized console and file output."""
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+
+    file_handler = logging.FileHandler(log_filepath, encoding='utf-8')
+    file_formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    file_handler.setFormatter(file_formatter)
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_formatter = logging.Formatter('%(message)s')
+    stream_handler.setFormatter(stream_formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
 
 def check_directories(version, split):
     """
     Validates the existence of required DOTA dataset directories for both 
     Single-Scale (ss) and Multi-Scale (ms) splits.
-    Terminates execution if any required data paths are missing.
+    Terminates execution if any required data directory is missing.
     """
     v_str = version.replace('.', '_')
     dirs = {
@@ -87,20 +115,20 @@ def check_directories(version, split):
                 missing.append(dirs[scale][p_type])
                 
     if missing:
-        print("\nError: The following required data directories are missing:")
+        logger.error("\nError: The following required data directories are missing:")
         for m in missing:
-            print(f"  - {m}")
-        print("\nPlease check your dataset paths and ensure DOTA data is split correctly.")
+            logger.error(f"  - {m}")
+        logger.error("\nPlease verify your dataset paths and ensure DOTA data is split correctly.")
         sys.exit(1)
         
-    print("All required data directories exist.")
+    logger.info("All required data directories exist.")
     return dirs
 
 
 def check_checkpoints(metafiles, target_models):
     """
-    Scans all metafile configs and verifies that required model checkpoints exist locally.
-    Terminates execution if any required checkpoints are missing.
+    Scans all metafile configurations and verifies local availability of required model weights.
+    Terminates execution if any required checkpoint files are missing.
     """
     missing_checkpoints = []
     found_models_count = 0
@@ -135,23 +163,23 @@ def check_checkpoints(metafiles, target_models):
                 missing_checkpoints.append((name, checkpoint_path))
 
     if found_models_count == 0:
-        print("Error: No matching models found to evaluate based on arguments.")
+        logger.error("Error: No matching models found for evaluation based on the provided arguments.")
         sys.exit(1)
 
     if missing_checkpoints:
-        print("\nError: The following required model checkpoints are missing:")
+        logger.error("\nError: The following required model checkpoints are missing:")
         for name, path in missing_checkpoints:
-            print(f"  - Model: {name}")
-            print(f"    Path:  {path}")
-        print("\nPlease download the missing checkpoints into 'checkpoints/' directory before running.")
+            logger.error(f"  - Model: {name}")
+            logger.error(f"    Path:  {path}")
+        logger.error("\nPlease download missing checkpoints into the 'checkpoints/' folder before running.")
         sys.exit(1)
 
-    print("All required checkpoints for models exist. Proceeding...")
+    logger.info("All required model checkpoints exist. Proceeding...")
 
 
 def run_command(cmd, env=None):
     """
-    Runs a shell command, streams the output, and captures the exit code.
+    Executes a shell command, streams line-by-line output to the logger, and returns status.
     Returns: (success_bool, output_string, error_message)
     """
     try:
@@ -160,19 +188,17 @@ def run_command(cmd, env=None):
             shell=True, 
             stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT, 
-            env=env
+            env=env,
+            text=True,
+            bufsize=1
         )
         
         output = []
-        while True:
-            char_bytes = process.stdout.read(1)
-            if not char_bytes:
-                break
-                
-            char = char_bytes.decode('utf-8', errors='replace')
-            sys.stdout.write(char)
-            sys.stdout.flush()
-            output.append(char)
+        for line in process.stdout:
+            clean_line = line.rstrip('\r\n')
+            if clean_line:
+                logger.info(clean_line)
+            output.append(line)
             
         returncode = process.wait()
         out_str = ''.join(output)
@@ -183,12 +209,12 @@ def run_command(cmd, env=None):
         return True, out_str, ""
         
     except Exception as e:
-        print(f"\nExecution error: {e}")
+        logger.error(f"\nExecution error: {e}")
         return False, "", str(e)
 
 
 def extract_collection_name(data, mf_path):
-    """Extracts collection name from metafile YAML or falls back to parent folder name."""
+    """Extracts collection name from metafile YAML or falls back to parent directory name."""
     if 'Collections' in data and isinstance(data['Collections'], list) and len(data['Collections']) > 0:
         coll_name = data['Collections'][0].get('Name')
         if coll_name:
@@ -197,7 +223,7 @@ def extract_collection_name(data, mf_path):
 
 
 def prepare_model_paths(model_entry, data_dirs):
-    """Extracts model metadata and constructs dataset/checkpoint paths."""
+    """Extracts model metadata and constructs corresponding dataset and checkpoint paths."""
     name = model_entry.get('Name', '')
     config = model_entry.get('Config', '')
     weights_url = model_entry.get('Weights', '')
@@ -224,8 +250,8 @@ def prepare_model_paths(model_entry, data_dirs):
 
 
 def evaluate_mAP(paths, args):
-    """Executes mAP evaluation for a given model and parses the output."""
-    print("\n[+] Running mAP evaluation...")
+    """Executes mAP evaluation for a given model and parses results from output."""
+    logger.info("\n[+] Running mAP evaluation...")
     cmd_map = (
         f"python -W ignore ./tools/test.py {paths['config']} {paths['checkpoint_path']} "
         f"--eval mAP "
@@ -243,19 +269,19 @@ def evaluate_mAP(paths, args):
             if raw_map <= 1.0:
                 raw_map *= 100
             val = round(raw_map, 2)
-            print(f"\n[OK] Extracted mAP: {val}")
+            logger.info(f"\n[OK] Extracted mAP: {val}")
             return val, None
         else:
-            print("\n[-] Failed to extract mAP from output.")
+            logger.info("\n[-] Failed to extract mAP metric from output.")
             return None, "Regex match failed. Output might be malformed."
     else:
-        print(f"\n[-] mAP evaluation failed: {err_msg}")
+        logger.info(f"\n[-] mAP evaluation failed: {err_msg}")
         return None, err_msg
 
 
 def evaluate_benchmark(paths, args):
-    """Executes benchmark (FPS calculation) for a given model and parses the output."""
-    print("\n[+] Running Benchmark...")
+    """Executes benchmark evaluation (FPS calculation) and parses output."""
+    logger.info("\n[+] Running Benchmark...")
     env = os.environ.copy()
     env["PYTHONWARNINGS"] = "ignore"
     cmd_bench = (
@@ -273,18 +299,18 @@ def evaluate_benchmark(paths, args):
         fps_match = re.search(r"Overall fps:\s*([0-9.]+)", out_bench)
         if fps_match:
             val = float(fps_match.group(1))
-            print(f"\n[OK] Extracted FPS: {val}")
+            logger.info(f"\n[OK] Extracted FPS: {val}")
             return val, None
         else:
-            print("\n[-] Failed to extract FPS.")
+            logger.info("\n[-] Failed to extract FPS metric from output.")
             return None, "Regex match failed. Output might be malformed."
     else:
-        print(f"\n[-] Benchmark failed: {err_msg}")
+        logger.info(f"\n[-] Benchmark failed: {err_msg}")
         return None, err_msg
 
 
 def process_model(model_entry, data_dirs, collection_name, args, errors_db):
-    """Handles evaluation pipeline for a single model entry."""
+    """Coordinates overall evaluation workflow for an individual model."""
     name = model_entry.get('Name', '')
     if args.models and name not in args.models:
         return None
@@ -293,9 +319,9 @@ def process_model(model_entry, data_dirs, collection_name, args, errors_db):
     if not paths:
         return None
 
-    print(f"\n{'='*80}")
-    print(f"Processing model: {name} (Collection: {collection_name})")
-    print(f"{'='*80}")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"Processing model: {name} (Collection: {collection_name})")
+    logger.info(f"{'='*80}")
 
     model_info = {
         'name': name,
@@ -321,12 +347,9 @@ def process_model(model_entry, data_dirs, collection_name, args, errors_db):
     return model_info
 
 
-def save_report(results_db, errors_db, gpu_name, args):
-    """Saves final evaluation results and metadata to JSON file."""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    v_str = args.dota_version.replace('.', '_')
-    out_filename = f"models_stats_dota{v_str}_{args.data_split}_{args.tasks}_{timestamp}.json"
-    out_filepath = os.path.join(args.work_dir, out_filename)
+def save_report(results_db, errors_db, gpu_name, args, out_prefix):
+    """Saves structured evaluation metrics and hardware configuration to JSON."""
+    out_filepath = f"{out_prefix}.json"
 
     with open(out_filepath, 'w', encoding='utf-8') as f:
         json.dump({
@@ -338,15 +361,21 @@ def save_report(results_db, errors_db, gpu_name, args):
             'errors': errors_db
         }, f, indent=4, ensure_ascii=False)
 
-    print(f"\n{'='*80}")
-    print(f"Evaluation finished. Results saved to: {out_filepath}")
-    print(f"{'='*80}\n")
+    logger.info(f"\n{'='*80}")
+    logger.info("Evaluation finished.")
+    logger.info(f"JSON Report: {out_filepath}")
+    logger.info(f"Text Log:    {out_prefix}.log")
+    logger.info(f"{'='*80}\n")
 
 
 def main():
     args = parse_args()
     os.makedirs(args.work_dir, exist_ok=True)
-    
+
+    out_prefix = generate_out_prefix(args)
+
+    init_logger(f"{out_prefix}.log")
+
     gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU detected"
     data_dirs = check_directories(args.dota_version, args.data_split)
     metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
@@ -377,7 +406,7 @@ def main():
         if group_results:
             results_db[collection_name] = group_results
 
-    save_report(results_db, errors_db, gpu_name, args)
+    save_report(results_db, errors_db, gpu_name, args, out_prefix)
 
 
 if __name__ == '__main__':

@@ -1,50 +1,69 @@
 import os
+import sys
 import yaml
 import glob
+import logging
 import subprocess
 
+logger = logging.getLogger("downloader")
+
+
+def init_logger():
+    """Initializes global logger for clean console output."""
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_formatter = logging.Formatter('%(message)s')
+    stream_handler.setFormatter(stream_formatter)
+
+    logger.addHandler(stream_handler)
+
+
 def print_summary(downloaded_items, skipped_items, failed_items):
-    """Print execution summary, listing downloaded, skipped, and failed items separately."""
-    print('\n\n' + '=' * 80)
-    print('DOWNLOAD SUMMARY')
-    print('=' * 80 + '\n')
+    """Prints execution summary, listing downloaded, skipped, and failed items separately."""
+    logger.info('\n\n' + '=' * 80)
+    logger.info('DOWNLOAD SUMMARY')
+    logger.info('=' * 80 + '\n')
 
     # Downloaded items block
     if downloaded_items:
-        print(f'Successfully downloaded: {len(downloaded_items)} item(s)')
+        logger.info(f'Successfully downloaded: {len(downloaded_items)} item(s)')
         for idx, item in enumerate(downloaded_items, 1):
-            print(f'    {idx}. {item["filename"]}')
-        print()
+            logger.info(f'    {idx}. {item["filename"]}')
+        logger.info('')
 
     # Skipped items block
     if skipped_items:
-        print(f'Already downloaded and skipped: {len(skipped_items)} item(s)\n')
+        logger.info(f'Already downloaded and skipped: {len(skipped_items)} item(s)\n')
 
     # Failed items block
     if not failed_items:
-        print('Status: All required files were processed successfully!')
+        logger.info('Status: All required files were processed successfully!')
     else:
-        print(f'Status: Failed to download {len(failed_items)} item(s) due to network or server errors:\n')
+        logger.error(f'Status: Failed to download {len(failed_items)} item(s) due to network or server errors:\n')
         for idx, item in enumerate(failed_items, 1):
-            print(f'    {idx}. {item["name"]}')
-            print(f'       Filename:    {item["filename"]}')
-            print(f'       Wget Code:   {item.get("error_code", "Unknown")}')
-            print(f'       Manual Link: {item["url"]}\n')
+            logger.error(f'    {idx}. {item["name"]}')
+            logger.error(f'       Filename:    {item["filename"]}')
+            logger.error(f'       Wget Code:   {item.get("error_code", "Unknown")}')
+            logger.error(f'       Manual Link: {item["url"]}\n')
             
-        print('    Tip: You can manually download these files via browser using the links above,')
-        print('    and place them in the checkpoints/ folder.')
+        logger.info('    Tip: You can manually download these files via browser using the links above,')
+        logger.info('    and place them in the checkpoints/ folder.')
         
-    print('\n' + '=' * 80 + '\n')
+    logger.info('\n' + '=' * 80 + '\n')
 
 
 def main():
+    init_logger()
+
     checkpoint_dir = 'checkpoints'
     os.makedirs(checkpoint_dir, exist_ok=True)
     
     metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
     
     if not metafiles:
-        print("No metafile.yml files found in configs/.")
+        logger.error("No metafile.yml files found in configs/.")
         return
 
     downloaded_items = []
@@ -82,11 +101,11 @@ def main():
                 }
                 
                 if os.path.exists(save_path):
-                    print(f"Skipping:  {filename}")
+                    logger.info(f"Skipping:  {filename}")
                     skipped_items.append(item_info)
                     continue
                 
-                print(f"Downloading: {filename}")
+                logger.info(f"Downloading: {filename}")
                 
                 try:
                     result = subprocess.run(
@@ -98,12 +117,12 @@ def main():
                     else:
                         if os.path.exists(save_path):
                             os.remove(save_path)
-                            print(f"\nRemoved invalid/HTML file created by failed download: {filename}\n")
+                            logger.error(f"\nRemoved invalid/HTML file created by failed download: {filename}\n")
                         
                         item_info['error_code'] = result.returncode
                         failed_items.append(item_info)
                 except Exception as e:
-                    print(f"Error while running wget: {e}")
+                    logger.error(f"Error while running wget: {e}")
                     item_info['error_code'] = 'Exception'
                     failed_items.append(item_info)
                     

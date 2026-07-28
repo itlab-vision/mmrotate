@@ -269,7 +269,10 @@ def main():
                 if success:
                     map_match = re.search(r"'mAP':\s*([0-9.]+)", out_map)
                     if map_match:
-                        model_info['mAP'] = float(map_match.group(1))
+                        raw_map = float(map_match.group(1))
+                        if raw_map <= 1.0:
+                            raw_map *= 100
+                        model_info['mAP'] = round(raw_map, 2)
                         print(f"\n[OK] Extracted mAP: {model_info['mAP']}")
                     else:
                         model_info['mAP'] = None

@@ -85,10 +85,8 @@ def check_directories(version, split):
 
 def run_command(cmd, env=None):
     """
-    Runs a shell command, streams the output to the console in real-time,
-    and returns the full output as a string for parsing.
-    Reads in binary mode to prevent Python from automatically converting
-    carriage returns (\\r) into newlines (\\n).
+    Runs a shell command, streams the output, and captures the exit code.
+    Returns: (success_bool, output_string, error_message)
     """
     try:
         process = subprocess.Popen(
@@ -102,24 +100,29 @@ def run_command(cmd, env=None):
         output = []
         while True:
             char_bytes = process.stdout.read(1)
-            
-            if not char_bytes and process.poll() is not None:
+            if not char_bytes:
                 break
                 
-            if char_bytes:
-                char = char_bytes.decode('utf-8', errors='replace')
-                sys.stdout.write(char)
-                sys.stdout.flush()
-                output.append(char)
-                
-        return ''.join(output)
+            char = char_bytes.decode('utf-8', errors='replace')
+            sys.stdout.write(char)
+            sys.stdout.flush()
+            output.append(char)
+            
+        returncode = process.wait()
+        out_str = ''.join(output)
+        
+        if returncode != 0:
+            return False, out_str, f"Process exited with code {returncode}"
+            
+        return True, out_str, ""
+        
     except Exception as e:
         print(f"\nExecution error: {e}")
-        return str(e)
+        return False, "", str(e)
+
 
 def main():
     args = parse_args()
-    
     os.makedirs(args.work_dir, exist_ok=True)
     
     gpu_name = "CPU or No GPU detected"
@@ -127,10 +130,10 @@ def main():
         gpu_name = torch.cuda.get_device_name(0)
     
     data_dirs = check_directories(args.dota_version, args.data_split)
-    
     metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
                      
     results_db = {}
+    errors_db = {}
     
     for mf_path in metafiles:
         with open(mf_path, 'r', encoding='utf-8') as f:
@@ -152,7 +155,6 @@ def main():
 
             config = model.get('Config', '')
             weights_url = model.get('Weights', '')
-            
             meta = model.get('Metadata', {})
             training_data = meta.get('Training Data', '').lower()
             
@@ -161,7 +163,7 @@ def main():
                 
             checkpoint_path = os.path.join('checkpoints', os.path.basename(weights_url))
             if not os.path.exists(checkpoint_path):
-                print(f"Warning: Checkpoint {checkpoint_path} not found. Skipping {name}.")
+                print(f"\nWarning: Checkpoint {checkpoint_path} not found. Skipping {name}.")
                 continue
                 
             scale = 'ms' if '_ms_' in name else 'ss'
@@ -194,13 +196,23 @@ def main():
                     f"data.test.ann_file={ann_file} "
                     f"data.test.img_prefix={img_prefix}"
                 )
-                out_map = run_command(cmd_map)
-                map_match = re.search(r"'mAP':\s*([0-9.]+)", out_map)
-                model_info['mAP'] = float(map_match.group(1)) if map_match else None
-                if not map_match:
-                    print("\n[-] Failed to extract mAP.")
+                success, out_map, err_msg = run_command(cmd_map)
+                
+                if success:
+                    map_match = re.search(r"'mAP':\s*([0-9.]+)", out_map)
+                    if map_match:
+                        model_info['mAP'] = float(map_match.group(1))
+                        print(f"\n[OK] Extracted mAP: {model_info['mAP']}")
+                    else:
+                        model_info['mAP'] = None
+                        if name not in errors_db: errors_db[name] = {}
+                        errors_db[name]['mAP'] = "Regex match failed. Output might be malformed."
+                        print("\n[-] Failed to extract mAP from output.")
                 else:
-                    print(f"\n[OK] Extracted mAP: {model_info['mAP']}")
+                    model_info['mAP'] = None
+                    if name not in errors_db: errors_db[name] = {}
+                    errors_db[name]['mAP'] = err_msg
+                    print(f"\n[-] mAP evaluation failed: {err_msg}")
 
             # Evaluate FPS (Benchmark)
             if args.tasks in ['benchmark', 'map+benchmark']:
@@ -216,13 +228,23 @@ def main():
                     f"data.test.ann_file={ann_file} "
                     f"data.test.img_prefix={img_prefix}"
                 )
-                out_bench = run_command(cmd_bench, env=env)
-                fps_match = re.search(r"Overall fps:\s*([0-9.]+)", out_bench)
-                model_info['FPS'] = float(fps_match.group(1)) if fps_match else None
-                if not fps_match:
-                    print("\n[-] Failed to extract FPS.")
+                success, out_bench, err_msg = run_command(cmd_bench, env=env)
+                
+                if success:
+                    fps_match = re.search(r"Overall fps:\s*([0-9.]+)", out_bench)
+                    if fps_match:
+                        model_info['FPS'] = float(fps_match.group(1))
+                        print(f"\n[OK] Extracted FPS: {model_info['FPS']}")
+                    else:
+                        model_info['FPS'] = None
+                        if name not in errors_db: errors_db[name] = {}
+                        errors_db[name]['Benchmark'] = "Regex match failed. Output might be malformed."
+                        print("\n[-] Failed to extract FPS.")
                 else:
-                    print(f"\n[OK] Extracted FPS: {model_info['FPS']}")
+                    model_info['FPS'] = None
+                    if name not in errors_db: errors_db[name] = {}
+                    errors_db[name]['Benchmark'] = err_msg
+                    print(f"\n[-] Benchmark failed: {err_msg}")
                     
             group_results.append(model_info)
             
@@ -241,7 +263,8 @@ def main():
             'hardware': {
                 'gpu_name': gpu_name
             },
-            'results': results_db
+            'results': results_db,
+            'errors': errors_db
         }, f, indent=4, ensure_ascii=False)
         
     print(f"\n{'='*80}")

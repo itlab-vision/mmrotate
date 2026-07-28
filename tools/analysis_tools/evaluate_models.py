@@ -237,6 +237,7 @@ def prepare_model_paths(model_entry, data_dirs):
     img_prefix = data_dirs[scale]['img']
     ann_file = data_dirs[scale]['ann_hbb'] if '_hbb_' in name else data_dirs[scale]['ann']
     checkpoint_path = os.path.join('checkpoints', os.path.basename(weights_url))
+    angle = name.rsplit('_', 1)[-1]
 
     return {
         'name': name,
@@ -244,6 +245,7 @@ def prepare_model_paths(model_entry, data_dirs):
         'weights_url': weights_url,
         'checkpoint_path': checkpoint_path,
         'scale': scale,
+        'angle': angle,
         'img_prefix': img_prefix,
         'ann_file': ann_file
     }
@@ -327,7 +329,8 @@ def process_model(model_entry, data_dirs, collection_name, args, errors_db):
         'name': name,
         'config': paths['config'],
         'weights_url': paths['weights_url'],
-        'scale': paths['scale']
+        'scale': paths['scale'],
+        'angle': paths['angle']
     }
 
     # Evaluate mAP

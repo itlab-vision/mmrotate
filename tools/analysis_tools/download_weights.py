@@ -63,7 +63,13 @@ def main():
             
         for model in data['Models']:
             name = model.get('Name', 'Unknown Model')
+            config = model.get('Config', '')
             weights_url = model.get('Weights', '')
+            meta = model.get('Metadata', {})
+            training_data = meta.get('Training Data', '').lower()
+
+            if 'dota' not in training_data and 'dota' not in config.lower():
+                continue
             
             if weights_url.startswith('http'):
                 filename = os.path.basename(weights_url)

@@ -7,3 +7,4 @@ pycocotools
 six
 terminaltables
 torch
+mmcls

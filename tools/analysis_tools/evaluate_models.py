@@ -12,6 +12,11 @@ from datetime import datetime
 
 logger = logging.getLogger("evaluator")
 
+DATASET_TYPE = {
+    '1.0': 'DOTADataset',
+    '1.5' : 'DOTAv15Dataset',
+    # Add '2.0'
+}
 
 def parse_args():
     parser = argparse.ArgumentParser(description='MMRotate model evaluation and metric benchmarking script.')
@@ -262,7 +267,8 @@ def evaluate_mAP(paths, args):
         f"--cfg-options data.test_dataloader.workers_per_gpu={args.map_workers_per_gpu} "
         f"data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} "
         f"data.test.ann_file={paths['ann_file']} "
-        f"data.test.img_prefix={paths['img_prefix']}"
+        f"data.test.img_prefix={paths['img_prefix']} "
+        f"data.test.type={DATASET_TYPE[args.dota_version]}"
     )
     success, out_map, err_msg = run_command(cmd_map)
 
@@ -295,7 +301,8 @@ def evaluate_benchmark(paths, args):
         f"--cfg-options data.test_dataloader.workers_per_gpu={args.benchmark_workers_per_gpu} "
         f"data.test_dataloader.samples_per_gpu={args.benchmark_samples_per_gpu} "
         f"data.test.ann_file={paths['ann_file']} "
-        f"data.test.img_prefix={paths['img_prefix']}"
+        f"data.test.img_prefix={paths['img_prefix']} "
+        f"data.test.type={DATASET_TYPE[args.dota_version]}"
     )
     success, out_bench, err_msg = run_command(cmd_bench, env=env)
 

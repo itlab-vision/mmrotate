@@ -9,7 +9,7 @@ Collections:
     Architecture:
       - ResNet
   Paper:
-    URL: None
+    URL: https://cdn.aaai.org/ojs/19975/19975-13-23988-1-2-20220628.pdf
     Title: 'SASM RepPoints'
   README: configs/sasm_reppoints/README.md
 

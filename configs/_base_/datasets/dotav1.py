@@ -1,5 +1,6 @@
 # dataset settings
 dataset_type = 'DOTADataset'
+# dataset_type = 'DOTAv15Dataset'
 
 # Uncomment the required option
 data_root = 'data/split_ss_dota_1_0/'

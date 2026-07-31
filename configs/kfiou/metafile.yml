@@ -9,7 +9,7 @@ Collections:
     Architecture:
       - ResNet
   Paper:
-    URL: https://arxiv.org/pdf/2101.11952.pdf
+    URL: https://arxiv.org/pdf/2201.12558.pdf
     Title: 'The KFIoU Loss for Rotated Object Detection'
   README: configs/kfiou/README.md
 

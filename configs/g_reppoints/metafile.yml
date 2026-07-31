@@ -9,7 +9,7 @@ Collections:
     Architecture:
       - ResNet
   Paper:
-    URL: None
+    URL: https://arxiv.org/pdf/2205.11796
     Title: 'G-Rep: Gaussian Representation for Arbitrary-Oriented Object Detection'
   README: configs/g_reppoints/README.md
 

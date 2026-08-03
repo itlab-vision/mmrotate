@@ -1,5 +1,7 @@
 ## Model Zoo
 
+***Note:** All pre-trained weights for the models evaluated in this benchmark were obtained from the official OpenMMLab resource (`download.openmmlab.com`). These models were originally trained on the DOTA v1.0 dataset.*
+
 - [Rotated RetinaNet-OBB/HBB](https://github.com/open-mmlab/mmrotate/tree/main/configs/rotated_retinanet/README.md) (ICCV'2017)
 - [Rotated FasterRCNN-OBB](https://github.com/open-mmlab/mmrotate/tree/main/configs/rotated_faster_rcnn/README.md) (TPAMI'2017)
 - [Rotated RepPoints-OBB](https://github.com/open-mmlab/mmrotate/tree/main/configs/rotated_reppoints/README.md) (ICCV'2019)
@@ -20,21 +22,91 @@
 - [KFIoU](https://github.com/open-mmlab/mmrotate/tree/main/configs/kfiou/README.md) (arXiv)
 - [G-Rep](https://github.com/open-mmlab/mmrotate/tree/main/configs/g_reppoints/README.md) (stay tuned)
 
+## Benchmark
 
-## Benchmark 
+### 1. Environment & Dependencies
 
-### Evaluation Settings & Environment
-- **GPU:** 1x NVIDIA A100 40GB.
-- **Dataset:** Evaluated on the DOTA `val` split.
-- **Speed (FPS):** Measured on the aforementioned GPU with `batch_size=1`.
-- **Data Processing:** The dataset split configuration corresponds to the model's **Scale** parameter.
+All experiments were conducted on a high-performance computing cluster running CentOS Linux 8, managed by the Slurm Workload Manager. 
 
-### Column Definitions
-- **Scale:** Dataset cropping scale. `-` denotes Single-Scale (SS), while `MS` denotes Multi-Scale.
-- **Rotation:** Rotation augmentation used during training. `-` denotes no rotation, while `RR` denotes Random Rotation.
-- **Angle:** The mathematical format of the rotation representation used in the model's head architecture (e.g., `le90`, `le135`, `oc`).
+#### Hardware Configuration
+The evaluation was executed on a high-performance compute node with the following overall specifications:
 
-### Results on DOTA v1.0
+| Component | Specification |
+| :--- | :--- |
+| **OS** | CentOS Linux 8 |
+| **GPU** | 8x NVIDIA A100-PCIE-40GB |
+| **CPU** | AMD EPYC 7742 64-Core Processor |
+| **RAM** | 512 GB |
+| **Scheduler** | Slurm Workload Manager 24.11.5 |
+
+**Actual Resource Allocation:**
+While the compute node possesses the capacity listed above, the specific resources requested and allocated via Slurm for benchmarking jobs were strictly limited to:
+- **1x GPU**
+- **6x CPU cores** 
+- **Unrestricted memory** (no specific RAM limit was requested, meaning the jobs operated without strict memory constraints)
+
+
+#### Software & Libraries
+All models were launched within an isolated Miniconda3 environment to ensure reproducibility. The core dependencies and their respective versions are listed below:
+
+| Software / Package | Version |
+| :--- | :--- |
+| **OS** | CentOS Linux 8 |
+| **CUDA Toolkit** | 11.1 |
+| **Python** | Python 3.8.20 |
+| **PyTorch** | 1.8.0 |
+| **TorchVision** | 0.9.0 |
+| **MMCV / MMCV-full** | 1.7.2|
+| **MMDetection** | 2.28.2 |
+| **MMRotate** | 0.3.4 |
+
+### 2. Datasets & Preprocessing
+
+The experiments are based on the **DOTA (Dataset for Object Detection in Aerial Images)**. Aerial images are typically characterized by massive resolutions (e.g., 4000×4000 pixels or more) and objects of highly varied scales and orientations. 
+
+#### Dataset Versions
+- **DOTA v1.0:** Contains 2,806 large-scale aerial images with 15 object categories.
+- **DOTA v1.5:** Uses the same images as v1.0 but features updated and refined annotations. It introduces a new class (*container crane*, making it 16 classes in total) and includes annotations for extremely small object instances (less than 10 pixels).
+
+#### Data Split & Evaluation Policy
+The DOTA dataset is officially split into `training`, `validation`, and `testing` sets. Because the ground truth annotations for the `testing` set are closed-source and require submission to the official DOTA evaluation server, all local evaluations and FPS benchmarks in this document were strictly performed on the **`validation`** split.
+
+#### Image Cropping Strategies (SS vs. MS)
+Due to the massive resolution of aerial imagery, images cannot be fed directly into standard CNNs. Before training and evaluation, the original images are processed into smaller patches (e.g., 1024×1024) with a specific overlap. Two main strategies are used:
+- **Single-Scale (SS):** The original images are cropped into patches at their original scale (no resizing before cropping). 
+- **Multi-Scale (MS):** The original images are first resized to multiple scaling factors (e.g., 0.5, 1.0, 1.5) and then cropped into patches. This provides the model with rich scale invariance during training.
+
+***Note:** The model's evaluation is strictly performed using the same cropping strategy (SS or MS) that was utilized during its training phase. This is denoted in the `Scale` parameter of the benchmark table.*
+
+#### Downloads
+The datasets are available for download below. 
+
+| Dataset | Download Link |
+| :--- | :--- |
+| **DOTA v1.0** | [Google Drive Link](https://drive.google.com/drive/folders/1n5w45suVOyaqY84hltJhIZdtVFD9B224?usp=sharing) |
+| **DOTA v1.5** | [Google Drive Link](https://drive.google.com/drive/folders/1n5w45suVOyaqY84hltJhIZdtVFD9B224?usp=sharing) |
+
+Alternative download methods and official mirrors can be found on the [Official DOTA Website](https://captain-whu.github.io/DOTA/dataset.html).
+
+***Note:** The datasets are provided in their original base format. The image cropping for Single-Scale (SS) and Multi-Scale (MS) evaluation is performed locally using the `tools/data/dota/split/img_split.py` script prior to training and testing.*
+
+### 3. Model Configurations & Evaluation Metrics
+
+To clarify the exact setups and metrics used for the models in the benchmark, the following parameters define the core strategies and measurements applied:
+
+- **Speed (FPS):** Denotes the model's inference speed measured with `batch_size=1`. The FPS calculation encompasses the full inference pipeline, including both the network's forward pass and post-processing steps. Note that several warm-up iterations are performed initially and are not included in the final timing.
+- **Scale (Cropping Scale):** Indicates the dataset preprocessing applied (as described above). 
+  - `-` denotes **Single-Scale (SS)**.
+  - `MS` denotes **Multi-Scale**.
+- **Rotation (Augmentation):** Refers to the data augmentation applied dynamically during the training pipeline. 
+  - `-` denotes **no rotation augmentation**.
+  - `RR` denotes **Random Rotation**. When enabled, both the images and their corresponding bounding box coordinates are randomly rotated by arbitrary angles (e.g., uniformly between $[0, 360)$ degrees) on the fly before being fed into the network. This vastly improves the model's rotation invariance.
+- **Angle (Bounding Box Representation):** Oriented bounding boxes (OBB) can be mathematically parameterized in several ways. For a detailed explanation of the angle definitions (e.g., `oc`, `le90`, `le135`) expected by the specific model's detection head, please refer to the [Definition of Rotated Box](../docs/en/intro.md#definition-of-rotated-box) section in documentation.
+
+
+### 4. Benchmark Results
+
+#### Results on DOTA v1.0
 | Family | Model Name | mAP (%) | FPS | Scale | Rotation | Angle | Config | Download |
 |---|---|---|---|---|---|---|---|---|
 | roi_trans | `roi_trans_swin_tiny_fpn_1x_dota_le90` | 86.49 | 24.6 | - | - | le90 | [config](../../configs/roi_trans/roi_trans_swin_tiny_fpn_1x_dota_le90.py) | [model](https://download.openmmlab.com/mmrotate/v0.1.0/roi_trans/roi_trans_swin_tiny_fpn_1x_dota_le90/roi_trans_swin_tiny_fpn_1x_dota_le90-ddeee9ae.pth) |
@@ -86,7 +158,7 @@
 | kfiou | `rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135` | 46.86 | 24.3 | - | - | le135 | [config](../../configs/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135.py) | [model](https://download.openmmlab.com/mmrotate/v0.1.0/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135-0eaa4156.pth) |
 | g_reppoints | `g_reppoints_r50_fpn_1x_dota_le135` | N/A | N/A | - | - | le135 | [config](../../configs/g_reppoints/g_reppoints_r50_fpn_1x_dota_le135.py) | [model](https://download.openmmlab.com/mmrotate/v0.1.0/g_reppoints/g_reppoints_r50_fpn_1x_dota_le135/g_reppoints_r50_fpn_1x_dota_le135-b840eed7.pth) |
 
-### Results on DOTA v1.5
+#### Results on DOTA v1.5
 | Family | Model Name | mAP (%) | FPS | Scale | Rotation | Angle | Config | Download |
 |---|---|---|---|---|---|---|---|---|
 | roi_trans | `roi_trans_swin_tiny_fpn_1x_dota_le90` | 78.08 | 23.8 | - | - | le90 | [config](../../configs/roi_trans/roi_trans_swin_tiny_fpn_1x_dota_le90.py) | [model](https://download.openmmlab.com/mmrotate/v0.1.0/roi_trans/roi_trans_swin_tiny_fpn_1x_dota_le90/roi_trans_swin_tiny_fpn_1x_dota_le90-ddeee9ae.pth) |

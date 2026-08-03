@@ -21,7 +21,7 @@ conda create --name openmmlab python=3.8 -y
 conda activate openmmlab
 ```
 
-*Note: If package caching issues occur during installation, run `conda clean --all -y`.*
+***Note:** If package caching issues occur during installation, run `conda clean --all -y`.*
 
 ---
 

@@ -16,6 +16,13 @@ Ensure `gdown` is installed:
 pip install gdown
 ```
 
+### Key Arguments
+
+- `--dota-version`: DOTA version(s) to download (`1.0`, `1.5`, `2.0`, or `all`). Default: `1.0`.
+- `--split`: Dataset split(s) to download (`train`, `val`, `test`, or `all`). Default: `val`.
+- `--out-dir`: Directory where dataset files will be saved. Default: `./data`.
+- `--overwrite`: Force re-download and overwrite existing data. Default: `False`.
+
 ### Usage Examples
 
 Download default DOTA v1.0 validation set:
@@ -25,18 +32,18 @@ python ./tools/data/dota/download_dota.py
 
 Download specific version and split:
 ```bash
-python ./tools/data/dota/download_dota.py --version 1.0 --split val
-python ./tools/data/dota/download_dota.py --version 1.5 --split test
+python ./tools/data/dota/download_dota.py --dota-version 1.0 --split val
+python ./tools/data/dota/download_dota.py --dota-version 1.5 --split test
 ```
 
 Download all versions and splits:
 ```bash
-python ./tools/data/dota/download_dota.py --version all --split all
+python ./tools/data/dota/download_dota.py --dota-version all --split all
 ```
 
 Overwrite existing downloads:
 ```bash
-python ./tools/data/dota/download_dota.py --version all --split all --overwrite
+python ./tools/data/dota/download_dota.py --dota-version all --split all --overwrite
 ```
 
 ---
@@ -60,8 +67,7 @@ python tools/data/dota/split/img_split.py --base-json \
 
 ### Automated Splitting Script (`run_dota_split.py`)
 
-- **Location**: `tools/data/dota/run_dota_split.py`
-- **Description**: A wrapper script that dynamically generates split configurations and executes multi-process image cropping (`img_split.py`) across different DOTA versions, splits, and scales.
+Use `tools/data/dota/run_dota_split.py` to dynamically generate split configurations and execute multi-process image cropping across different DOTA versions, splits, and scales.
 
 #### Key Arguments
 

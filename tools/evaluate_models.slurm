@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --partition=p5gpuA100
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6

@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'DOTAv2Dataset'
-data_root = '/data/split_ss_dota2_0/'
+data_root = '/data/split_ss_dota_2_0/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [

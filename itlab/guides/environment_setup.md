@@ -7,7 +7,7 @@ This guide describes the exact, tested step-by-step process for deploying MMRota
 ## 1. Verified Prerequisites
 
 - **Python**: 3.8
-- **CUDA**: 11.1 (or 10.2 for older GPU architectures)
+- **CUDA**: 11.1
 - **Package Manager**: Conda
 
 ---
@@ -31,11 +31,6 @@ Install PyTorch 1.8.0 with CUDA 11.1 support:
 
 ```bash
 conda install pytorch==1.8.0 torchvision==0.9.0 cudatoolkit=11.1 -c pytorch -c nvidia
-```
-
-*For older GPUs requiring CUDA 10.2:*
-```bash
-conda install pytorch==1.8.0 torchvision==0.9.0 cudatoolkit=10.2 -c pytorch
 ```
 
 ---
@@ -89,15 +84,15 @@ Expected output format:
 ```text
 PyTorch: 1.8.0
 CUDA available: True
-GPU: NVIDIA GeForce RTX 3070 Ti
+GPU: NVIDIA A100-PCIE-40GB
 ```
 
 ### Verification Step 2: Run Demo Inference
 
 ```bash
-mim download mmrotate --config oriented_rcnn_r50_fpn_1x_dota_le90 --dest .
+mim download mmrotate --config oriented_rcnn_r50_fpn_1x_dota_le90 --dest demo/tmp/
 
-python demo/image_demo.py demo/demo.jpg oriented_rcnn_r50_fpn_1x_dota_le90.py oriented_rcnn_r50_fpn_1x_dota_le90-6d2b2ce0.pth --out-file result.jpg
+python demo/image_demo.py demo/demo.jpg demo/tmp/oriented_rcnn_r50_fpn_1x_dota_le90.py demo/tmp/oriented_rcnn_r50_fpn_1x_dota_le90-6d2b2ce0.pth --out-file demo/tmp/result.jpg
 ```
 
 Expected result: Generates `result.jpg` containing plotted rotated bounding boxes over detected objects.

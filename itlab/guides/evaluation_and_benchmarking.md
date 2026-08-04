@@ -18,6 +18,8 @@ python tools/analysis_tools/download_dota_weights.py
 
 Offline evaluation computes mean Average Precision (mAP) on local validation or test sets, formats predictions, generates visualization images, and exports detection pickle files for confusion matrix analysis.
 
+***Note:** By default, dataset directory paths are defined in the `configs/_base_/datasets/dotav1.py` file or in the corresponding configuration file (which takes precedence over `_base_`). These paths can be overridden via command-line arguments at runtime (see example in [Overriding Dataset Paths at Runtime](#overriding-dataset-paths-at-runtime)).*
+
 ### Key Arguments
 
 - `config`: Path to the model configuration Python file.

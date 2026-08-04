@@ -29,6 +29,8 @@ class RotatedBBoxHead(BaseModule):
             class agnostic.
         reg_decoded_bbox (bool, optional): If True, regression branch use
             decoded bbox to compute loss.
+        gaucho_encoding (bool): If true, regress gaussian bounding boxes using Gaussian Cholesky encoding.
+            reg_decoded_bbox must also be set to true. Default: False
         reg_predictor_cfg (dict, optional): Config of regression predictor.
         cls_predictor_cfg (dict, optional): Config of classification predictor.
         loss_cls (dict, optional): Config of classification loss.
@@ -50,6 +52,7 @@ class RotatedBBoxHead(BaseModule):
                      target_stds=[0.1, 0.1, 0.2, 0.2]),
                  reg_class_agnostic=False,
                  reg_decoded_bbox=False,
+                 gaucho_encoding=False,
                  reg_predictor_cfg=dict(type='Linear'),
                  cls_predictor_cfg=dict(type='Linear'),
                  loss_cls=dict(
@@ -70,6 +73,9 @@ class RotatedBBoxHead(BaseModule):
         self.num_classes = num_classes
         self.reg_class_agnostic = reg_class_agnostic
         self.reg_decoded_bbox = reg_decoded_bbox
+        if not reg_decoded_bbox and gaucho_encoding:
+            raise ValueError(f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled')
+        self.gaucho_encoding = gaucho_encoding
         self.reg_predictor_cfg = reg_predictor_cfg
         self.cls_predictor_cfg = cls_predictor_cfg
         self.fp16_enabled = False
@@ -335,7 +341,10 @@ class RotatedBBoxHead(BaseModule):
                     # `GIouLoss`, `DIouLoss`) is applied directly on
                     # the decoded bounding boxes, it decodes the
                     # already encoded coordinates to absolute format.
-                    bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred)
+                    if self.gaucho_encoding:
+                        bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred, to_obb=False)
+                    else:
+                        bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred)
                 if self.reg_class_agnostic:
                     pos_bbox_pred = bbox_pred.view(
                         bbox_pred.size(0), 5)[pos_inds.type(torch.bool)]

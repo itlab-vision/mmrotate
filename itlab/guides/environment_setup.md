@@ -90,9 +90,9 @@ GPU: NVIDIA A100-PCIE-40GB
 ### Verification Step 2: Run Demo Inference
 
 ```bash
-mim download mmrotate --config oriented_rcnn_r50_fpn_1x_dota_le90 --dest .
+mim download mmrotate --config oriented_rcnn_r50_fpn_1x_dota_le90 --dest demo/tmp/
 
-python demo/image_demo.py demo/demo.jpg oriented_rcnn_r50_fpn_1x_dota_le90.py oriented_rcnn_r50_fpn_1x_dota_le90-6d2b2ce0.pth --out-file result.jpg
+python demo/image_demo.py demo/demo.jpg demo/tmp/oriented_rcnn_r50_fpn_1x_dota_le90.py demo/tmp/oriented_rcnn_r50_fpn_1x_dota_le90-6d2b2ce0.pth --out-file demo/tmp/result.jpg
 ```
 
 Expected result: Generates `result.jpg` containing plotted rotated bounding boxes over detected objects.

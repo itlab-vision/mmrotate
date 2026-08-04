@@ -74,7 +74,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Download and prepare DOTA dataset')
     parser.add_argument(
-        '--version',
+        '--dota-version',
         type=str,
         nargs='+',
         choices=['1.0', '1.5', '2.0', 'all'],
@@ -262,7 +262,7 @@ def main():
     init_logger()
     args = parse_args()
 
-    selected_versions = set(args.version)
+    selected_versions = set(args.dota_version)
     if 'all' in selected_versions:
         selected_versions = {'1.0', '1.5', '2.0'}
 

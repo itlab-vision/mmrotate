@@ -1,6 +1,9 @@
+# Custom DOTA v1.5 multi-scale dataset configuration.
+# Used exclusively by models integrated by ITLab, including experiments from featured papers (e.g., GauCho).
+
 # dataset settings
 dataset_type = 'DOTAv15Dataset'
-data_root = 'data/split_ss_dota_1_5/'
+data_root = 'data/split_ms_dota_1_5/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [

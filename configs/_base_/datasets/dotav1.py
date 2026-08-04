@@ -1,8 +1,10 @@
+# Base configuration for the DOTA dataset (defaults to DOTA v1.0).
+# Override parameters via `--cfg-options` when evaluating on different versions or splits.
+
 # dataset settings
 dataset_type = 'DOTADataset'
 # dataset_type = 'DOTAv15Dataset'
 
-# Uncomment the required option
 data_root = 'data/split_ss_dota_1_0/'
 # data_root = 'data/split_ss_dota_1_5/'
 # data_root = 'data/split_ss_dota_2_0/'

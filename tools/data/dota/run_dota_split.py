@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument(
         '--data-split', 
         nargs='+', 
-        choices=['train', 'val', 'test', 'all'], 
+        choices=['train', 'val', 'test', 'trainval', 'all'], 
         default=['val'],
         help='Dataset split(s) to process (default: val)')
     parser.add_argument(
@@ -61,7 +61,6 @@ def generate_split_config(version, split, scale, nproc):
     
     config = {
         "nproc": nproc,
-        "img_dirs": [f"data/DOTA_{v_str}/{split}/images/"],
         "sizes": [1024],
         "img_rate_thr": 0.6,
         "iof_thr": 0.7,
@@ -71,9 +70,23 @@ def generate_split_config(version, split, scale, nproc):
         "save_ext": ".png"
     }
 
-    if split != 'test':
-        config["ann_dirs"] = [f"data/DOTA_{v_str}/{split}/labelTxt/"]
-        config["ann_hbb_dir"] = f"data/DOTA_{v_str}/{split}/labelTxtHbb/"
+    if split == 'trainval':
+        config["img_dirs"] = [
+            f"data/DOTA_{v_str}/train/images/",
+            f"data/DOTA_{v_str}/val/images/"
+        ]
+        # Note: Horizontal bounding box (ann_hbb_dir) annotations are currently 
+        # not processed for the trainval split.
+        config["ann_dirs"] = [
+            f"data/DOTA_{v_str}/train/labelTxt/",
+            f"data/DOTA_{v_str}/val/labelTxt/"
+        ]
+    else:
+        config["img_dirs"] = [f"data/DOTA_{v_str}/{split}/images/"]
+        
+        if split != 'test':
+            config["ann_dirs"] = [f"data/DOTA_{v_str}/{split}/labelTxt/"]
+            config["ann_hbb_dir"] = f"data/DOTA_{v_str}/{split}/labelTxtHbb/"
 
     if scale == 'ss':
         config["gaps"] = [200]
@@ -146,7 +159,7 @@ def main():
     args = parse_args()
 
     versions = ['1.0', '1.5', '2.0'] if 'all' in args.dota_version else args.dota_version
-    splits = ['train', 'val', 'test'] if 'all' in args.data_split else args.data_split
+    splits = ['train', 'val', 'trainval', 'test'] if 'all' in args.data_split else args.data_split
     scales = ['ss', 'ms'] if 'all' in args.scale else args.scale
 
     logger.info("=" * 60)

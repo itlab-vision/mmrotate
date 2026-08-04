@@ -84,7 +84,7 @@ Expected output format:
 ```text
 PyTorch: 1.8.0
 CUDA available: True
-GPU: NVIDIA GeForce RTX 3070 Ti
+GPU: NVIDIA A100-PCIE-40GB
 ```
 
 ### Verification Step 2: Run Demo Inference

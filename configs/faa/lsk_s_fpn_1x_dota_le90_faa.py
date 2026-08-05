@@ -15,7 +15,7 @@ model = dict(
         drop_rate=0.1,
         drop_path_rate=0.1,
         depths=[2,2,4,2],
-        init_cfg=dict(type='Pretrained', checkpoint="/data2/guchangyu/backbone/lsk_s_backbone-e9d2e551.pth"),
+        init_cfg=dict(type='Pretrained', checkpoint="data/pretrained/lsk_s_backbone.pth.tar"),
         norm_cfg=dict(type='BN', requires_grad=True)), # if more than one gpu, use SyncBN instead of BN
     neck=dict(
         type='FAAFusionFPN',

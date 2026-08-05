@@ -35,3 +35,14 @@ Execute automated batch evaluations across pre-trained model checkpoints and gen
 - Download pre-trained model checkpoints using `tools/analysis_tools/download_dota_weights.py`.
 - Execute automated multi-model batch evaluations (mAP metrics and FPS benchmarks) using `tools/analysis_tools/evaluate_models.py`.
 - Generate consolidated markdown summary tables from JSON logs using `tools/analysis_tools/build_summary_table.py`.
+
+---
+
+### Step 4: Model Training
+
+Train custom or baseline models on DOTA datasets:
+
+- Read **[model_training.md](model_training.md)**.
+- Prepare `trainval` patch splits using `tools/data/dota/run_dota_split.py`.
+- Launch training directly (`tools/train.py`) or submit Slurm cluster jobs (`tools/train_model.slurm` & `tools/batch_train.sh`).
+

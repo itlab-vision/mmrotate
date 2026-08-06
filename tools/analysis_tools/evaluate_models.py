@@ -69,6 +69,11 @@ def parse_args():
         nargs='+',
         default=[],
         help='Specific model names to evaluate. Runs all models if empty.')
+    parser.add_argument(
+        '--metafiles',
+        nargs='+',
+        default=[],
+        help='Specific metafile paths to process. Scans configs/ if empty.')
 
     return parser.parse_args()
 
@@ -141,6 +146,34 @@ def check_directories(version, split):
 
     logger.info('All required data directories exist.')
     return dirs
+
+
+def check_metafiles(metafiles_args):
+    """Validates the existence of explicitly provided metafiles or scans the
+    configs directory if none are provided.
+
+    Terminates execution if explicitly provided files are missing or if no
+    files are found overall.
+    """
+    if metafiles_args:
+        metafiles = metafiles_args
+        missing_mfs = [mf for mf in metafiles if not os.path.exists(mf)]
+        if missing_mfs:
+            logger.error(
+                '\nError: The following specified metafiles are missing:')
+            for m in missing_mfs:
+                logger.error(f'  - {m}')
+            sys.exit(1)
+        logger.info(f'Using {len(metafiles)} manually specified metafile(s).')
+    else:
+        metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
+        logger.info(f'Found {len(metafiles)} metafiles in configs directory.')
+
+    if not metafiles:
+        logger.error('\nError: No metafiles found or specified to process.')
+        sys.exit(1)
+
+    return metafiles
 
 
 def check_checkpoints(metafiles, target_models):
@@ -419,14 +452,13 @@ def main():
     os.makedirs(args.work_dir, exist_ok=True)
 
     out_prefix = generate_out_prefix(args)
-
     init_logger(f'{out_prefix}.log')
 
     gpu_name = torch.cuda.get_device_name(
         0) if torch.cuda.is_available() else 'No GPU detected'
-    data_dirs = check_directories(args.dota_version, args.data_split)
-    metafiles = glob.glob('configs/**/metafile.yml', recursive=True)
 
+    data_dirs = check_directories(args.dota_version, args.data_split)
+    metafiles = check_metafiles(args.metafiles)
     check_checkpoints(metafiles, args.models)
 
     results_db = {}

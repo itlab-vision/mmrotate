@@ -15,9 +15,7 @@ from .rotated_rpn_head import RotatedRPNHead
 class OrientedRPNHead(RotatedRPNHead):
     """Oriented RPN head for Oriented R-CNN."""
 
-    def __init__(self, 
-            kfiou_loss=False,
-            **kwargs):
+    def __init__(self, kfiou_loss=False, **kwargs):
         super().__init__(**kwargs)
         self.kfiou_loss = kfiou_loss
 
@@ -28,9 +26,11 @@ class OrientedRPNHead(RotatedRPNHead):
         self.rpn_cls = nn.Conv2d(self.feat_channels,
                                  self.num_anchors * self.cls_out_channels, 1)
         if self.gaucho_encoding:
-            self.rpn_reg = nn.Conv2d(self.feat_channels, self.num_anchors * 5, 1)
+            self.rpn_reg = nn.Conv2d(self.feat_channels, self.num_anchors * 5,
+                                     1)
         else:
-            self.rpn_reg = nn.Conv2d(self.feat_channels, self.num_anchors * 6, 1)
+            self.rpn_reg = nn.Conv2d(self.feat_channels, self.num_anchors * 6,
+                                     1)
 
     def _get_targets_single(self,
                             flat_anchors,
@@ -191,16 +191,18 @@ class OrientedRPNHead(RotatedRPNHead):
             bbox_targets = bbox_targets.reshape(-1, 6)
             bbox_weights = bbox_weights.reshape(-1, 6)
             bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 6)
-        
+
         anchors = anchors.reshape(-1, 4)
         if self.kfiou_loss:
             if self.gaucho_encoding:
-                bbox_pred_decode = self.bbox_coder.decode(anchors, bbox_pred, to_obb=False)
+                bbox_pred_decode = self.bbox_coder.decode(
+                    anchors, bbox_pred, to_obb=False)
                 bbox_targets_decode = bbox_targets
                 bbox_targets = self.bbox_coder.encode(anchors, bbox_targets)
             else:
                 bbox_pred_decode = self.bbox_coder.decode(anchors, bbox_pred)
-                bbox_targets_decode = self.bbox_coder.decode(anchors, bbox_targets)
+                bbox_targets_decode = self.bbox_coder.decode(
+                    anchors, bbox_targets)
             loss_bbox = self.loss_bbox(
                 bbox_pred,
                 bbox_targets,
@@ -214,7 +216,8 @@ class OrientedRPNHead(RotatedRPNHead):
                 # is applied directly on the decoded bounding boxes, it
                 # decodes the already encoded coordinates to absolute format.
                 if self.gaucho_encoding:
-                    bbox_pred = self.bbox_coder.decode(anchors, bbox_pred, to_obb=False)
+                    bbox_pred = self.bbox_coder.decode(
+                        anchors, bbox_pred, to_obb=False)
                 else:
                     bbox_pred = self.bbox_coder.decode(anchors, bbox_pred)
             loss_bbox = self.loss_bbox(

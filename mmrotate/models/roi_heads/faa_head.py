@@ -1,11 +1,14 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+import math
+
 import torch
+import torch.fft
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.fft
-import math
-from mmrotate.models.builder import ROTATED_HEADS
-from mmrotate.models.roi_heads.bbox_heads.convfc_rbbox_head import RotatedShared2FCBBoxHead
 
+from mmrotate.models.builder import ROTATED_HEADS
+from mmrotate.models.roi_heads.bbox_heads.convfc_rbbox_head import \
+    RotatedShared2FCBBoxHead
 
 
 class FAA(nn.Module):
@@ -25,11 +28,13 @@ class FAA(nn.Module):
         h_idx = torch.arange(H)
         w_idx = torch.arange(W // 2 + 1)
 
-        h_shift = torch.fft.fftshift(h_idx - H // 2, dim=0)  # [-3,-2,-1,0,1,2,3]
-        w_shift = torch.cat([w_idx[:W // 2], torch.tensor([-W // 2])])  # [0,1,2,-3]
+        h_shift = torch.fft.fftshift(
+            h_idx - H // 2, dim=0)  # [-3,-2,-1,0,1,2,3]
+        w_shift = torch.cat([w_idx[:W // 2],
+                             torch.tensor([-W // 2])])  # [0,1,2,-3]
 
         y, x_grid = torch.meshgrid(h_shift, w_shift)
-        rho = torch.sqrt(x_grid ** 2 + y ** 2)
+        rho = torch.sqrt(x_grid**2 + y**2)
         theta = torch.atan2(y, x_grid)
         theta = (theta + 2 * math.pi) % (2 * math.pi)  # [0, 2π)
 
@@ -51,7 +56,8 @@ class FAA(nn.Module):
         ys = torch.linspace(-1, 1, H)
         xs = torch.linspace(-1, 1, W)
         grid_y, grid_x = torch.meshgrid(ys, xs)  # [H, W]
-        self.register_buffer('base_grid', torch.stack([grid_x, grid_y], dim=-1))  # [H, W, 2]
+        self.register_buffer('base_grid', torch.stack([grid_x, grid_y],
+                                                      dim=-1))  # [H, W, 2]
 
     def _rotate_images(self, x, theta_e):
         """
@@ -61,7 +67,7 @@ class FAA(nn.Module):
         返回: [B, 1, H, W]
         """
         B, _, H, W = x.shape
-        device = x.device
+        x.device
 
         # 构造旋转矩阵（绕原点，逆时针为正；我们要顺时针旋转 theta_e，即 -theta_e）
         cos = torch.cos(-theta_e)  # [B]
@@ -71,10 +77,12 @@ class FAA(nn.Module):
         rot_mat = torch.stack([
             torch.stack([cos, -sin], dim=-1),
             torch.stack([sin, cos], dim=-1)
-        ], dim=1)  # [B, 2, 2]
+        ],
+                              dim=1)  # [B, 2, 2]
 
         # 扩展 base_grid 到 batch
-        grid = self.base_grid.unsqueeze(0).expand(B, -1, -1, -1)  # [B, H, W, 2]
+        grid = self.base_grid.unsqueeze(0).expand(B, -1, -1,
+                                                  -1)  # [B, H, W, 2]
         grid = grid.reshape(B, H * W, 2)  # [B, HW, 2]
 
         # 应用旋转: [B, HW, 2] = [B, HW, 2] @ [B, 2, 2]
@@ -87,13 +95,12 @@ class FAA(nn.Module):
             rotated_grid,
             mode='bilinear',
             padding_mode='border',  # 或 'zeros'
-            align_corners=True
-        )
+            align_corners=True)
         return x_rotated
 
     def forward(self, x):
         B, C, H, W = x.shape
-        assert C == 1 and H == 7 and W == 7, f"Expected [B,1,7,7], got {x.shape}"
+        assert C == 1 and H == 7 and W == 7, f'Expected [B,1,7,7], got {x.shape}'
 
         # 1. 计算 rFFT
         x_rfft = torch.fft.rfft2(x, dim=(-2, -1), norm='ortho')  # [B, 1, 7, 4]
@@ -112,7 +119,8 @@ class FAA(nn.Module):
         theta_e = thetas[max_energy_idx]  # [B]
 
         # 4. 角度归一化 & 排序（用于 rot_inv_mag）
-        theta_prime = (thetas.unsqueeze(0) - theta_e.unsqueeze(1) + math.pi) % math.pi  # [B, m]
+        theta_prime = (thetas.unsqueeze(0) - theta_e.unsqueeze(1) +
+                       math.pi) % math.pi  # [B, m]
         u = rho_flat.unsqueeze(0) * torch.cos(theta_prime)  # [B, m]
         v = rho_flat.unsqueeze(0) * torch.sin(theta_prime)  # [B, m]
         sort_key = u * 1e6 + v
@@ -130,11 +138,12 @@ class FAA(nn.Module):
         else:
             return rot_inv_mag, theta_e
 
+
 @ROTATED_HEADS.register_module()
 class FAAHead(RotatedShared2FCBBoxHead):
-    """支持 le90 角度编码 + Ere 降维 + 角度对齐损失"""
+    """支持 le90 角度编码 + Ere 降维 + 角度对齐损失."""
 
-    def __init__(self, *args,  **kwargs):
+    def __init__(self, *args, **kwargs):
         super(FAAHead, self).__init__(*args, **kwargs)
 
         # FAA 模块
@@ -145,16 +154,20 @@ class FAAHead(RotatedShared2FCBBoxHead):
 
         # 修改输入维度：原始空间特征 256*49 + FAM 特征 16 * self.m
         old_in_features = self.in_channels * self.roi_feat_area
-        new_in_features = self.in_channels * self.roi_feat_area + self.in_channels * self.roi_feat_area
+        self.in_channels * self.roi_feat_area + self.in_channels * self.roi_feat_area
 
         # 重建 shared_fcs
         num_shared_fcs = len(self.shared_fcs)
         self.shared_fcs = nn.ModuleList()
         for i in range(num_shared_fcs):
             if i == 0:
-                self.shared_fcs.append(nn.Linear(old_in_features, self.fc_out_channels + self.in_channels))
+                self.shared_fcs.append(
+                    nn.Linear(old_in_features,
+                              self.fc_out_channels + self.in_channels))
             else:
-                self.shared_fcs.append(nn.Linear(self.fc_out_channels + self.in_channels, self.fc_out_channels))
+                self.shared_fcs.append(
+                    nn.Linear(self.fc_out_channels + self.in_channels,
+                              self.fc_out_channels))
 
         for m in self.shared_fcs:
             if isinstance(m, nn.Linear):
@@ -196,6 +209,5 @@ class FAAHead(RotatedShared2FCBBoxHead):
 
         cls_score = self.fc_cls(x) if self.with_cls else None
         bbox_pred = self.fc_reg(x) if self.with_reg else None
-
 
         return cls_score, bbox_pred

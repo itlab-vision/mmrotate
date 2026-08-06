@@ -86,7 +86,9 @@ class RotatedAnchorHead(BaseDenseHead):
             raise ValueError(f'num_classes={num_classes} is too small')
         self.reg_decoded_bbox = reg_decoded_bbox
         if not reg_decoded_bbox and gaucho_encoding:
-            raise ValueError(f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled')
+            raise ValueError(
+                f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled'
+            )
         self.gaucho_encoding = gaucho_encoding
         self.assign_by_circumhbbox = assign_by_circumhbbox
         self.bbox_coder = build_bbox_coder(bbox_coder)
@@ -439,7 +441,8 @@ class RotatedAnchorHead(BaseDenseHead):
         if self.reg_decoded_bbox:
             anchors = anchors.reshape(-1, 5)
             if self.gaucho_encoding:
-                bbox_pred = self.bbox_coder.decode(anchors, bbox_pred, to_obb=False)
+                bbox_pred = self.bbox_coder.decode(
+                    anchors, bbox_pred, to_obb=False)
             else:
                 bbox_pred = self.bbox_coder.decode(anchors, bbox_pred)
 

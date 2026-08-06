@@ -1,23 +1,21 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import math
 import mmcv
 import numpy as np
-from mmrotate.core import bbox
 import torch
 from mmdet.core.bbox.coder.base_bbox_coder import BaseBBoxCoder
-from mmrotate.core.bbox.transforms import hbb2obb
 
+from mmrotate.core.bbox.transforms import hbb2obb
 from ..builder import ROTATED_BBOX_CODERS
 from ..transforms import norm_angle
 
 
 @ROTATED_BBOX_CODERS.register_module()
 class GauchoAnchorOBBDecoder(BaseBBoxCoder):
-    """
-    Gaussian-Cholesky Oriented Bounding Box coder. 
-    Decodes gaussian anchor deltas (dx, dy, da, db, dc) into (mux, muy, a, b, c) gaussian bounding boxes
-    and optionally further into (x, y, w, h, theta) oriented bounding boxes
+    """Gaussian-Cholesky Oriented Bounding Box coder.
 
+    Decodes gaussian anchor deltas (dx, dy, da, db, dc) into (mux, muy, a, b,
+    c) gaussian bounding boxes and optionally further into (x, y, w, h, theta)
+    oriented bounding boxes
     """
 
     def __init__(self,
@@ -57,10 +55,10 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
             torch.Tensor: Box transformation deltas
         """
         assert bboxes.size(0) == gt_bboxes.size(0)
-        
+
         if bboxes.size(-1) == 4:
             bboxes = hbb2obb(bboxes, self.angle_range)
-        
+
         assert bboxes.size(-1) == 5
         assert gt_bboxes.size(-1) == 5
         if self.angle_range in ['oc', 'le135', 'le90']:
@@ -91,14 +89,14 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
                and the length of max_shape should also be B.
             wh_ratio_clip (float, optional): The allowed ratio between
                 width and height.
-            to_obb (bool, optional): If True, further decode gaussian bounding boxes 
+            to_obb (bool, optional): If True, further decode gaussian bounding boxes
                 into oriented bounding boxes. Defaults to True.
 
         Returns:
             torch.Tensor: Decoded boxes.
         """
         assert pred_bboxes.size(0) == bboxes.size(0)
-        
+
         if bboxes.size(-1) == 4:
             bboxes = hbb2obb(bboxes, self.angle_range)
 
@@ -108,7 +106,9 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
             return delta2bbox(bboxes, pred_bboxes, self.means, self.stds,
                               max_shape, wh_ratio_clip, self.add_ctr_clamp,
                               self.ctr_clamp, self.angle_range,
-                              self.norm_factor, self.edge_swap, self.proj_xy, to_obb, self.horizontal)
+                              self.norm_factor, self.edge_swap, self.proj_xy,
+                              to_obb, self.horizontal)
+
 
 @mmcv.jit(coderize=True)
 def bbox2delta(proposals,
@@ -119,9 +119,9 @@ def bbox2delta(proposals,
                norm_factor=None,
                edge_swap=False,
                proj_xy=False):
-    """
-    Does not properly compute deltas for cholesky elements. This is intended as a placeholder fix for KFIoU integration,
-    specifically for the x and y deltas
+    """Does not properly compute deltas for cholesky elements. This is intended
+    as a placeholder fix for KFIoU integration, specifically for the x and y
+    deltas.
 
     Args:
         proposals (torch.Tensor): Boxes to be transformed, shape (N, ..., 5)
@@ -181,21 +181,24 @@ def bbox2delta(proposals,
     deltas = deltas.sub_(means).div_(stds)
     return deltas
 
+
 @mmcv.jit(coderize=True)
-def delta2bbox(rois,
-               deltas,
-               means=(0., 0., 0., 0., 0.),
-               stds=(1., 1., 1., 1., 1.),
-               max_shape=None,
-               wh_ratio_clip=16 / 1000,
-               add_ctr_clamp=False,
-               ctr_clamp=32,
-               angle_range='oc',
-               norm_factor=None,
-               edge_swap=False,
-               proj_xy=False,
-               to_obb=True,
-               horizontal=False,):
+def delta2bbox(
+    rois,
+    deltas,
+    means=(0., 0., 0., 0., 0.),
+    stds=(1., 1., 1., 1., 1.),
+    max_shape=None,
+    wh_ratio_clip=16 / 1000,
+    add_ctr_clamp=False,
+    ctr_clamp=32,
+    angle_range='oc',
+    norm_factor=None,
+    edge_swap=False,
+    proj_xy=False,
+    to_obb=True,
+    horizontal=False,
+):
     """Apply deltas to shift/scale base boxes. Typically the rois are anchor
     or proposed bounding boxes and the deltas are network outputs used to
     shift/scale those boxes. This is the inverse function of
@@ -229,7 +232,7 @@ def delta2bbox(rois,
             Defaults to False.
         proj_xy (bool, optional): Whether project x and y according to angle.
             Defaults to False.
-        to_obb (bool, optional): If True, further decode gaussian bounding boxes 
+        to_obb (bool, optional): If True, further decode gaussian bounding boxes
             into oriented bounding boxes. Defaults to True.
         wh_scale_factor (float): Scalar value of width and height in OBB -> Gaussian conversion
         min_scaled_ar (float): Minimum aspect ratio for reescaled anchors (gamma regression)
@@ -258,8 +261,8 @@ def delta2bbox(rois,
     pa = rois[:, 4].unsqueeze(1).expand_as(dgamma)
     dx_width = pw * dx
     dy_height = ph * dy
-    max_ratio = np.abs(np.log(wh_ratio_clip))
-    
+    np.abs(np.log(wh_ratio_clip))
+
     # if add_ctr_clamp:
     #     raise NotImplemented
     # else:
@@ -275,25 +278,28 @@ def delta2bbox(rois,
 
     # This assumes that horizontal anchors can have w < h (oc encoding)
     if horizontal:
-        galpha      = sqrt_eig_w * dalpha.exp()
-        gbeta       = sqrt_eig_h * dbeta.exp()
-        ggamma      = torch.max(torch.min(sqrt_eig_w, sqrt_eig_h), torch.abs(sqrt_eig_w - sqrt_eig_h)) * dgamma
+        galpha = sqrt_eig_w * dalpha.exp()
+        gbeta = sqrt_eig_h * dbeta.exp()
+        ggamma = torch.max(
+            torch.min(sqrt_eig_w, sqrt_eig_h),
+            torch.abs(sqrt_eig_w - sqrt_eig_h)) * dgamma
     # Input anchor is oriented
     else:
-        p_cova  = torch.cos(pa).square() * eig_w + torch.sin(pa).square() * eig_h
+        p_cova = torch.cos(pa).square() * eig_w + torch.sin(
+            pa).square() * eig_h
         #p_covb  = torch.cos(pa).square() * eig_h + torch.sin(pa).square() * eig_w
-        p_covc  = 0.5 * torch.sin(2*pa) * (eig_w - eig_h)
-        palpha  = torch.sqrt(p_cova)
-        pgamma  = p_covc / palpha
-        pbeta  = (sqrt_eig_h * sqrt_eig_w).clamp(1.0) / palpha
+        p_covc = 0.5 * torch.sin(2 * pa) * (eig_w - eig_h)
+        palpha = torch.sqrt(p_cova)
+        pgamma = p_covc / palpha
+        pbeta = (sqrt_eig_h * sqrt_eig_w).clamp(1.0) / palpha
         #pbeta   = torch.sqrt((p_covb + 5e-2) - (p_covc.square() / p_cova))
 
         alpha_scale = dalpha.exp()
-        beta_scale  = dbeta.exp()
-        gamma_add   = sqrt_eig_h.clamp(1.0) * dgamma
-        galpha      = palpha * alpha_scale
-        gbeta       = pbeta  * beta_scale
-        ggamma      = pgamma + gamma_add
+        beta_scale = dbeta.exp()
+        gamma_add = sqrt_eig_h.clamp(1.0) * dgamma
+        galpha = palpha * alpha_scale
+        gbeta = pbeta * beta_scale
+        ggamma = pgamma + gamma_add
 
     # Use network energy to shift the center of each roi
     if proj_xy:
@@ -308,8 +314,8 @@ def delta2bbox(rois,
         gy = gy.clamp(min=0, max=max_shape[0] - 1)
 
     # Convert covariance values into box width, height and angle
-    ga = galpha **2
-    gb = gbeta **2 + ggamma **2
+    ga = galpha**2
+    gb = gbeta**2 + ggamma**2
     gc = galpha * ggamma
 
     if to_obb:
@@ -321,8 +327,10 @@ def delta2bbox(rois,
         gt = torch.atan(gc / (eig2 - gb))
         gt = norm_angle(gt, angle_range)
 
-        decoded_bbox = torch.stack([gx, gy, gw, gh, gt],dim=-1).view(deltas.size())
+        decoded_bbox = torch.stack([gx, gy, gw, gh, gt],
+                                   dim=-1).view(deltas.size())
     else:
-        decoded_bbox = torch.stack([gx, gy, ga, gb, gc],dim=-1).view(deltas.size())
+        decoded_bbox = torch.stack([gx, gy, ga, gb, gc],
+                                   dim=-1).view(deltas.size())
 
     return decoded_bbox

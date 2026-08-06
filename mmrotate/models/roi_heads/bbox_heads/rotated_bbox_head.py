@@ -74,7 +74,9 @@ class RotatedBBoxHead(BaseModule):
         self.reg_class_agnostic = reg_class_agnostic
         self.reg_decoded_bbox = reg_decoded_bbox
         if not reg_decoded_bbox and gaucho_encoding:
-            raise ValueError(f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled')
+            raise ValueError(
+                f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled'
+            )
         self.gaucho_encoding = gaucho_encoding
         self.reg_predictor_cfg = reg_predictor_cfg
         self.cls_predictor_cfg = cls_predictor_cfg
@@ -348,9 +350,11 @@ class RotatedBBoxHead(BaseModule):
                     # the decoded bounding boxes, it decodes the
                     # already encoded coordinates to absolute format.
                     if self.gaucho_encoding:
-                        bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred, to_obb=False)
+                        bbox_pred = self.bbox_coder.decode(
+                            rois[:, 1:], bbox_pred, to_obb=False)
                     else:
-                        bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred)
+                        bbox_pred = self.bbox_coder.decode(
+                            rois[:, 1:], bbox_pred)
                 if self.reg_class_agnostic:
                     pos_bbox_pred = bbox_pred.view(
                         bbox_pred.size(0), 5)[pos_inds.type(torch.bool)]
@@ -363,17 +367,16 @@ class RotatedBBoxHead(BaseModule):
                     loss_kwargs = dict(
                         weight=bbox_weights[pos_inds.type(torch.bool)],
                         avg_factor=bbox_targets.size(0),
-                        reduction_override=reduction_override
-                    )
+                        reduction_override=reduction_override)
 
                     # Inject decoded bounding boxes only if the specific loss module requires them
                     if self._loss_takes_decode:
                         loss_kwargs['pred_decode'] = pos_bbox_pred
-                        loss_kwargs['targets_decode'] = bbox_targets[pos_inds.type(torch.bool)]
+                        loss_kwargs['targets_decode'] = bbox_targets[
+                            pos_inds.type(torch.bool)]
 
                     losses['loss_bbox'] = self.loss_bbox(
-                        pos_bbox_pred,
-                        bbox_targets[pos_inds.type(torch.bool)],
+                        pos_bbox_pred, bbox_targets[pos_inds.type(torch.bool)],
                         **loss_kwargs)
                 else:
                     losses['loss_bbox'] = self.loss_bbox(

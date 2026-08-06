@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from math import pi, sqrt
 from multiprocessing import get_context
 
 import numpy as np
@@ -6,39 +7,36 @@ import torch
 from mmcv.ops import box_iou_rotated
 from mmcv.utils import print_log
 from mmdet.core import average_precision
-from terminaltables import AsciiTable
-
-from math import sqrt, pi
+from shapely import affinity
 #matplotlib inline
 from shapely.geometry.point import Point
-from shapely import affinity
-
-
+from terminaltables import AsciiTable
 
 
 def convert_obb_to_gbb_egbb(obb):
     x, y, w, h, rad_angle = obb
     #print(angle)
-    aa2 = w ** 2/12
-    bb2 = h ** 2/12
+    aa2 = w**2 / 12
+    bb2 = h**2 / 12
     # Gets diagonal covariance
-    Sig1 = np.array( [ [aa2, 0], [0, bb2] ])
+    Sig1 = np.array([[aa2, 0], [0, bb2]])
     # Gets orientation in radians
-    angle = rad_angle*180/pi
+    angle = rad_angle * 180 / pi
     # Rotation matrix
-    R1 = np.array([ [np.cos(rad_angle), -np.sin(rad_angle)], [np.sin(rad_angle), np.cos(rad_angle)]  ])
+    R1 = np.array([[np.cos(rad_angle), -np.sin(rad_angle)],
+                   [np.sin(rad_angle), np.cos(rad_angle)]])
     # Full covariance matrix
     Sig = R1 @ Sig1 @ R1.T
     # Final GBB encoded as [xcenter, ycenter, cov_a, cov_b, cov_c]
-    gbb = np.array([x, y, Sig[0,0], Sig[1,1], Sig[0,1] ])
+    gbb = np.array([x, y, Sig[0, 0], Sig[1, 1], Sig[0, 1]])
     #
     # Gets EGBB coordinates
     #
     # Semi-axes
-    aa = w/sqrt(pi)
-    bb = h/sqrt(pi)
+    aa = w / sqrt(pi)
+    bb = h / sqrt(pi)
     # Gets EGBB coordinates [xcenter, ycenter, semi-axis1, semi-axes2, angle]
-    egbb = np.array([x, y, aa, bb, angle ])
+    egbb = np.array([x, y, aa, bb, angle])
     return gbb, egbb
 
 
@@ -47,7 +45,7 @@ def probiou_mapping(x):
     #  Applies non-linear mapping to better relate ProbIoU with the corresponing EGBB-based IoU
     #
     a = 0.259743420366354
-    return a*x + (1 - a)*x**2
+    return a * x + (1 - a) * x**2
 
 
 def probiou(gbb1, gbb2):
@@ -59,14 +57,17 @@ def probiou(gbb1, gbb2):
     mu1 = gbb1[:2]
     mu2 = gbb2[:2]
     # covariance are the next three
-    C1 = np.array( [  [gbb1[2], gbb1[4]], [gbb1[4], gbb1[3]]  ]  )
-    C2 = np.array( [  [gbb2[2], gbb2[4]], [gbb2[4], gbb2[3]]  ]  )
+    C1 = np.array([[gbb1[2], gbb1[4]], [gbb1[4], gbb1[3]]])
+    C2 = np.array([[gbb2[2], gbb2[4]], [gbb2[4], gbb2[3]]])
     dmu = mu1 - mu2
-    C = 0.5*(C1 + C2)
+    C = 0.5 * (C1 + C2)
     iC = np.linalg.inv(C)
-    BB1 = np.dot(dmu, np.dot(iC, dmu).T)/8
-    ratio = max(1e-16, abs(np.linalg.det(C)) / (1e-16 + np.sqrt(abs(np.linalg.det(C1)*np.linalg.det(C2)))))
-    BB2 = 0.5*np.log( ratio )
+    BB1 = np.dot(dmu, np.dot(iC, dmu).T) / 8
+    ratio = max(
+        1e-16,
+        abs(np.linalg.det(C)) /
+        (1e-16 + np.sqrt(abs(np.linalg.det(C1) * np.linalg.det(C2)))))
+    BB2 = 0.5 * np.log(ratio)
     DBB = BB1 + BB2
     # Bhatacharyya coefficient
     BC = np.exp(-DBB)
@@ -82,20 +83,22 @@ def create_ellipse(center, lengths, angle=0):
     ellr = affinity.rotate(ell, angle)
     return ellr
 
+
 def iou_ellipse(egbb1, egbb2):
     #
     #  Computes the IoU between two EGBBs
     #
     # Creates ellipses (multiplies the semi-axes by a large value to reduce approximation errors)
     factor = 1
-    el1 = create_ellipse(egbb1[0:2], factor*egbb1[2:4], egbb1[4])
-    el2 = create_ellipse(egbb2[0:2], factor*egbb2[2:4], egbb2[4])
+    el1 = create_ellipse(egbb1[0:2], factor * egbb1[2:4], egbb1[4])
+    el2 = create_ellipse(egbb2[0:2], factor * egbb2[2:4], egbb2[4])
     #Computes IoU
     inter = el1.buffer(0).intersection(el2).buffer(0).area
     a1 = el1.area
     a2 = el2.area
     union = a1 + a2 - inter
-    iou = inter / (max(union, 1e-16)) # avoids any possible rectangle with no area
+    iou = inter / (max(union, 1e-16)
+                   )  # avoids any possible rectangle with no area
     return iou
 
 
@@ -106,16 +109,16 @@ def probiou_calculate(pred, GT, mode):
     pred_gbb, pred_egbb = convert_obb_to_gbb_egbb(pred)
 
     if mode == 'egbb':
-      return iou_ellipse(GT_egbb, pred_egbb)
+        return iou_ellipse(GT_egbb, pred_egbb)
     if mode == 'gbb':
-      return probiou(GT_gbb, pred_gbb)
+        return probiou(GT_gbb, pred_gbb)
 
 
 def tpfp_default(det_bboxes,
                  gt_bboxes,
                  gt_bboxes_ignore=None,
                  iou_thr=0.5,
-                 area_ranges=None, 
+                 area_ranges=None,
                  opt='iou'):
     """Check if detected bboxes are true positive or false positive.
 
@@ -160,24 +163,26 @@ def tpfp_default(det_bboxes,
             raise NotImplementedError
         return tp, fp
 
-
-    det_bboxes = det_bboxes[:,0:5]
+    det_bboxes = det_bboxes[:, 0:5]
 
     if opt == 'iou':
-        ious = box_iou_rotated( torch.from_numpy(det_bboxes).float(),torch.from_numpy(gt_bboxes).float()).numpy()
+        ious = box_iou_rotated(
+            torch.from_numpy(det_bboxes).float(),
+            torch.from_numpy(gt_bboxes).float()).numpy()
     elif opt == 'gbb':
         n, m = det_bboxes.shape[0], gt_bboxes.shape[0]
-        ious = np.zeros((n,m))
+        ious = np.zeros((n, m))
         for i_x in range(n):
             for j_y in range(m):
-                ious[i_x, j_y] = probiou_calculate(det_bboxes[i_x, :], gt_bboxes[j_y, :], opt)
+                ious[i_x, j_y] = probiou_calculate(det_bboxes[i_x, :],
+                                                   gt_bboxes[j_y, :], opt)
     elif opt == 'egbb':
         n, m = det_bboxes.shape[0], gt_bboxes.shape[0]
         ious = np.zeros((n, m))
         for i_x in range(n):
             for j_y in range(m):
-                ious[i_x, j_y] = probiou_calculate(det_bboxes[i_x, :], gt_bboxes[j_y, :], opt)
-
+                ious[i_x, j_y] = probiou_calculate(det_bboxes[i_x, :],
+                                                   gt_bboxes[j_y, :], opt)
 
     # for each det, the max iou with all gts
     ious_max = ious.max(axis=1)
@@ -251,7 +256,6 @@ def eval_rbbox_map(det_results,
                    logger=None,
                    nproc=4,
                    opt='iou'):
-
     """Evaluate mAP of a rotated dataset.
 
     Args:
@@ -287,7 +291,9 @@ def eval_rbbox_map(det_results,
 
     num_imgs = len(det_results)
     num_scales = len(scale_ranges) if scale_ranges is not None else 1
-    num_classes = len(det_results[0])  # positive class num
+    num_classes = len(
+        det_results[0]
+    )  # positive class num, there we count actual classes !!!
     area_ranges = ([(rg[0]**2, rg[1]**2) for rg in scale_ranges]
                    if scale_ranges is not None else None)
 
@@ -304,8 +310,8 @@ def eval_rbbox_map(det_results,
             tpfp_default,
             zip(cls_dets, cls_gts, cls_gts_ignore,
                 [iou_thr for _ in range(num_imgs)],
-                [area_ranges for _ in range(num_imgs)], [opt]*len(range(num_imgs)) ))
-
+                [area_ranges
+                 for _ in range(num_imgs)], [opt] * len(range(num_imgs))))
 
         tp, fp = tuple(zip(*tpfp))
         # calculate gt number of each scale

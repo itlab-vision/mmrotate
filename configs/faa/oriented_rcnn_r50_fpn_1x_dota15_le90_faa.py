@@ -4,7 +4,7 @@ _base_ = [
 ]
 
 angle_version = 'le90'
-find_unused_parameters=True
+find_unused_parameters = True
 model = dict(
     type='OrientedRCNN',
     backbone=dict(
@@ -13,7 +13,8 @@ model = dict(
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=True),  # if more than one gpu, use SyncBN instead of BN
+        norm_cfg=dict(type='BN', requires_grad=True
+                      ),  # if more than one gpu, use SyncBN instead of BN
         norm_eval=True,
         style='pytorch',
         init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
@@ -22,7 +23,8 @@ model = dict(
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         num_outs=5,
-        fusion_modes=['add', 'add', 'faa'],  # P5→P4: add, P4→P3: add, P3→P2: faa
+        fusion_modes=['add', 'add',
+                      'faa'],  # P5→P4: add, P4→P3: add, P3→P2: faa
         start_level=0,
         end_level=-1,
         add_extra_convs='on_input',
@@ -162,6 +164,6 @@ data = dict(
 optimizer = dict(
     _delete_=True,
     type='AdamW',
-    lr=0.0001, #/8*gpu_number,
+    lr=0.0001,  #/8*gpu_number,
     betas=(0.9, 0.999),
     weight_decay=0.05)

@@ -4,7 +4,7 @@ _base_ = [
 ]
 
 angle_version = 'le90'
-find_unused_parameters=True
+find_unused_parameters = True
 # gpu_number = 8
 # fp16 = dict(loss_scale='dynamic')
 model = dict(
@@ -14,9 +14,12 @@ model = dict(
         embed_dims=[64, 128, 320, 512],
         drop_rate=0.1,
         drop_path_rate=0.1,
-        depths=[2,2,4,2],
-        init_cfg=dict(type='Pretrained', checkpoint="data/pretrained/lsk_s_backbone.pth.tar"),
-        norm_cfg=dict(type='BN', requires_grad=True)), # if more than one gpu, use SyncBN instead of BN
+        depths=[2, 2, 4, 2],
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='data/pretrained/lsk_s_backbone.pth.tar'),
+        norm_cfg=dict(type='BN', requires_grad=True)
+    ),  # if more than one gpu, use SyncBN instead of BN
     neck=dict(
         type='FPN',
         in_channels=[64, 128, 320, 512],
@@ -159,6 +162,6 @@ data = dict(
 optimizer = dict(
     _delete_=True,
     type='AdamW',
-    lr=0.0001, #/8*gpu_number,
+    lr=0.0001,  #/8*gpu_number,
     betas=(0.9, 0.999),
     weight_decay=0.05)

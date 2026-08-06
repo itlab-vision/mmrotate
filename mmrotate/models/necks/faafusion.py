@@ -1,17 +1,19 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 # mmrotate/models/necks/faafusion.py
-from ..builder import ROTATED_NECKS
 import math
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmdet.models.necks.fpn import FPN
 from mmcv.runner import auto_fp16
-from typing import List
+from mmdet.models.necks.fpn import FPN
+
+from ..builder import ROTATED_NECKS
 
 
 class FAAFusion(nn.Module):
-    """
-    Lightweight FAMFusion with channel reduction and fold normalization.
+    """Lightweight FAMFusion with channel reduction and fold normalization.
 
     Key improvements:
       - Project full C-channel input to c_mid channels once (not per-channel!)
@@ -33,11 +35,11 @@ class FAAFusion(nn.Module):
     """
 
     def __init__(
-            self,
-            m: int = 7,
-            c_mid: int = 16,
-            eps: float = 1e-8,
-            layer_scale_init_value: float = 1e-5,
+        self,
+        m: int = 7,
+        c_mid: int = 16,
+        eps: float = 1e-8,
+        layer_scale_init_value: float = 1e-5,
     ):
         super().__init__()
         self.m = m
@@ -47,13 +49,17 @@ class FAAFusion(nn.Module):
         # Learnable LayerScale: per-channel scalar, initialized small
         self.layer_scale = nn.Parameter(
             torch.full((1, 1, 1, 1), layer_scale_init_value),
-            requires_grad=True
-        )
+            requires_grad=True)
 
         # CORRECT: Project full C channels → c_mid (once per feature map)
-        self.proj_low = nn.Conv2d(in_channels=256, out_channels=c_mid, kernel_size=1, bias=False)  # assuming C=256
-        self.proj_high = nn.Conv2d(in_channels=256, out_channels=c_mid, kernel_size=1, bias=False)
-        self.recon = nn.Conv2d(in_channels=c_mid, out_channels=256, kernel_size=1, bias=False)  # reconstruct to C
+        self.proj_low = nn.Conv2d(
+            in_channels=256, out_channels=c_mid, kernel_size=1,
+            bias=False)  # assuming C=256
+        self.proj_high = nn.Conv2d(
+            in_channels=256, out_channels=c_mid, kernel_size=1, bias=False)
+        self.recon = nn.Conv2d(
+            in_channels=c_mid, out_channels=256, kernel_size=1,
+            bias=False)  # reconstruct to C
 
         self._init_freq_grids(m)
 
@@ -62,7 +68,7 @@ class FAAFusion(nn.Module):
         w_freq = torch.fft.fftfreq(m, d=1.0) * m
         h_grid, w_grid = torch.meshgrid(h_freq, w_freq)  # [m, m]
 
-        rho = torch.sqrt(h_grid ** 2 + w_grid ** 2)
+        rho = torch.sqrt(h_grid**2 + w_grid**2)
         theta = torch.atan2(h_grid, w_grid)
         theta = (theta + 2 * math.pi) % (2 * math.pi)
 
@@ -73,6 +79,7 @@ class FAAFusion(nn.Module):
 
     def _estimate_main_direction(self, x_local: torch.Tensor) -> torch.Tensor:
         """Estimate dominant orientation from magnitude spectrum.
+
         x_local: [Bn, 1, m, m]
         Returns: [Bn]
         """
@@ -92,7 +99,8 @@ class FAAFusion(nn.Module):
         theta_e = self.valid_thetas.to(device)[max_idx]
         return theta_e
 
-    def _rotate_spatial_patch(self, patch: torch.Tensor, theta: torch.Tensor) -> torch.Tensor:
+    def _rotate_spatial_patch(self, patch: torch.Tensor,
+                              theta: torch.Tensor) -> torch.Tensor:
         K, _, m, _ = patch.shape
         device = patch.device
 
@@ -105,14 +113,22 @@ class FAAFusion(nn.Module):
         rot_mat[:, 0, 1] = -sin_t.squeeze()
         rot_mat[:, 1, 0] = sin_t.squeeze()
         rot_mat[:, 1, 1] = cos_t.squeeze()
-        rot_mat[:, 0, 2] = center - cos_t.squeeze() * center + sin_t.squeeze() * center
-        rot_mat[:, 1, 2] = center - sin_t.squeeze() * center - cos_t.squeeze() * center
+        rot_mat[:, 0, 2] = center - cos_t.squeeze() * center + sin_t.squeeze(
+        ) * center
+        rot_mat[:, 1, 2] = center - sin_t.squeeze() * center - cos_t.squeeze(
+        ) * center
 
         grid = F.affine_grid(rot_mat, patch.size(), align_corners=False)
-        rotated = F.grid_sample(patch, grid, mode='bilinear', padding_mode='zeros', align_corners=False)
+        rotated = F.grid_sample(
+            patch,
+            grid,
+            mode='bilinear',
+            padding_mode='zeros',
+            align_corners=False)
         return rotated
 
-    def forward(self, x_high: torch.Tensor, x_low: torch.Tensor) -> torch.Tensor:
+    def forward(self, x_high: torch.Tensor,
+                x_low: torch.Tensor) -> torch.Tensor:
         B, C, H_l, W_l = x_low.shape
         # assert C == self.in_channels, f"Expected {self.in_channels} channels, got {C}"
         _, _, H_h, W_h = x_high.shape
@@ -120,7 +136,8 @@ class FAAFusion(nn.Module):
 
         # Step 1: Upsample x_high to low resolution
         if (H_h, W_h) != (H_l, W_l):
-            x_high_up = F.interpolate(x_high, size=(H_l, W_l), mode='bilinear', align_corners=False)
+            x_high_up = F.interpolate(
+                x_high, size=(H_l, W_l), mode='bilinear', align_corners=False)
         else:
             x_high_up = x_high
 
@@ -131,7 +148,8 @@ class FAAFusion(nn.Module):
         #pad = self.m // 2
         pad = 0
         #N = H_l * W_l  # number of spatial positions
-        N = (H_l - self.m + 1) * (W_l - self.m + 1)  # number of spatial positions
+        N = (H_l - self.m + 1) * (W_l - self.m + 1
+                                  )  # number of spatial positions
 
         # We'll accumulate rotated high features in c_mid space
         xh_aligned_cmid = torch.zeros_like(xh_proj)  # [B, c_mid, H_l, W_l]
@@ -143,12 +161,16 @@ class FAAFusion(nn.Module):
             xh_c = xh_proj[:, c:c + 1]  # [B, 1, H_l, W_l]
 
             # Unfold into patches
-            xl_unfold = F.unfold(xl_c, kernel_size=self.m, stride=1, padding=pad)  # [B, m*m, N]
-            xh_unfold = F.unfold(xh_c, kernel_size=self.m, stride=1, padding=pad)  # [B, m*m, N]
+            xl_unfold = F.unfold(
+                xl_c, kernel_size=self.m, stride=1, padding=pad)  # [B, m*m, N]
+            xh_unfold = F.unfold(
+                xh_c, kernel_size=self.m, stride=1, padding=pad)  # [B, m*m, N]
 
             # Reshape to [B*N, 1, m, m]
-            xl_patches = xl_unfold.transpose(1, 2).reshape(B * N, 1, self.m, self.m)
-            xh_patches = xh_unfold.transpose(1, 2).reshape(B * N, 1, self.m, self.m)
+            xl_patches = xl_unfold.transpose(1, 2).reshape(
+                B * N, 1, self.m, self.m)
+            xh_patches = xh_unfold.transpose(1, 2).reshape(
+                B * N, 1, self.m, self.m)
 
             # Estimate directions from projected features (now in c_mid space)
             theta_low = self._estimate_main_direction(xl_patches)  # [B*N]
@@ -159,22 +181,29 @@ class FAAFusion(nn.Module):
             theta_ = theta_low_norm - theta_high_norm  # [B*N]
 
             # Rotate high patch to align with low
-            xh_rotated = self._rotate_spatial_patch(xh_patches, theta_)  # [B*N, 1, m, m]
+            xh_rotated = self._rotate_spatial_patch(xh_patches,
+                                                    theta_)  # [B*N, 1, m, m]
 
             # Fold back to feature map
-            xh_rotated_flat = xh_rotated.reshape(B, N, -1).transpose(1, 2)  # [B, m*m, N]
+            xh_rotated_flat = xh_rotated.reshape(B, N, -1).transpose(
+                1, 2)  # [B, m*m, N]
             xh_aligned_map = F.fold(
                 xh_rotated_flat,
                 output_size=(H_l, W_l),
                 kernel_size=self.m,
                 stride=1,
-                padding=pad
-            )  # [B, 1, H_l, W_l]
+                padding=pad)  # [B, 1, H_l, W_l]
 
             # Normalize (optional but recommended)
             ones = torch.ones(1, 1, H_l, W_l, device=device)
-            ones_unfold = F.unfold(ones, kernel_size=self.m, stride=1, padding=pad)
-            ones_fold = F.fold(ones_unfold, output_size=(H_l, W_l), kernel_size=self.m, stride=1, padding=pad)
+            ones_unfold = F.unfold(
+                ones, kernel_size=self.m, stride=1, padding=pad)
+            ones_fold = F.fold(
+                ones_unfold,
+                output_size=(H_l, W_l),
+                kernel_size=self.m,
+                stride=1,
+                padding=pad)
             xh_aligned_map = xh_aligned_map / (ones_fold + self.eps)
             # Store in c_mid-aligned tensor
             xh_aligned_cmid[:, c:c + 1] = xh_aligned_map
@@ -220,7 +249,8 @@ class FAAFusionFPN(FPN):
                  norm_cfg=None,
                  act_cfg=None,
                  upsample_cfg=dict(mode='nearest'),
-                 init_cfg=dict(type='Xavier', layer='Conv2d', distribution='uniform'),
+                 init_cfg=dict(
+                     type='Xavier', layer='Conv2d', distribution='uniform'),
                  fam_cfg=dict(m=7, c_mid=64)):
         # Call parent FPN __init__
         super(FAAFusionFPN, self).__init__(
@@ -242,10 +272,10 @@ class FAAFusionFPN(FPN):
         backbone_levels = self.backbone_end_level - self.start_level
         expected_fusion_steps = backbone_levels - 1  # e.g., 4 levels → 3 fusion steps
         assert len(fusion_modes) == expected_fusion_steps, \
-            f"fusion_modes length ({len(fusion_modes)}) must be {expected_fusion_steps} (backbone_levels - 1)"
+            f'fusion_modes length ({len(fusion_modes)}) must be {expected_fusion_steps} (backbone_levels - 1)'
 
         for mode in fusion_modes:
-            assert mode in ['add', 'faa'], f"Invalid fusion mode: {mode}"
+            assert mode in ['add', 'faa'], f'Invalid fusion mode: {mode}'
 
         self.fusion_modes = fusion_modes
 
@@ -281,13 +311,15 @@ class FAAFusionFPN(FPN):
                     upsampled = F.interpolate(laterals[i], **self.upsample_cfg)
                 else:
                     prev_shape = laterals[i - 1].shape[2:]
-                    upsampled = F.interpolate(laterals[i], size=prev_shape, **self.upsample_cfg)
+                    upsampled = F.interpolate(
+                        laterals[i], size=prev_shape, **self.upsample_cfg)
                 laterals[i - 1] = laterals[i - 1] + upsampled
             elif mode == 'faa':
-                fused_low = self.fam_modules[fusion_idx](laterals[i], laterals[i - 1])
+                fused_low = self.fam_modules[fusion_idx](laterals[i],
+                                                         laterals[i - 1])
                 laterals[i - 1] = fused_low
             else:
-                raise ValueError(f"Unknown fusion mode: {mode}")
+                raise ValueError(f'Unknown fusion mode: {mode}')
 
         # Step 3: Build outputs (same as FPN)
         outs = [

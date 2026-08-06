@@ -34,8 +34,9 @@ def xy_wh_r_2_xy_sigma(xywhr):
 
     return xy, sigma
 
+
 def gaussian_prediction_2_xy_sigma(xyabc):
-    """Extract xy and sigma elements from a gaussian prediction
+    """Extract xy and sigma elements from a gaussian prediction.
 
     Args:
         xyabc (torch.Tensor): gaussian bboxes with shape (N, 5).
@@ -47,10 +48,11 @@ def gaussian_prediction_2_xy_sigma(xyabc):
             with shape (N, 2, 2).
     """
     xy = xyabc[..., :2]
-    sigma = torch.stack((xyabc[..., 2], xyabc[..., 4], 
-                         xyabc[..., 4], xyabc[..., 3]),
-                        dim=-1).reshape(xyabc.shape[:-1] + (2, 2))
+    sigma = torch.stack(
+        (xyabc[..., 2], xyabc[..., 4], xyabc[..., 4], xyabc[..., 3]),
+        dim=-1).reshape(xyabc.shape[:-1] + (2, 2))
     return xy, sigma
+
 
 def gwd_loss(pred, target, fun='sqrt', tau=2.0):
     """Gaussian Wasserstein distance loss.
@@ -167,6 +169,7 @@ def kld_loss(pred, target, fun='log1p', tau=1.0):
         kl_loss = 1 - 1 / (tau + torch.log1p(kl_dis))
     return kl_loss
 
+
 def probiou_loss(pred, target, fun='log1p', tau=1.0):
     """ProbIoU loss.
 
@@ -187,23 +190,24 @@ def probiou_loss(pred, target, fun='log1p', tau=1.0):
     # Refer to https://arxiv.org/abs/2106.06072
 
     xy_diffs = xy_p - xy_t
-    det_p = Sigma_p[:, 0, 0] * Sigma_p[:, 1, 1] - (Sigma_p[:, 0, 1] ** 2) 
-    det_t = Sigma_t[:, 0, 0] * Sigma_t[:, 1, 1] - (Sigma_t[:, 0, 1] ** 2)
+    det_p = Sigma_p[:, 0, 0] * Sigma_p[:, 1, 1] - (Sigma_p[:, 0, 1]**2)
+    det_t = Sigma_t[:, 0, 0] * Sigma_t[:, 1, 1] - (Sigma_t[:, 0, 1]**2)
 
     x = xy_diffs[:, 0]
     y = xy_diffs[:, 1]
     a = Sigma[:, 0, 0]
     b = Sigma[:, 1, 1]
     c = Sigma[:, 0, 1]
-    det = a*b - (c**2)
+    det = a * b - (c**2)
 
-    B1 = 0.125 * ((a * y**2) + (b * x**2) + 2*(-c * x * y)) / det
-    B2 = 0.5 * torch.log(det / (torch.sqrt((det_p * det_t) + 1e-7))) 
+    B1 = 0.125 * ((a * y**2) + (b * x**2) + 2 * (-c * x * y)) / det
+    B2 = 0.5 * torch.log(det / (torch.sqrt((det_p * det_t) + 1e-7)))
     Bd = B1 + B2
     Bc = torch.exp(-Bd)
     loss = torch.sqrt(1 - Bc.clamp(max=1.0))
 
     return loss
+
 
 @ROTATED_LOSSES.register_module()
 class GDLoss_v1(nn.Module):
@@ -222,7 +226,12 @@ class GDLoss_v1(nn.Module):
     Returns:
         loss (torch.Tensor)
     """
-    BAG_GD_LOSS = {'kld': kld_loss, 'bcd': bcd_loss, 'gwd': gwd_loss, 'probiou': probiou_loss}
+    BAG_GD_LOSS = {
+        'kld': kld_loss,
+        'bcd': bcd_loss,
+        'gwd': gwd_loss,
+        'probiou': probiou_loss
+    }
 
     def __init__(self,
                  loss_type,

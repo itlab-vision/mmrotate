@@ -1,5 +1,6 @@
 _base_ = [
-    '../../../_base_/datasets/dotav1.py', '../../../_base_/schedules/schedule_1x.py',
+    '../../../_base_/datasets/dotav1.py',
+    '../../../_base_/schedules/schedule_1x.py',
     '../../../_base_/default_runtime.py'
 ]
 
@@ -10,19 +11,16 @@ angle_version = 'le90'
 
 num_classes = 15
 
-use_gaucho=True
+use_gaucho = True
 
 coder = 'GauchoAnchorOBBDecoder'
 
-reg_decoded_bbox=True
+reg_decoded_bbox = True
 
 stds = (0.1, 0.1, 0.2, 0.2, 0.1)
 
-gaussian_loss =dict(
-    type='KFLoss',
-    fun='ln', 
-    gaussian_prediction=False,
-    loss_weight=1.0)
+gaussian_loss = dict(
+    type='KFLoss', fun='ln', gaussian_prediction=False, loss_weight=1.0)
 
 optimizer = dict(lr=0.005)
 

@@ -144,4 +144,3 @@ class R3Det(RotatedBaseDetector):
 
     def aug_test(self, imgs, img_metas, **kwargs):
         """Test function with test time augmentation."""
-        pass

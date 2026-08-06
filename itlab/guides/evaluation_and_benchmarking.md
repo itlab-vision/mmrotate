@@ -2,7 +2,7 @@
 
 This document describes how to download model weights, run local offline evaluation (mAP), compute FPS benchmarks, and execute automated batch evaluations across multiple models using MMRotate tools.
 
----
+______________________________________________________________________
 
 ## 1. Downloading Pre-trained Model Checkpoints
 
@@ -12,7 +12,7 @@ To download pre-trained MMRotate checkpoints required for benchmarks:
 python tools/analysis_tools/download_dota_weights.py
 ```
 
----
+______________________________________________________________________
 
 ## 2. Offline Evaluation (`tools/test.py`)
 
@@ -83,6 +83,7 @@ python -W ignore ./tools/test.py \
 Generate prediction pickle files first using `tools/test.py --out`, then plot the confusion matrix:
 
 #### Step 1: Export Pickle File
+
 ```bash
 python -W ignore ./tools/test.py \
   configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py \
@@ -91,6 +92,7 @@ python -W ignore ./tools/test.py \
 ```
 
 #### Step 2: Generate Matrix Plot
+
 ```bash
 python tools/analysis_tools/confusion_matrix.py \
   configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py \
@@ -99,7 +101,7 @@ python tools/analysis_tools/confusion_matrix.py \
   --show
 ```
 
----
+______________________________________________________________________
 
 ## 3. FPS Benchmark Utility (`benchmark.py`)
 
@@ -128,7 +130,7 @@ Example Output:
 
 Standard MMRotate benchmark code evaluates with `batch_size = 1` regardless of configuration. Minor modifications were introduced in this fork's `tools/analysis_tools/benchmark.py` to correctly evaluate custom `batch_size` settings during inference.
 
----
+______________________________________________________________________
 
 ## 4. Automated Multi-Model Batch Evaluation (`evaluate_models.py`)
 
@@ -149,16 +151,19 @@ Use `tools/analysis_tools/evaluate_models.py` to automate multi-model evaluation
 ### Usage Examples
 
 Run default batch evaluation (DOTA v1.0, validation split):
+
 ```bash
 python tools/analysis_tools/evaluate_models.py
 ```
 
 Evaluate on DOTA v1.5 test split:
+
 ```bash
 python tools/analysis_tools/evaluate_models.py --dota-version 1.5 --data-split test
 ```
 
 Evaluate specific list of models on a sample dataset split:
+
 ```bash
 python tools/analysis_tools/evaluate_models.py --data-split sample \
   --models rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90 \

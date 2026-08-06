@@ -1,5 +1,6 @@
 # Base configuration for the DOTA dataset (defaults to DOTA v1.0).
-# Override parameters via `--cfg-options` when evaluating on different versions or splits.
+# Override parameters via `--cfg-options` when evaluating on different
+# versions or splits.
 
 # dataset settings
 dataset_type = 'DOTADataset'
@@ -50,8 +51,9 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'test/images/',   # replace with actual testing set
-        img_prefix=data_root + 'test/images/',   # replace with actual testing set
+        ann_file=data_root + 'test/images/',  # replace with actual testing set
+        img_prefix=data_root +
+        'test/images/',  # replace with actual testing set
         pipeline=test_pipeline),
     # train_dataloader=dict(samples_per_gpu=2, workers_per_gpu=2),
     # val_dataloader=dict(samples_per_gpu=4, workers_per_gpu=4),

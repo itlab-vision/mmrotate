@@ -1,29 +1,29 @@
-import sys
-import json
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import json
+import sys
 from pathlib import Path
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Convert evaluation JSON report to Markdown table.')
+    parser = argparse.ArgumentParser(
+        description='Convert evaluation JSON report to Markdown table.')
     parser.add_argument(
-        '--input', 
-        type=str, 
-        required=True, 
-        help='Path to the evaluation results JSON file'
-    )
+        '--input',
+        type=str,
+        required=True,
+        help='Path to the evaluation results JSON file')
     parser.add_argument(
-        '--work-dir', 
-        type=str, 
-        default='work_dirs', 
-        help='Directory where the output Markdown file will be saved (default: work_dirs)'
-    )
+        '--work-dir',
+        type=str,
+        default='work_dirs',
+        help='Directory where the output Markdown file will be saved '
+        '(default: work_dirs)')
     parser.add_argument(
-        '--sort-map', 
-        choices=['asc', 'desc', 'none'], 
-        default='desc', 
-        help='Sort results by mAP (asc: ascending, desc: descending)'
-    )
+        '--sort-map',
+        choices=['asc', 'desc', 'none'],
+        default='desc',
+        help='Sort results by mAP (asc: ascending, desc: descending)')
     return parser.parse_args()
 
 
@@ -34,10 +34,10 @@ def generate_markdown(data, sort_map=None):
     for family, models in results.items():
         for model in models:
             name = model.get('name', '')
-            
+
             raw_scale = model.get('scale', '').lower()
             scale = '-' if raw_scale == 'ss' else raw_scale.upper()
-            
+
             raw_rotation = model.get('rotation', '').lower()
             rotation = '-' if raw_rotation == 'none' else raw_rotation.upper()
 
@@ -47,20 +47,31 @@ def generate_markdown(data, sort_map=None):
             config_path = model.get('config', '')
             weights_url = model.get('weights_url', '')
 
-            config_link = f"[config](../../{config_path})" if config_path else "N/A"
-            download_link = f"[model]({weights_url})" if weights_url else "N/A"
+            config_link = (f'[config](../../{config_path})'
+                           if config_path else 'N/A')
+            download_link = f'[model]({weights_url})' if weights_url else 'N/A'
 
             rows.append({
-                'family': family,
-                'name': name,
-                'scale': scale,
-                'rotation': rotation,
-                'angle': angle,
-                'map': map_val if map_val is not None else -1.0,
-                'map_str': f"{map_val:.2f}" if map_val is not None else "N/A",
-                'fps_str': f"{fps_val:.1f}" if fps_val is not None else "N/A",
-                'config_link': config_link,
-                'download_link': download_link
+                'family':
+                family,
+                'name':
+                name,
+                'scale':
+                scale,
+                'rotation':
+                rotation,
+                'angle':
+                angle,
+                'map':
+                map_val if map_val is not None else -1.0,
+                'map_str':
+                f'{map_val:.2f}' if map_val is not None else 'N/A',
+                'fps_str':
+                f'{fps_val:.1f}' if fps_val is not None else 'N/A',
+                'config_link':
+                config_link,
+                'download_link':
+                download_link
             })
 
     if sort_map == 'asc':
@@ -69,14 +80,16 @@ def generate_markdown(data, sort_map=None):
         rows.sort(key=lambda x: x['map'], reverse=True)
 
     lines = []
-    lines.append('| Family | Model Name | mAP (%) | FPS | Scale | Rotation | Angle | Config | Download |')
+    lines.append(
+        '| Family | Model Name | mAP (%) | FPS | Scale | Rotation | Angle '
+        '| Config | Download |')
     lines.append('|---|---|---|---|---|---|---|---|---|')
 
     for r in rows:
         lines.append(
-            f"| {r['family']} | `{r['name']}` | {r['map_str']} | {r['fps_str']} | "
-            f"{r['scale']} | {r['rotation']} | {r['angle']} | {r['config_link']} | {r['download_link']} |"
-        )
+            f"| {r['family']} | `{r['name']}` | {r['map_str']} | "
+            f"{r['fps_str']} | {r['scale']} | {r['rotation']} | "
+            f"{r['angle']} | {r['config_link']} | {r['download_link']} |")
 
     return '\n'.join(lines)
 

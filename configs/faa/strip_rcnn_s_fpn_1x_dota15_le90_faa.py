@@ -4,7 +4,7 @@ _base_ = [
 ]
 
 angle_version = 'le90'
-find_unused_parameters=True
+find_unused_parameters = True
 # gpu_number = 8
 # fp16 = dict(loss_scale='dynamic')
 model = dict(
@@ -12,19 +12,22 @@ model = dict(
     backbone=dict(
         type='StripNet',
         embed_dims=[64, 128, 320, 512],
-        k1s=[1,1,1,1],
-        k2s=[19,19,19,19],
+        k1s=[1, 1, 1, 1],
+        k2s=[19, 19, 19, 19],
         drop_rate=0.1,
         drop_path_rate=0.15,
-        depths=[2,2,4,2],
-        init_cfg=dict(type='Pretrained', checkpoint="data/pretrained/stripnet_s.pth"),
-        norm_cfg=dict(type='BN', requires_grad=True)),  # if more than one gpu, use SyncBN instead of BN
+        depths=[2, 2, 4, 2],
+        init_cfg=dict(
+            type='Pretrained', checkpoint='data/pretrained/stripnet_s.pth'),
+        norm_cfg=dict(type='BN', requires_grad=True)
+    ),  # if more than one gpu, use SyncBN instead of BN
     neck=dict(
         type='FAAFusionFPN',
         in_channels=[64, 128, 320, 512],
         out_channels=256,
         num_outs=5,
-        fusion_modes=['add', 'add', 'faa'],  # P5→P4: add, P4→P3: add, P3→P2: faa
+        fusion_modes=['add', 'add',
+                      'faa'],  # P5→P4: add, P4→P3: add, P3→P2: faa
         start_level=0,
         end_level=-1,
         add_extra_convs='on_input',
@@ -166,6 +169,6 @@ data = dict(
 optimizer = dict(
     _delete_=True,
     type='AdamW',
-    lr=0.0001, #/8*gpu_number,
+    lr=0.0001,  # /8*gpu_number,
     betas=(0.9, 0.999),
     weight_decay=0.05)

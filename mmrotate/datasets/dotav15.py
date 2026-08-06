@@ -226,7 +226,6 @@ class DOTAv15Dataset(CustomDataset):
             list: merged results.
         """
 
-
         def extract_xy(img_id):
             """Extract x and y coordinates from image ID.
 
@@ -356,6 +355,7 @@ class DOTAv15Dataset(CustomDataset):
                                                 submission_dir)
 
         return result_files, tmp_dir
+
 
 def _merge_func(info, CLASSES, iou_thr):
     """Merging patch bboxes into full image.

@@ -1,19 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 
 import torch
-import torch.nn as nn
-from mmcv.cnn import Scale
 from mmcv.runner import force_fp32
 from mmdet.core import reduce_mean
 
 from mmrotate.core import multiclass_nms_rotated
+from ...core.bbox.transforms import norm_angle
 from ..builder import ROTATED_HEADS
 from .rotated_fcos_head import RotatedFCOSHead
-from ...core.bbox.transforms import norm_angle
-
-import numpy as np
 
 INF = 1e8
+
 
 def xy_wh_r_2_xy_sigma(xywhr):
     """Convert oriented bounding box to 2-D Gaussian distribution.
@@ -42,16 +39,18 @@ def xy_wh_r_2_xy_sigma(xywhr):
 
     return xy, sigma
 
+
 def decode_gaucho_offset(points, deltas, angle_range, to_obb=False):
 
     ctr = deltas[..., :2] + points
     cholesky = deltas[..., 2:]
-    cov_a = cholesky[..., 0] ** 2
-    cov_b = (cholesky[..., 1] ** 2) + (cholesky[..., 2] ** 2)
+    cov_a = cholesky[..., 0]**2
+    cov_b = (cholesky[..., 1]**2) + (cholesky[..., 2]**2)
     cov_c = cholesky[..., 0] * cholesky[..., 2]
 
     if to_obb:
-        delta = torch.sqrt(4 * torch.abs(cov_c).square() + (cov_a - cov_b).square())
+        delta = torch.sqrt(4 * torch.abs(cov_c).square() +
+                           (cov_a - cov_b).square())
         eig1 = 0.5 * (cov_a + cov_b - delta)
         eig2 = 0.5 * (cov_a + cov_b + delta)
         gw = 2 * torch.sqrt(eig2).unsqueeze(-1)
@@ -60,7 +59,12 @@ def decode_gaucho_offset(points, deltas, angle_range, to_obb=False):
         gt = norm_angle(gt, angle_range)
         return torch.cat([ctr, gw, gh, gt], 1)
     else:
-        return torch.cat([ctr, cov_a.unsqueeze(-1), cov_b.unsqueeze(-1), cov_c.unsqueeze(-1)], 1)
+        return torch.cat([
+            ctr,
+            cov_a.unsqueeze(-1),
+            cov_b.unsqueeze(-1),
+            cov_c.unsqueeze(-1)
+        ], 1)
 
 
 @ROTATED_HEADS.register_module()
@@ -92,7 +96,8 @@ class GaussianFCOSHead(RotatedFCOSHead):
             tuple: scores for each class, bbox predictions, angle predictions \
                 and centerness predictions of input feature maps.
         """
-        cls_score, bbox_pred, cls_feat, reg_feat = super(RotatedFCOSHead, self).forward_single(x)
+        cls_score, bbox_pred, cls_feat, reg_feat = super(
+            RotatedFCOSHead, self).forward_single(x)
         if self.centerness_on_reg:
             centerness = self.conv_centerness(reg_feat)
         else:
@@ -100,10 +105,10 @@ class GaussianFCOSHead(RotatedFCOSHead):
         # scale the bbox_pred of different level
         # float to avoid overflow when enabling FP16
         bbox_pred = scale(bbox_pred).float()
-        
+
         if self.gaucho_encoding:
             gauss_xy = bbox_pred[:, 0:2] * stride
-            gaucho_ab = bbox_pred[:, 2:4].exp() * stride # cholesky a, b > 0
+            gaucho_ab = bbox_pred[:, 2:4].exp() * stride  # cholesky a, b > 0
             gaucho_c = self.conv_angle(reg_feat) * stride
             if self.norm_on_bbox:
                 raise NotImplementedError
@@ -218,7 +223,6 @@ class GaussianFCOSHead(RotatedFCOSHead):
         pos_centerness = flatten_centerness[pos_inds]
         pos_bbox_targets = flatten_bbox_targets[pos_inds]
         pos_angle_targets = flatten_angle_targets[pos_inds]
-        
 
         if len(pos_inds) > 0:
             pos_points = flatten_points[pos_inds]
@@ -228,31 +232,35 @@ class GaussianFCOSHead(RotatedFCOSHead):
             else:
                 bbox_coder = self.bbox_coder
                 pos_bbox_preds = torch.cat([pos_bbox_preds, pos_angle_preds],
-                                        dim=-1)
+                                           dim=-1)
                 pos_bbox_targets = torch.cat(
                     [pos_bbox_targets, pos_angle_targets], dim=-1)
-                    
+
             if self.gaucho_encoding:
-                pos_decoded_bbox_preds = decode_gaucho_offset(pos_points, pos_bbox_preds, self.angle_version)
+                pos_decoded_bbox_preds = decode_gaucho_offset(
+                    pos_points, pos_bbox_preds, self.angle_version)
             else:
-                pos_decoded_bbox_preds = bbox_coder.decode(pos_points,
-                                                        pos_bbox_preds)
-            
-            pos_decoded_target_preds = bbox_coder.decode(pos_points, pos_bbox_targets)
+                pos_decoded_bbox_preds = bbox_coder.decode(
+                    pos_points, pos_bbox_preds)
+
+            pos_decoded_target_preds = bbox_coder.decode(
+                pos_points, pos_bbox_targets)
             pos_centerness_targets = self.centerness_target(pos_bbox_targets)
 
-            centerness_denorm = max(reduce_mean(pos_centerness_targets.sum().detach()), 1e-6)
-            
+            centerness_denorm = max(
+                reduce_mean(pos_centerness_targets.sum().detach()), 1e-6)
+
             if self.kfiou_loss:
                 pos_pred_xy_offset = pos_bbox_preds[..., :2] - pos_points
-                pos_target_xy_offset = pos_decoded_target_preds[..., :2] - pos_points
+                pos_target_xy_offset = pos_decoded_target_preds[
+                    ..., :2] - pos_points
                 loss_bbox = self.loss_bbox(
-                        pos_pred_xy_offset,
-                        pos_target_xy_offset,
-                        pred_decode=pos_decoded_bbox_preds,
-                        targets_decode=pos_decoded_target_preds,
-                        weight=pos_centerness_targets,
-                        avg_factor=centerness_denorm)
+                    pos_pred_xy_offset,
+                    pos_target_xy_offset,
+                    pred_decode=pos_decoded_bbox_preds,
+                    targets_decode=pos_decoded_target_preds,
+                    weight=pos_centerness_targets,
+                    avg_factor=centerness_denorm)
             else:
                 loss_bbox = self.loss_bbox(
                     pos_decoded_bbox_preds,
@@ -346,9 +354,10 @@ class GaussianFCOSHead(RotatedFCOSHead):
                 bbox_pred = bbox_pred[topk_inds, :]
                 scores = scores[topk_inds, :]
                 centerness = centerness[topk_inds]
-            
+
             if self.gaucho_encoding:
-                bboxes = decode_gaucho_offset(points, bbox_pred, self.angle_version, to_obb=True)
+                bboxes = decode_gaucho_offset(
+                    points, bbox_pred, self.angle_version, to_obb=True)
             else:
                 bboxes = self.bbox_coder.decode(
                     points, bbox_pred, max_shape=img_shape)

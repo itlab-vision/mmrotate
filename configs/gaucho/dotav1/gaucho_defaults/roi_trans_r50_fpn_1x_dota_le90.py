@@ -1,5 +1,6 @@
 _base_ = [
-    '../../../_base_/datasets/dotav1.py', '../../../_base_/schedules/schedule_1x.py',
+    '../../../_base_/datasets/dotav1.py',
+    '../../../_base_/schedules/schedule_1x.py',
     '../../../_base_/default_runtime.py'
 ]
 
@@ -10,19 +11,16 @@ angle_version = 'le90'
 
 num_classes = 15
 
-use_gaucho=True
+use_gaucho = True
 
 coder = 'GauchoAnchorOBBDecoder'
 
-reg_decoded_bbox=True
+reg_decoded_bbox = True
 
 stds = [1.0, 1.0, 1.0, 1.0, 1.0]
 
-gaussian_loss =dict(
-    type='KFLoss',
-    fun='ln', 
-    gaussian_prediction=True,
-    loss_weight=1.0)
+gaussian_loss = dict(
+    type='KFLoss', fun='ln', gaussian_prediction=True, loss_weight=1.0)
 
 optimizer = dict(lr=0.005)
 
@@ -71,9 +69,7 @@ model = dict(
             ratios=[0.5, 1.0, 2.0],
             strides=[4, 8, 16, 32, 64]),
         bbox_coder=dict(
-            type=coder,
-            target_means=[.0, .0, .0, .0, .0],
-            target_stds=stds),
+            type=coder, target_means=[.0, .0, .0, .0, .0], target_stds=stds),
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         gaucho_encoding=use_gaucho,

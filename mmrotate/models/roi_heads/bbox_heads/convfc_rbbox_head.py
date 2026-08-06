@@ -280,7 +280,8 @@ class RotatedKFIoUShared2FCBBoxHead(RotatedConvFCBBoxHead):
                         rois[:, 1:], bbox_pred, to_obb=False)
                     bbox_targets_decode = bbox_targets
                     bbox_targets = self.bbox_coder.encode(
-                        rois[:, 1:], bbox_targets,
+                        rois[:, 1:],
+                        bbox_targets,
                     )
                 else:
                     bbox_pred_decode = self.bbox_coder.decode(

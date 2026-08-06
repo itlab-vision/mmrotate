@@ -20,8 +20,9 @@ class RotatedRPNHead(AnchorHead):
 
     Args:
         in_channels (int): Number of channels in the input feature map.
-        gaucho_encoding (bool): If true, regress gaussian bounding boxes using Gaussian Cholesky encoding.
-            reg_decoded_bbox must also be set to true. Default: False
+        gaucho_encoding (bool): If true, regress gaussian bounding boxes using
+            Gaussian Cholesky encoding. reg_decoded_bbox must also be set to
+            true. Default: False
         init_cfg (dict or list[dict], optional): Initialization config dict.
     """  # noqa: W605
 
@@ -36,7 +37,9 @@ class RotatedRPNHead(AnchorHead):
         super(RotatedRPNHead, self).__init__(
             1, in_channels, init_cfg=init_cfg, **kwargs)
         if not self.reg_decoded_bbox and gaucho_encoding:
-            raise ValueError(f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled')
+            raise ValueError(
+                'reg_decoded_bbox must be set to true if gaucho_encoding is '
+                'enabled')
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -300,7 +303,8 @@ class RotatedRPNHead(AnchorHead):
             # decodes the already encoded coordinates to absolute format.
             anchors = anchors.reshape(-1, 4)
             if self.gaucho_encoding:
-                bbox_pred = self.bbox_coder.decode(anchors, bbox_pred, to_obb=False)
+                bbox_pred = self.bbox_coder.decode(
+                    anchors, bbox_pred, to_obb=False)
             else:
                 bbox_pred = self.bbox_coder.decode(anchors, bbox_pred)
 

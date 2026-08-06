@@ -27,10 +27,10 @@ echo "------------------------------------------------"
 # Find all .py files and run sbatch for each
 find "$CONFIG_DIR" -type f -name "*.py" | while read -r config_file; do
     echo "Submitting training job for: $config_file"
-    
+
     # Extract the filename without the path and the .py extension
     job_name=$(basename "$config_file" .py)
-    
+
     # Override the job name and output log file directly from the command line
     sbatch --job-name="$job_name" --output="train_${job_name}_%j.out" "$SLURM_SCRIPT" "$config_file"
 done

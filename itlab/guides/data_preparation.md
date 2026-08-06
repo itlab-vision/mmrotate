@@ -2,7 +2,7 @@
 
 This document describes how to download, split (crop), and prepare DOTA dataset versions for MMRotate model training and offline evaluation.
 
----
+______________________________________________________________________
 
 ## 1. Dataset Downloading
 
@@ -26,27 +26,31 @@ pip install gdown
 ### Usage Examples
 
 Download default DOTA v1.0 validation set:
+
 ```bash
 python ./tools/data/dota/download_dota.py
 ```
 
 Download specific version and split:
+
 ```bash
 python ./tools/data/dota/download_dota.py --dota-version 1.0 --split val
 python ./tools/data/dota/download_dota.py --dota-version 1.5 --split test
 ```
 
 Download all versions and splits:
+
 ```bash
 python ./tools/data/dota/download_dota.py --dota-version all --split all
 ```
 
 Overwrite existing downloads:
+
 ```bash
 python ./tools/data/dota/download_dota.py --dota-version all --split all --overwrite
 ```
 
----
+______________________________________________________________________
 
 ## 2. Image Splitting (Cropping Patches)
 
@@ -63,7 +67,7 @@ python tools/data/dota/split/img_split.py --base-json \
 
 ***Note:** Polygon intersection calculations during `img_split.py` require the `shapely` library (`pip install shapely`).*
 
----
+______________________________________________________________________
 
 ### Automated Splitting Script (`run_dota_split.py`)
 
@@ -80,21 +84,25 @@ Use `tools/data/dota/run_dota_split.py` to dynamically generate split configurat
 #### Usage Examples
 
 Run default splitting (DOTA v1.0, validation split, single-scale and multi-scale with 10 processes):
+
 ```bash
 python tools/data/dota/run_dota_split.py
 ```
 
 Process DOTA v1.5 with 6 worker processes:
+
 ```bash
 python tools/data/dota/run_dota_split.py --nproc 6 --dota-version 1.5
 ```
 
 Process all splits (train, val, test) and scales for DOTA 1.0 with 8 processes:
+
 ```bash
 python tools/data/dota/run_dota_split.py --dota-version 1.0 --data-split all --scale all --nproc 8
 ```
 
 Overwrite existing split directories:
+
 ```bash
 python tools/data/dota/run_dota_split.py --dota-version 1.0 --data-split val --overwrite
 ```

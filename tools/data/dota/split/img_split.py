@@ -598,16 +598,17 @@ def main():
         print(f'\nLoading HBB annotations from: {args.ann_hbb_dir}')
         save_anns_hbb = osp.join(args.save_dir, 'annfiles_hbb')
         os.makedirs(save_anns_hbb)
-        
+
         # Load HBB annotations
         infos_hbb = []
         for img_dir in args.img_dirs:
-            _infos = load_dota(img_dir=img_dir, ann_dir=args.ann_hbb_dir, nproc=args.nproc)
+            _infos = load_dota(
+                img_dir=img_dir, ann_dir=args.ann_hbb_dir, nproc=args.nproc)
             infos_hbb.extend(_infos)
-        
+
         print('Start splitting HBB annotations!!!')
         start_hbb = time.time()
-        
+
         worker_hbb = partial(
             single_split,
             sizes=sizes,
@@ -623,22 +624,25 @@ def main():
             prog=manager.Value('i', 0),
             total=len(infos_hbb),
             logger=logger)
-        
+
         # Get image dirs for HBB
         img_dirs_hbb = []
         for img_dir in args.img_dirs:
             img_dirs_hbb.extend([img_dir for _ in range(len(infos_hbb))])
-        
+
         if args.nproc > 1:
             pool = Pool(args.nproc)
-            patch_infos_hbb = pool.map(worker_hbb, zip(infos_hbb, img_dirs_hbb))
+            patch_infos_hbb = pool.map(worker_hbb, zip(infos_hbb,
+                                                       img_dirs_hbb))
             pool.close()
         else:
-            patch_infos_hbb = list(map(worker_hbb, zip(infos_hbb, img_dirs_hbb)))
-        
+            patch_infos_hbb = list(
+                map(worker_hbb, zip(infos_hbb, img_dirs_hbb)))
+
         patch_infos_hbb = reduce(lambda x, y: x + y, patch_infos_hbb)
         stop_hbb = time.time()
-        print(f'Finish splitting HBB annotations in {int(stop_hbb - start_hbb)} second!!!')
+        print(f'Finish splitting HBB annotations in '
+              f'{int(stop_hbb - start_hbb)} second!!!')
         print(f'Total HBB images number: {len(patch_infos_hbb)}')
 
 

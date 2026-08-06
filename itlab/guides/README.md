@@ -4,7 +4,7 @@ This directory contains technical guides and step-by-step instructions for setup
 
 Information in these guides is extracted and structured from official MMRotate documentation and internal team experience.
 
----
+______________________________________________________________________
 
 ## Documentation Index
 

@@ -1,5 +1,6 @@
 _base_ = [
-    '../../../_base_/datasets/dotav1.py', '../../../_base_/schedules/schedule_1x.py',
+    '../../../_base_/datasets/dotav1.py',
+    '../../../_base_/schedules/schedule_1x.py',
     '../../../_base_/default_runtime.py'
 ]
 
@@ -10,13 +11,13 @@ angle_version = 'le90'
 
 num_classes = 15
 
-use_gaucho=True
+use_gaucho = True
 
 coder = 'GauchoAnchorOBBDecoder'
 
-reg_decoded_bbox=True
+reg_decoded_bbox = True
 
-gaussian_loss =dict(
+gaussian_loss = dict(
     type='GDLoss_v1',
     gaussian_prediction=True,
     loss_type='kld',
@@ -129,8 +130,7 @@ model = dict(
                     loss_weight=1.0),
                 gaucho_encoding=use_gaucho,
                 reg_decoded_bbox=reg_decoded_bbox,
-                loss_bbox=gaussian_loss
-                               ),
+                loss_bbox=gaussian_loss),
             dict(
                 type='RotatedShared2FCBBoxHead',
                 in_channels=256,
@@ -152,8 +152,7 @@ model = dict(
                     loss_weight=1.0),
                 gaucho_encoding=use_gaucho,
                 reg_decoded_bbox=reg_decoded_bbox,
-                loss_bbox=gaussian_loss
-                )
+                loss_bbox=gaussian_loss)
         ]),
     # model training and testing settings
     train_cfg=dict(
@@ -227,4 +226,3 @@ model = dict(
             score_thr=0.05,
             nms=dict(type=angle_version, iou_thr=0.1),
             max_per_img=2000)))
-

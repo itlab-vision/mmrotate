@@ -56,7 +56,7 @@ git clone https://github.com/itlab-vision/mmrotate.git
 cd mmrotate
 pip install -r requirements/build.txt
 pip install -v -e .
-pip install shapely gdown mmcls
+pip install shapely gdown mmcls timm==0.6.13
 ```
 
 ---

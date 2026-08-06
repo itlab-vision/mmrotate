@@ -10,7 +10,6 @@ from mmcv.cnn.utils.weight_init import (constant_init, normal_init,
                                         trunc_normal_init)
 from mmcv.runner import BaseModule
 from timm.models.layers import DropPath, to_2tuple
-from torch.nn.modules.utils import _pair as to_2tuple
 
 from ..builder import ROTATED_BACKBONES
 

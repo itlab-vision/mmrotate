@@ -275,10 +275,18 @@ class RotatedKFIoUShared2FCBBoxHead(RotatedConvFCBBoxHead):
             pos_inds = (labels >= 0) & (labels < bg_class_ind)
             # do not perform bounding box regression for BG anymore.
             if pos_inds.any():
-                bbox_pred_decode = self.bbox_coder.decode(
-                    rois[:, 1:], bbox_pred)
-                bbox_targets_decode = self.bbox_coder.decode(
-                    rois[:, 1:], bbox_targets)
+                if self.gaucho_encoding:
+                    bbox_pred_decode = self.bbox_coder.decode(
+                        rois[:, 1:], bbox_pred, to_obb=False)
+                    bbox_targets_decode = bbox_targets
+                    bbox_targets = self.bbox_coder.encode(
+                        rois[:, 1:], bbox_targets,
+                    )
+                else:
+                    bbox_pred_decode = self.bbox_coder.decode(
+                        rois[:, 1:], bbox_pred)
+                    bbox_targets_decode = self.bbox_coder.decode(
+                        rois[:, 1:], bbox_targets)
                 if self.reg_class_agnostic:
                     pos_bbox_pred = bbox_pred.view(
                         bbox_pred.size(0), 5)[pos_inds.type(torch.bool)]

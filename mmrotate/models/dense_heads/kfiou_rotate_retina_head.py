@@ -2,7 +2,6 @@
 from ..builder import ROTATED_HEADS
 from .rotated_retina_head import RotatedRetinaHead
 
-
 @ROTATED_HEADS.register_module()
 class KFIoURRetinaHead(RotatedRetinaHead):
     """Rotated Anchor-based head for KFIoU. The difference from `RRetinaHead`
@@ -97,8 +96,13 @@ class KFIoURRetinaHead(RotatedRetinaHead):
         bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 5)
 
         anchors = anchors.reshape(-1, 5)
-        bbox_pred_decode = self.bbox_coder.decode(anchors, bbox_pred)
-        bbox_targets_decode = self.bbox_coder.decode(anchors, bbox_targets)
+        if self.gaucho_encoding:
+            bbox_pred_decode = self.bbox_coder.decode(anchors, bbox_pred, to_obb=False)
+            bbox_targets_decode = bbox_targets
+            bbox_targets = self.bbox_coder.encode(anchors, bbox_targets)
+        else:
+            bbox_pred_decode = self.bbox_coder.decode(anchors, bbox_pred)
+            bbox_targets_decode = self.bbox_coder.decode(anchors, bbox_targets)
 
         loss_bbox = self.loss_bbox(
             bbox_pred,

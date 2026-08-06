@@ -29,6 +29,8 @@ class RotatedBBoxHead(BaseModule):
             class agnostic.
         reg_decoded_bbox (bool, optional): If True, regression branch use
             decoded bbox to compute loss.
+        gaucho_encoding (bool): If true, regress gaussian bounding boxes using Gaussian Cholesky encoding.
+            reg_decoded_bbox must also be set to true. Default: False
         reg_predictor_cfg (dict, optional): Config of regression predictor.
         cls_predictor_cfg (dict, optional): Config of classification predictor.
         loss_cls (dict, optional): Config of classification loss.
@@ -50,6 +52,7 @@ class RotatedBBoxHead(BaseModule):
                      target_stds=[0.1, 0.1, 0.2, 0.2]),
                  reg_class_agnostic=False,
                  reg_decoded_bbox=False,
+                 gaucho_encoding=False,
                  reg_predictor_cfg=dict(type='Linear'),
                  cls_predictor_cfg=dict(type='Linear'),
                  loss_cls=dict(
@@ -70,6 +73,9 @@ class RotatedBBoxHead(BaseModule):
         self.num_classes = num_classes
         self.reg_class_agnostic = reg_class_agnostic
         self.reg_decoded_bbox = reg_decoded_bbox
+        if not reg_decoded_bbox and gaucho_encoding:
+            raise ValueError(f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled')
+        self.gaucho_encoding = gaucho_encoding
         self.reg_predictor_cfg = reg_predictor_cfg
         self.cls_predictor_cfg = cls_predictor_cfg
         self.fp16_enabled = False
@@ -77,6 +83,12 @@ class RotatedBBoxHead(BaseModule):
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_cls = build_loss(loss_cls)
         self.loss_bbox = build_loss(loss_bbox)
+
+        import inspect
+        # Check if the regression loss function expects decoded bounding boxes (e.g., KFLoss).
+        # We store this flag during initialization to avoid overhead during the training loop.
+        loss_sig = inspect.signature(self.loss_bbox.forward)
+        self._loss_takes_decode = 'pred_decode' in loss_sig.parameters
 
         in_channels = self.in_channels
         if self.with_avg_pool:
@@ -335,7 +347,10 @@ class RotatedBBoxHead(BaseModule):
                     # `GIouLoss`, `DIouLoss`) is applied directly on
                     # the decoded bounding boxes, it decodes the
                     # already encoded coordinates to absolute format.
-                    bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred)
+                    if self.gaucho_encoding:
+                        bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred, to_obb=False)
+                    else:
+                        bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred)
                 if self.reg_class_agnostic:
                     pos_bbox_pred = bbox_pred.view(
                         bbox_pred.size(0), 5)[pos_inds.type(torch.bool)]
@@ -344,12 +359,29 @@ class RotatedBBoxHead(BaseModule):
                         bbox_pred.size(0), -1,
                         5)[pos_inds.type(torch.bool),
                            labels[pos_inds.type(torch.bool)]]
-                losses['loss_bbox'] = self.loss_bbox(
-                    pos_bbox_pred,
-                    bbox_targets[pos_inds.type(torch.bool)],
-                    bbox_weights[pos_inds.type(torch.bool)],
-                    avg_factor=bbox_targets.size(0),
-                    reduction_override=reduction_override)
+                if self.reg_decoded_bbox:
+                    loss_kwargs = dict(
+                        weight=bbox_weights[pos_inds.type(torch.bool)],
+                        avg_factor=bbox_targets.size(0),
+                        reduction_override=reduction_override
+                    )
+
+                    # Inject decoded bounding boxes only if the specific loss module requires them
+                    if self._loss_takes_decode:
+                        loss_kwargs['pred_decode'] = pos_bbox_pred
+                        loss_kwargs['targets_decode'] = bbox_targets[pos_inds.type(torch.bool)]
+
+                    losses['loss_bbox'] = self.loss_bbox(
+                        pos_bbox_pred,
+                        bbox_targets[pos_inds.type(torch.bool)],
+                        **loss_kwargs)
+                else:
+                    losses['loss_bbox'] = self.loss_bbox(
+                        pos_bbox_pred,
+                        bbox_targets[pos_inds.type(torch.bool)],
+                        bbox_weights[pos_inds.type(torch.bool)],
+                        avg_factor=bbox_targets.size(0),
+                        reduction_override=reduction_override)
             else:
                 losses['loss_bbox'] = bbox_pred[pos_inds].sum()
         return losses

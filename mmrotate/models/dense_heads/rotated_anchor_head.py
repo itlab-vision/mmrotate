@@ -28,6 +28,8 @@ class RotatedAnchorHead(BaseDenseHead):
         bbox_coder (dict): Config of bounding box coder.
         reg_decoded_bbox (bool): If true, the regression loss would be
             applied on decoded bounding boxes. Default: False
+        gaucho_encoding (bool): If true, regress gaussian bounding boxes using Gaussian Cholesky encoding.
+            reg_decoded_bbox must also be set to true. Default: False
         assign_by_circumhbbox (str): If None, assigner will assign according to
             the IoU between anchor and GT (OBB), called RetinaNet-OBB.
             If angle definition method, assigner will assign according to the
@@ -54,6 +56,7 @@ class RotatedAnchorHead(BaseDenseHead):
                      target_means=(.0, .0, .0, .0, .0),
                      target_stds=(1.0, 1.0, 1.0, 1.0, 1.0)),
                  reg_decoded_bbox=False,
+                 gaucho_encoding=False,
                  assign_by_circumhbbox='oc',
                  loss_cls=dict(
                      type='FocalLoss',
@@ -82,6 +85,9 @@ class RotatedAnchorHead(BaseDenseHead):
         if self.cls_out_channels <= 0:
             raise ValueError(f'num_classes={num_classes} is too small')
         self.reg_decoded_bbox = reg_decoded_bbox
+        if not reg_decoded_bbox and gaucho_encoding:
+            raise ValueError(f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled')
+        self.gaucho_encoding = gaucho_encoding
         self.assign_by_circumhbbox = assign_by_circumhbbox
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_cls = build_loss(loss_cls)
@@ -432,7 +438,10 @@ class RotatedAnchorHead(BaseDenseHead):
         bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 5)
         if self.reg_decoded_bbox:
             anchors = anchors.reshape(-1, 5)
-            bbox_pred = self.bbox_coder.decode(anchors, bbox_pred)
+            if self.gaucho_encoding:
+                bbox_pred = self.bbox_coder.decode(anchors, bbox_pred, to_obb=False)
+            else:
+                bbox_pred = self.bbox_coder.decode(anchors, bbox_pred)
 
         loss_bbox = self.loss_bbox(
             bbox_pred,

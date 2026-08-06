@@ -17,9 +17,8 @@ def parse_args():
         '--work-dir',
         type=str,
         default='work_dirs',
-        help=
-        'Directory where the output Markdown file will be saved (default: work_dirs)'
-    )
+        help='Directory where the output Markdown file will be saved '
+        '(default: work_dirs)')
     parser.add_argument(
         '--sort-map',
         choices=['asc', 'desc', 'none'],
@@ -48,7 +47,8 @@ def generate_markdown(data, sort_map=None):
             config_path = model.get('config', '')
             weights_url = model.get('weights_url', '')
 
-            config_link = f'[config](../../{config_path})' if config_path else 'N/A'
+            config_link = (f'[config](../../{config_path})'
+                           if config_path else 'N/A')
             download_link = f'[model]({weights_url})' if weights_url else 'N/A'
 
             rows.append({
@@ -81,15 +81,15 @@ def generate_markdown(data, sort_map=None):
 
     lines = []
     lines.append(
-        '| Family | Model Name | mAP (%) | FPS | Scale | Rotation | Angle | Config | Download |'
-    )
+        '| Family | Model Name | mAP (%) | FPS | Scale | Rotation | Angle '
+        '| Config | Download |')
     lines.append('|---|---|---|---|---|---|---|---|---|')
 
     for r in rows:
         lines.append(
-            f"| {r['family']} | `{r['name']}` | {r['map_str']} | {r['fps_str']} | "
-            f"{r['scale']} | {r['rotation']} | {r['angle']} | {r['config_link']} | {r['download_link']} |"
-        )
+            f"| {r['family']} | `{r['name']}` | {r['map_str']} | "
+            f"{r['fps_str']} | {r['scale']} | {r['rotation']} | "
+            f"{r['angle']} | {r['config_link']} | {r['download_link']} |")
 
     return '\n'.join(lines)
 

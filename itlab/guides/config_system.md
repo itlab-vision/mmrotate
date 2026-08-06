@@ -2,18 +2,19 @@
 
 This guide explains how configuration files are parsed, inherited, merged, and configured in MMRotate.
 
----
+______________________________________________________________________
 
 ## 1. Config Inheritance and Resolution Order
 
 MMRotate uses hierarchical configuration files built on `mmcv.Config`.
 
 Resolution sequence:
+
 1. The base config listed in `_base_` is loaded first (e.g., `configs/_base_/datasets/dotav1.py`).
 2. Model-specific configs inherit the base dictionary.
 3. Explicit parameters defined in child configs override or extend base values.
 
----
+______________________________________________________________________
 
 ## 2. Parameter Merging Rules
 
@@ -23,7 +24,7 @@ When combining base and child configs:
 - **Lists (`list`)**: Replaced completely. A list defined in a child config completely replaces the corresponding list in the base config.
 - **Primitive Values (int, float, str, bool)**: Replaced completely.
 
----
+______________________________________________________________________
 
 ## 3. DataLoader Configuration Styles
 
@@ -55,7 +56,7 @@ data = dict(
 )
 ```
 
----
+______________________________________________________________________
 
 ## 4. Internal Dataloader Worker Compatibility Behavior
 

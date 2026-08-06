@@ -28,8 +28,9 @@ class RotatedAnchorHead(BaseDenseHead):
         bbox_coder (dict): Config of bounding box coder.
         reg_decoded_bbox (bool): If true, the regression loss would be
             applied on decoded bounding boxes. Default: False
-        gaucho_encoding (bool): If true, regress gaussian bounding boxes using Gaussian Cholesky encoding.
-            reg_decoded_bbox must also be set to true. Default: False
+        gaucho_encoding (bool): If true, regress gaussian bounding boxes using
+            Gaussian Cholesky encoding. reg_decoded_bbox must also be set to
+            true. Default: False
         assign_by_circumhbbox (str): If None, assigner will assign according to
             the IoU between anchor and GT (OBB), called RetinaNet-OBB.
             If angle definition method, assigner will assign according to the
@@ -87,8 +88,8 @@ class RotatedAnchorHead(BaseDenseHead):
         self.reg_decoded_bbox = reg_decoded_bbox
         if not reg_decoded_bbox and gaucho_encoding:
             raise ValueError(
-                f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled'
-            )
+                'reg_decoded_bbox must be set to true if gaucho_encoding is '
+                'enabled')
         self.gaucho_encoding = gaucho_encoding
         self.assign_by_circumhbbox = assign_by_circumhbbox
         self.bbox_coder = build_bbox_coder(bbox_coder)

@@ -641,9 +641,8 @@ def main():
 
         patch_infos_hbb = reduce(lambda x, y: x + y, patch_infos_hbb)
         stop_hbb = time.time()
-        print(
-            f'Finish splitting HBB annotations in {int(stop_hbb - start_hbb)} second!!!'
-        )
+        print(f'Finish splitting HBB annotations in '
+              f'{int(stop_hbb - start_hbb)} second!!!')
         print(f'Total HBB images number: {len(patch_infos_hbb)}')
 
 

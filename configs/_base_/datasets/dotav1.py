@@ -1,5 +1,6 @@
 # Base configuration for the DOTA dataset (defaults to DOTA v1.0).
-# Override parameters via `--cfg-options` when evaluating on different versions or splits.
+# Override parameters via `--cfg-options` when evaluating on different
+# versions or splits.
 
 # dataset settings
 dataset_type = 'DOTADataset'

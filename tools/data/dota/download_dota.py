@@ -112,8 +112,8 @@ def parse_args():
         '--out-dir',
         type=str,
         default=str(DATA_ROOT_DIR),
-        help=
-        f'directory where dataset will be saved (default: "{DATA_ROOT_DIR}")')
+        help='directory where dataset will be saved '
+        f'(default: "{DATA_ROOT_DIR}")')
     parser.add_argument(
         '--overwrite',
         action='store_true',
@@ -130,8 +130,8 @@ def check_gdown():
         return gdown
     except ImportError:
         logger.error(
-            'ERROR: "gdown" package is missing. Please install it via: pip install gdown'
-        )
+            'ERROR: "gdown" package is missing. Please install it via: pip '
+            'install gdown')
         sys.exit(1)
 
 
@@ -184,7 +184,8 @@ def extract_and_place(archive_path: Path, target_dir: Path):
             return
 
     # Determine source directory
-    # If archive contains a single top-level directory (e.g. 'images/' or 'labelTxtHbb/'), navigate into it
+    # If archive contains a single top-level directory
+    # (e.g. 'images/' or 'labelTxtHbb/'), navigate into it
     top_level_contents = list(extract_tmp.iterdir())
     if len(top_level_contents) == 1 and top_level_contents[0].is_dir():
         source_dir = top_level_contents[0]
@@ -230,8 +231,8 @@ def process_version(gdown_module,
         # Skip items without Google Drive ID
         if not file_id:
             logger.info(
-                f'\n[{idx}/{total_items}] [{version_name}] "{display_name}" has no Google Drive ID provided. Skipping.'
-            )
+                f'\n[{idx}/{total_items}] [{version_name}] "{display_name}" '
+                f'has no Google Drive ID provided. Skipping.')
             continue
 
         full_target_dir = base_dir / rel_target
@@ -239,8 +240,8 @@ def process_version(gdown_module,
 
         if not overwrite and manifest_key in processed_keys:
             logger.info(
-                f'\n[{idx}/{total_items}] [{version_name}] "{display_name}" already processed. Skipping.'
-            )
+                f'\n[{idx}/{total_items}] [{version_name}] "{display_name}" '
+                f'already processed. Skipping.')
             skipped_items.append({
                 'version': version_name,
                 'display_name': display_name
@@ -249,18 +250,16 @@ def process_version(gdown_module,
 
         temp_archive = TEMP_DIR / f'{version_name}_part_{idx}.tmp'
 
-        logger.info(
-            f'\n[{idx}/{total_items}] Downloading {version_name} ({display_name})...'
-        )
+        logger.info(f'\n[{idx}/{total_items}] Downloading {version_name} '
+                    f'({display_name})...')
 
         try:
             download_file(gdown_module, file_id, temp_archive)
             extract_and_place(temp_archive, full_target_dir)
             mark_as_downloaded(manifest_path, manifest_key)
         except Exception:
-            logger.error(
-                f'WARNING: Failed to download {version_name} ({display_name}). Skipped.'
-            )
+            logger.error(f'WARNING: Failed to download {version_name} '
+                         f'({display_name}). Skipped.')
             failed_items.append({
                 'version':
                 version_name,
@@ -295,16 +294,16 @@ def print_summary(failed_items, skipped_items):
         logger.info('Status: All required files were processed successfully!')
     else:
         logger.error(
-            f'Status: Failed to download {len(failed_items)} item(s) due to Google Drive quotas or errors:\n'
-        )
+            f'Status: Failed to download {len(failed_items)} item(s) due to '
+            f'Google Drive quotas or errors:\n')
         for idx, item in enumerate(failed_items, 1):
             logger.error(
                 f'  {idx}. [{item["version"]}] {item["display_name"]}')
             logger.error(f'     Google Drive ID: {item["file_id"]}')
             logger.error(f'     Manual Link:     {item["url"]}\n')
         logger.info(
-            'Tip: You can manually download these files via browser using the links above,'
-        )
+            'Tip: You can manually download these files via browser using '
+            'the links above,')
         logger.info('and place their contents in appropriate folders.')
     logger.info('=' * 60)
 

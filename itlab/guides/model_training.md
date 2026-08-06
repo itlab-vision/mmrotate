@@ -2,7 +2,7 @@
 
 This guide details the complete workflow for training MMRotate models on DOTA datasets within the ITLab GPU infrastructure, from raw dataset downloading and patch splitting to direct interactive training and Slurm batch job submission.
 
----
+______________________________________________________________________
 
 ## 1. Download Train & Validation Datasets
 
@@ -12,7 +12,7 @@ Download the official DOTA training and validation dataset archives using `downl
 python ./tools/data/dota/download_dota.py --dota-version 1.0 1.5 --split train val
 ```
 
----
+______________________________________________________________________
 
 ## 2. Prepare `trainval` Datasets (Patch Splitting)
 
@@ -22,7 +22,7 @@ High-resolution aerial images in DOTA must be cropped into overlapping patches f
 python tools/data/dota/run_dota_split.py --nproc 12 --dota-version 1.0 1.5 --data-split trainval --scale all
 ```
 
----
+______________________________________________________________________
 
 ## 3. Model Training
 
@@ -42,7 +42,7 @@ To submit model training as a non-interactive background batch job on the ITLab 
 sbatch tools/train_model.slurm configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py
 ```
 
----
+______________________________________________________________________
 
 ## 4. Batch Training Job Generation
 

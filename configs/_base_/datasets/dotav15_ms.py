@@ -1,5 +1,6 @@
 # Custom DOTA v1.5 multi-scale dataset configuration.
-# Used exclusively by models integrated by ITLab, including experiments from featured papers (e.g., GauCho).
+# Used exclusively by models integrated by ITLab, including experiments from
+# featured papers (e.g., GauCho).
 
 # dataset settings
 dataset_type = 'DOTAv15Dataset'

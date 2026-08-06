@@ -100,7 +100,8 @@ class FAA(nn.Module):
 
     def forward(self, x):
         B, C, H, W = x.shape
-        assert C == 1 and H == 7 and W == 7, f'Expected [B,1,7,7], got {x.shape}'
+        assert C == 1 and H == 7 and W == 7, (
+            f'Expected [B,1,7,7], got {x.shape}')
 
         # 1. 计算 rFFT
         x_rfft = torch.fft.rfft2(x, dim=(-2, -1), norm='ortho')  # [B, 1, 7, 4]
@@ -154,7 +155,8 @@ class FAAHead(RotatedShared2FCBBoxHead):
 
         # 修改输入维度：原始空间特征 256*49 + FAM 特征 16 * self.m
         old_in_features = self.in_channels * self.roi_feat_area
-        self.in_channels * self.roi_feat_area + self.in_channels * self.roi_feat_area
+        #  self.in_channels * self.roi_feat_area + self.in_channels * \
+        #  self.roi_feat_area
 
         # 重建 shared_fcs
         num_shared_fcs = len(self.shared_fcs)
@@ -198,9 +200,9 @@ class FAAHead(RotatedShared2FCBBoxHead):
         spatial_feat = x.view(N, -1)  # [N, 256*49]
 
         # 拼接
-        #x = torch.cat([spatial_feat, fam_Ere], dim=1)  # [N, 12800]
-        # x_reg = spatial_feat
-        # x_cls = fam_Ere
+        #  x = torch.cat([spatial_feat, fam_Ere], dim=1)  # [N, 12800]
+        #  x_reg = spatial_feat
+        #  x_cls = fam_Ere
         x = spatial_feat + self.gamma * fam_Ere
 
         # FC

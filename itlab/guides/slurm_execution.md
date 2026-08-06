@@ -2,7 +2,7 @@
 
 This document describes how to submit and manage automated batch evaluation jobs on HPC clusters using the Slurm Workload Manager.
 
----
+______________________________________________________________________
 
 ## 1. Automated Model Evaluation Batch Script (`tools/evaluate_models.slurm`)
 
@@ -57,7 +57,7 @@ CLI arguments take precedence over script `#SBATCH` directives. To override the 
 sbatch --partition=other_partition tools/evaluate_models.slurm 1.0
 ```
 
----
+______________________________________________________________________
 
 ## 2. Job Monitoring and Management
 

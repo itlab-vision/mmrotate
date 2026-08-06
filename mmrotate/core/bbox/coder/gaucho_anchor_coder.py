@@ -43,8 +43,9 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
         """Get box regression transformation deltas that can be used to
         transform the ``bboxes`` into the ``gt_bboxes``.
 
-        Does not properly compute deltas for cholesky elements. This is intended as a placeholder fix for KFIoU integration,
-        specifically for the x and y deltas
+        Does not properly compute deltas for cholesky elements. This is
+        intended as a placeholder fix for KFIoU integration, specifically
+        for the x and y deltas
 
         Args:
             bboxes (torch.Tensor): Source boxes, e.g., object proposals.
@@ -89,8 +90,8 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
                and the length of max_shape should also be B.
             wh_ratio_clip (float, optional): The allowed ratio between
                 width and height.
-            to_obb (bool, optional): If True, further decode gaussian bounding boxes
-                into oriented bounding boxes. Defaults to True.
+            to_obb (bool, optional): If True, further decode gaussian bounding
+                boxes into oriented bounding boxes. Defaults to True.
 
         Returns:
             torch.Tensor: Decoded boxes.
@@ -232,10 +233,12 @@ def delta2bbox(
             Defaults to False.
         proj_xy (bool, optional): Whether project x and y according to angle.
             Defaults to False.
-        to_obb (bool, optional): If True, further decode gaussian bounding boxes
-            into oriented bounding boxes. Defaults to True.
-        wh_scale_factor (float): Scalar value of width and height in OBB -> Gaussian conversion
-        min_scaled_ar (float): Minimum aspect ratio for reescaled anchors (gamma regression)
+        to_obb (bool, optional): If True, further decode gaussian bounding
+            boxes into oriented bounding boxes. Defaults to True.
+        wh_scale_factor (float): Scalar value of width and height in OBB ->
+            Gaussian conversion
+        min_scaled_ar (float): Minimum aspect ratio for reescaled anchors
+            (gamma regression)
 
     Returns:
         Tensor: Boxes with shape (N, num_classes * 5) or (N, 5), where 5
@@ -287,12 +290,13 @@ def delta2bbox(
     else:
         p_cova = torch.cos(pa).square() * eig_w + torch.sin(
             pa).square() * eig_h
-        #p_covb  = torch.cos(pa).square() * eig_h + torch.sin(pa).square() * eig_w
+        #  p_covb = torch.cos(pa).square() * eig_h + torch.sin(
+        #      pa).square() * eig_w
         p_covc = 0.5 * torch.sin(2 * pa) * (eig_w - eig_h)
         palpha = torch.sqrt(p_cova)
         pgamma = p_covc / palpha
         pbeta = (sqrt_eig_h * sqrt_eig_w).clamp(1.0) / palpha
-        #pbeta   = torch.sqrt((p_covb + 5e-2) - (p_covc.square() / p_cova))
+        #  pbeta = torch.sqrt((p_covb + 5e-2) - (p_covc.square() / p_cova))
 
         alpha_scale = dalpha.exp()
         beta_scale = dbeta.exp()

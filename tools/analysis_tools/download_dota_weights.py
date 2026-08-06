@@ -47,8 +47,8 @@ def print_summary(downloaded_items, skipped_items, failed_items):
         logger.info('Status: All required files were processed successfully!')
     else:
         logger.error(
-            f'Status: Failed to download {len(failed_items)} item(s) due to network or server errors:\n'
-        )
+            f'Status: Failed to download {len(failed_items)} item(s) due to '
+            f'network or server errors:\n')
         for idx, item in enumerate(failed_items, 1):
             logger.error(f'    {idx}. {item["name"]}')
             logger.error(f'       Filename:    {item["filename"]}')
@@ -57,8 +57,8 @@ def print_summary(downloaded_items, skipped_items, failed_items):
             logger.error(f'       Manual Link: {item["url"]}\n')
 
         logger.info(
-            '    Tip: You can manually download these files via browser using the links above,'
-        )
+            '    Tip: You can manually download these files via browser using '
+            'the links above,')
         logger.info('    and place them in the checkpoints/ folder.')
 
     logger.info('\n' + '=' * 80 + '\n')
@@ -102,8 +102,8 @@ def process_model(model, checkpoint_dir, downloaded_items, skipped_items,
             if os.path.exists(save_path):
                 os.remove(save_path)
                 logger.error(
-                    f'\nRemoved invalid/HTML file created by failed download: {filename}\n'
-                )
+                    f'\nRemoved invalid/HTML file created by failed download: '
+                    f'{filename}\n')
 
             item_info['error_code'] = result.returncode
             failed_items.append(item_info)

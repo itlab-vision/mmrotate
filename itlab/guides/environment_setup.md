@@ -2,7 +2,7 @@
 
 This guide describes the exact, tested step-by-step process for deploying MMRotate (ITLab fork) on NVIDIA GPU servers.
 
----
+______________________________________________________________________
 
 ## 1. Verified Prerequisites
 
@@ -10,7 +10,7 @@ This guide describes the exact, tested step-by-step process for deploying MMRota
 - **CUDA**: 11.1
 - **Package Manager**: Conda
 
----
+______________________________________________________________________
 
 ## 2. Step-by-Step Installation
 
@@ -23,7 +23,7 @@ conda activate openmmlab
 
 ***Note:** If package caching issues occur during installation, run `conda clean --all -y`.*
 
----
+______________________________________________________________________
 
 ### Step 2: Install PyTorch and Torchvision
 
@@ -33,7 +33,7 @@ Install PyTorch 1.8.0 with CUDA 11.1 support:
 conda install pytorch==1.8.0 torchvision==0.9.0 cudatoolkit=11.1 -c pytorch -c nvidia
 ```
 
----
+______________________________________________________________________
 
 ### Step 3: Install OpenMIM, MMCV, and MMDetection
 
@@ -45,7 +45,7 @@ mim install mmcv-full
 mim install mmdet\<3.0.0
 ```
 
----
+______________________________________________________________________
 
 ### Step 4: Install MMRotate (ITLab Fork) and Additional Dependencies
 
@@ -59,7 +59,7 @@ pip install -v -e .
 pip install shapely gdown mmcls timm==0.6.13
 ```
 
----
+______________________________________________________________________
 
 ### Step 5: Server OpenCV Fix
 
@@ -70,7 +70,7 @@ pip uninstall opencv-python opencv-contrib-python -y
 pip install opencv-python-headless
 ```
 
----
+______________________________________________________________________
 
 ## 3. Verification
 
@@ -81,6 +81,7 @@ python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA av
 ```
 
 Expected output format:
+
 ```text
 PyTorch: 1.8.0
 CUDA available: True

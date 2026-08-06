@@ -78,7 +78,8 @@ def generate_out_prefix(args):
     and current timestamp."""
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     v_str = args.dota_version.replace('.', '_')
-    base_name = f'models_stats_dota{v_str}_{args.data_split}_{args.tasks}_{timestamp}'
+    base_name = (f'models_stats_dota{v_str}_{args.data_split}_'
+                 f'{args.tasks}_{timestamp}')
     return os.path.join(args.work_dir, base_name)
 
 
@@ -134,8 +135,8 @@ def check_directories(version, split):
         for m in missing:
             logger.error(f'  - {m}')
         logger.error(
-            '\nPlease verify your dataset paths and ensure DOTA data is split correctly.'
-        )
+            '\nPlease verify your dataset paths and ensure DOTA data is split '
+            'correctly.')
         sys.exit(1)
 
     logger.info('All required data directories exist.')
@@ -183,8 +184,8 @@ def check_checkpoints(metafiles, target_models):
 
     if found_models_count == 0:
         logger.error(
-            'Error: No matching models found for evaluation based on the provided arguments.'
-        )
+            'Error: No matching models found for evaluation based on the '
+            'provided arguments.')
         sys.exit(1)
 
     if missing_checkpoints:
@@ -194,8 +195,8 @@ def check_checkpoints(metafiles, target_models):
             logger.error(f'  - Model: {name}')
             logger.error(f'    Path:  {path}')
         logger.error(
-            "\nPlease download missing checkpoints into the 'checkpoints/' folder before running."
-        )
+            "\nPlease download missing checkpoints into the 'checkpoints/' "
+            'folder before running.')
         sys.exit(1)
 
     logger.info('All required model checkpoints exist. Proceeding...')
@@ -287,9 +288,10 @@ def evaluate_mAP(paths, args):
     output."""
     logger.info('\n[+] Running mAP evaluation...')
     cmd_map = (
-        f"python -W ignore ./tools/test.py {paths['config']} {paths['checkpoint_path']} "
-        f'--eval mAP '
-        f'--cfg-options data.test_dataloader.workers_per_gpu={args.map_workers_per_gpu} '
+        f"python -W ignore ./tools/test.py {paths['config']} "
+        f"{paths['checkpoint_path']} --eval mAP "
+        f'--cfg-options data.test_dataloader.workers_per_gpu='
+        f'{args.map_workers_per_gpu} '
         f'data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} '
         f"data.test.ann_file={paths['ann_file']} "
         f"data.test.img_prefix={paths['img_prefix']} "
@@ -319,11 +321,14 @@ def evaluate_benchmark(paths, args):
     env = os.environ.copy()
     env['PYTHONWARNINGS'] = 'ignore'
     cmd_bench = (
-        f'python -m torch.distributed.launch --nproc_per_node=1 --master_port=29500 '
-        f"tools/analysis_tools/benchmark.py {paths['config']} {paths['checkpoint_path']} "
-        f'--launcher pytorch --log-interval 5 '
-        f'--cfg-options data.test_dataloader.workers_per_gpu={args.benchmark_workers_per_gpu} '
-        f'data.test_dataloader.samples_per_gpu={args.benchmark_samples_per_gpu} '
+        f'python -m torch.distributed.launch --nproc_per_node=1 '
+        f'--master_port=29500 tools/analysis_tools/benchmark.py '
+        f"{paths['config']} {paths['checkpoint_path']} --launcher pytorch "
+        f'--log-interval 5 --cfg-options '
+        f'data.test_dataloader.workers_per_gpu='
+        f'{args.benchmark_workers_per_gpu} '
+        f'data.test_dataloader.samples_per_gpu='
+        f'{args.benchmark_samples_per_gpu} '
         f"data.test.ann_file={paths['ann_file']} "
         f"data.test.img_prefix={paths['img_prefix']} "
         f'data.test.type={DATASET_TYPE[args.dota_version]}')

@@ -22,9 +22,11 @@ class FAAFusion(nn.Module):
 
     Args:
         m (int): Local window size (must be odd). Default: 7.
-        c_mid (int): Intermediate channel dimension after 1x1 projection. Default: 16.
+        c_mid (int): Intermediate channel dimension after 1x1 projection.
+            Default: 16.
         eps (float): Small value for numerical stability. Default: 1e-8.
-        layer_scale_init_value (float): Init value for LayerScale. Default: 1e-5.
+        layer_scale_init_value (float): Init value for LayerScale.
+            Default: 1e-5.
 
     Inputs:
         x_high (Tensor): [B, C, H_h, W_h]
@@ -130,7 +132,8 @@ class FAAFusion(nn.Module):
     def forward(self, x_high: torch.Tensor,
                 x_low: torch.Tensor) -> torch.Tensor:
         B, C, H_l, W_l = x_low.shape
-        # assert C == self.in_channels, f"Expected {self.in_channels} channels, got {C}"
+        #  assert C == self.in_channels, (
+        #      f"Expected {self.in_channels} channels, got {C}")
         _, _, H_h, W_h = x_high.shape
         device = x_low.device
 
@@ -145,9 +148,9 @@ class FAAFusion(nn.Module):
         xl_proj = self.proj_low(x_low)  # [B, c_mid, H_l, W_l]
         xh_proj = self.proj_high(x_high_up)  # [B, c_mid, H_l, W_l]
 
-        #pad = self.m // 2
+        #  pad = self.m // 2
         pad = 0
-        #N = H_l * W_l  # number of spatial positions
+        #  N = H_l * W_l  # number of spatial positions
         N = (H_l - self.m + 1) * (W_l - self.m + 1
                                   )  # number of spatial positions
 
@@ -192,7 +195,8 @@ class FAAFusion(nn.Module):
                 output_size=(H_l, W_l),
                 kernel_size=self.m,
                 stride=1,
-                padding=pad)  # [B, 1, H_l, W_l]
+                padding=pad,
+            )  # [B, 1, H_l, W_l]
 
             # Normalize (optional but recommended)
             ones = torch.ones(1, 1, H_l, W_l, device=device)
@@ -203,7 +207,8 @@ class FAAFusion(nn.Module):
                 output_size=(H_l, W_l),
                 kernel_size=self.m,
                 stride=1,
-                padding=pad)
+                padding=pad,
+            )
             xh_aligned_map = xh_aligned_map / (ones_fold + self.eps)
             # Store in c_mid-aligned tensor
             xh_aligned_cmid[:, c:c + 1] = xh_aligned_map
@@ -226,32 +231,36 @@ class FAAFusionFPN(FPN):
         out_channels (int): Number of output channels (used at each scale).
         num_outs (int): Number of output scales.
         fusion_modes (list[str]): Fusion mode for each top-down fusion step.
-            Length must be `num_outs - 1` (or `backbone_levels - 1` if no extra levels).
-            Each element is either 'add' (original FPN) or 'fam' (use FAMFusionK2K).
+            Length must be `num_outs - 1` (or `backbone_levels - 1` if no
+            extra levels). Each element is either 'add' (original FPN) or
+            'fam' (use FAMFusionK2K).
         start_level (int): Index of the start input backbone level.
         end_level (int): Index of the end input backbone level.
         add_extra_convs (bool | str): Same as FPN.
         ... (other args same as FPN)
-        fam_cfg (dict): Config for FAMFusionK2K. Default: dict(m=7, layer_scale_init_value=1e-5)
+        fam_cfg (dict): Config for FAMFusionK2K. Default: dict(m=7,
+            layer_scale_init_value=1e-5)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 num_outs,
-                 fusion_modes: List[str],
-                 start_level=0,
-                 end_level=-1,
-                 add_extra_convs=False,
-                 relu_before_extra_convs=False,
-                 no_norm_on_lateral=False,
-                 conv_cfg=None,
-                 norm_cfg=None,
-                 act_cfg=None,
-                 upsample_cfg=dict(mode='nearest'),
-                 init_cfg=dict(
-                     type='Xavier', layer='Conv2d', distribution='uniform'),
-                 fam_cfg=dict(m=7, c_mid=64)):
+    def __init__(
+            self,
+            in_channels,
+            out_channels,
+            num_outs,
+            fusion_modes: List[str],
+            start_level=0,
+            end_level=-1,
+            add_extra_convs=False,
+            relu_before_extra_convs=False,
+            no_norm_on_lateral=False,
+            conv_cfg=None,
+            norm_cfg=None,
+            act_cfg=None,
+            upsample_cfg=dict(mode='nearest'),
+            init_cfg=dict(
+                type='Xavier', layer='Conv2d', distribution='uniform'),
+            fam_cfg=dict(m=7, c_mid=64),
+    ):
         # Call parent FPN __init__
         super(FAAFusionFPN, self).__init__(
             in_channels=in_channels,
@@ -266,13 +275,16 @@ class FAAFusionFPN(FPN):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,
             upsample_cfg=upsample_cfg,
-            init_cfg=init_cfg)
+            init_cfg=init_cfg,
+        )
 
         # Validate fusion_modes
         backbone_levels = self.backbone_end_level - self.start_level
-        expected_fusion_steps = backbone_levels - 1  # e.g., 4 levels → 3 fusion steps
-        assert len(fusion_modes) == expected_fusion_steps, \
-            f'fusion_modes length ({len(fusion_modes)}) must be {expected_fusion_steps} (backbone_levels - 1)'
+        expected_fusion_steps = backbone_levels - 1
+        # e.g., 4 levels → 3 fusion steps
+        assert len(fusion_modes) == expected_fusion_steps, (
+            f'fusion_modes length ({len(fusion_modes)}) must be '
+            f'{expected_fusion_steps} (backbone_levels - 1)')
 
         for mode in fusion_modes:
             assert mode in ['add', 'faa'], f'Invalid fusion mode: {mode}'
@@ -302,7 +314,8 @@ class FAAFusionFPN(FPN):
         used_backbone_levels = len(laterals)
         # We have (used_backbone_levels - 1) fusion steps: from top to bottom
         for i in range(used_backbone_levels - 1, 0, -1):
-            fusion_idx = used_backbone_levels - 1 - i  # maps i=3→0, i=2→1, i=1→2
+            # maps i=3→0, i=2→1, i=1→2
+            fusion_idx = used_backbone_levels - 1 - i
             mode = self.fusion_modes[fusion_idx]
 
             if mode == 'add':

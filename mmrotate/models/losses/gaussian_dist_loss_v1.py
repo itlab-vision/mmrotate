@@ -159,7 +159,8 @@ def kld_loss(pred, target, fun='log1p', tau=1.0):
     term2 = torch.diagonal(
         sigma_t_inv.matmul(sigma_p),
         dim1=-2, dim2=-1).sum(dim=-1, keepdim=True) + \
-        torch.log(torch.det(sigma_t) / torch.det(sigma_p).clamp(1e-3)).reshape(-1, 1)
+        torch.log(torch.det(sigma_t) /
+                  torch.det(sigma_p).clamp(1e-3)).reshape(-1, 1)
     dis = term1 + term2 - 2
     kl_dis = dis.clamp(min=1e-6)
 
@@ -176,8 +177,8 @@ def probiou_loss(pred, target, fun='log1p', tau=1.0):
     Args:
         pred (torch.Tensor): Predicted bboxes.
         target (torch.Tensor): Corresponding gt bboxes.
-        fun (str): The function applied to distance. Defaults to 'log1p'. # Unused
-        tau (float): Defaults to 1.0. # Unused
+        fun (str): The function applied to distance. Defaults to 'log1p'.
+        tau (float): Defaults to 1.0.
 
     Returns:
         loss (torch.Tensor)
@@ -221,7 +222,9 @@ class GDLoss_v1(nn.Module):
         reduction (str, optional): The reduction method of the
             loss. Defaults to 'mean'.
         loss_weight (float, optional): The weight of loss. Defaults to 1.0.
-        gaussian_prediction (bool, optional): If True, treat the input as in the form (x,y,a,b,c) where a,b,c are the elements of the 2D Covariance Matrix. Defaults to False.
+        gaussian_prediction (bool, optional): If True, treat the input as in
+            the form (x,y,a,b,c) where a,b,c are the elements of the 2D
+            Covariance Matrix. Defaults to False.
 
     Returns:
         loss (torch.Tensor)

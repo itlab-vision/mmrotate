@@ -2,7 +2,7 @@
 
 This directory stores benchmark evaluation results, raw performance statistics, and consolidated comparison tables for MMRotate models evaluated on DOTA datasets.
 
----
+______________________________________________________________________
 
 ## Directory Structure
 
@@ -13,7 +13,7 @@ itlab/benchmarks/
 └── README.md                # Benchmark storage documentation
 ```
 
----
+______________________________________________________________________
 
 ## Workflow Integration
 

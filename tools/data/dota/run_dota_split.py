@@ -43,9 +43,8 @@ def parse_args():
         nargs='+',
         choices=['ss', 'ms', 'all'],
         default=['ss', 'ms'],
-        help=
-        'Scale mode(s): single-scale (ss) or multi-scale (ms) (default: ss ms)'
-    )
+        help='Scale mode(s): single-scale (ss) or multi-scale (ms) '
+        '(default: ss ms)')
     parser.add_argument(
         '--nproc',
         type=int,
@@ -128,8 +127,8 @@ def run_split_command(config, version, split, scale, overwrite):
             shutil.rmtree(save_dir)
         else:
             logger.info(
-                f"[-] Skipping {version} | {split} | {scale.upper()} -> Directory '{save_dir}' exists (use --overwrite)."
-            )
+                f'[-] Skipping {version} | {split} | {scale.upper()} -> '
+                f"Directory '{save_dir}' exists (use --overwrite).")
             return
 
     logger.info(
@@ -140,7 +139,8 @@ def run_split_command(config, version, split, scale, overwrite):
         json.dump(config, tmp_file, indent=2)
         tmp_file.flush()
 
-        cmd = f'python tools/data/dota/split/img_split.py --base-json {tmp_file.name}'
+        cmd = (f'python tools/data/dota/split/img_split.py '
+               f'--base-json {tmp_file.name}')
 
         process = subprocess.Popen(
             cmd,

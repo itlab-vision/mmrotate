@@ -121,7 +121,8 @@ def measure_inference_speed(cfg, checkpoint, max_processed, log_interval,
     pure_inf_time = 0
     fps = 0
 
-    # benchmark with at least `max_processed` images (default 2000) and take the average
+    # benchmark with at least `max_processed` images (default 2000)
+    # and take the average
     total_processed = 0
     batch_samples = -1
     for i, data in enumerate(data_loader):

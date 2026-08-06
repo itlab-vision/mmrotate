@@ -29,8 +29,9 @@ class RotatedBBoxHead(BaseModule):
             class agnostic.
         reg_decoded_bbox (bool, optional): If True, regression branch use
             decoded bbox to compute loss.
-        gaucho_encoding (bool): If true, regress gaussian bounding boxes using Gaussian Cholesky encoding.
-            reg_decoded_bbox must also be set to true. Default: False
+        gaucho_encoding (bool): If true, regress gaussian bounding boxes using
+            Gaussian Cholesky encoding. reg_decoded_bbox must also be set to
+            true. Default: False
         reg_predictor_cfg (dict, optional): Config of regression predictor.
         cls_predictor_cfg (dict, optional): Config of classification predictor.
         loss_cls (dict, optional): Config of classification loss.
@@ -75,8 +76,8 @@ class RotatedBBoxHead(BaseModule):
         self.reg_decoded_bbox = reg_decoded_bbox
         if not reg_decoded_bbox and gaucho_encoding:
             raise ValueError(
-                f'reg_decoded_bbox must be set to true if gaucho_encoding is enabled'
-            )
+                'reg_decoded_bbox must be set to true if gaucho_encoding is '
+                'enabled')
         self.gaucho_encoding = gaucho_encoding
         self.reg_predictor_cfg = reg_predictor_cfg
         self.cls_predictor_cfg = cls_predictor_cfg
@@ -87,8 +88,9 @@ class RotatedBBoxHead(BaseModule):
         self.loss_bbox = build_loss(loss_bbox)
 
         import inspect
-        # Check if the regression loss function expects decoded bounding boxes (e.g., KFLoss).
-        # We store this flag during initialization to avoid overhead during the training loop.
+        # Check if the regression loss function expects decoded bounding boxes
+        # (e.g., KFLoss). We store this flag during initialization to avoid
+        # overhead during the training loop.
         loss_sig = inspect.signature(self.loss_bbox.forward)
         self._loss_takes_decode = 'pred_decode' in loss_sig.parameters
 
@@ -369,7 +371,8 @@ class RotatedBBoxHead(BaseModule):
                         avg_factor=bbox_targets.size(0),
                         reduction_override=reduction_override)
 
-                    # Inject decoded bounding boxes only if the specific loss module requires them
+                    # Inject decoded bounding boxes only if the specific loss
+                    # module requires them
                     if self._loss_takes_decode:
                         loss_kwargs['pred_decode'] = pos_bbox_pred
                         loss_kwargs['targets_decode'] = bbox_targets[

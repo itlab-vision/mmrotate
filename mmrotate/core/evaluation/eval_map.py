@@ -8,14 +8,14 @@ from mmcv.ops import box_iou_rotated
 from mmcv.utils import print_log
 from mmdet.core import average_precision
 from shapely import affinity
-#matplotlib inline
+#  matplotlib inline
 from shapely.geometry.point import Point
 from terminaltables import AsciiTable
 
 
 def convert_obb_to_gbb_egbb(obb):
     x, y, w, h, rad_angle = obb
-    #print(angle)
+    #  print(angle)
     aa2 = w**2 / 12
     bb2 = h**2 / 12
     # Gets diagonal covariance
@@ -23,8 +23,10 @@ def convert_obb_to_gbb_egbb(obb):
     # Gets orientation in radians
     angle = rad_angle * 180 / pi
     # Rotation matrix
-    R1 = np.array([[np.cos(rad_angle), -np.sin(rad_angle)],
-                   [np.sin(rad_angle), np.cos(rad_angle)]])
+    R1 = np.array([
+        [np.cos(rad_angle), -np.sin(rad_angle)],
+        [np.sin(rad_angle), np.cos(rad_angle)],
+    ])
     # Full covariance matrix
     Sig = R1 @ Sig1 @ R1.T
     # Final GBB encoded as [xcenter, ycenter, cov_a, cov_b, cov_c]
@@ -42,7 +44,8 @@ def convert_obb_to_gbb_egbb(obb):
 
 def probiou_mapping(x):
     #
-    #  Applies non-linear mapping to better relate ProbIoU with the corresponing EGBB-based IoU
+    #  Applies non-linear mapping to better relate ProbIoU with the
+    #  corresponding EGBB-based IoU
     #
     a = 0.259743420366354
     return a * x + (1 - a) * x**2
@@ -66,14 +69,15 @@ def probiou(gbb1, gbb2):
     ratio = max(
         1e-16,
         abs(np.linalg.det(C)) /
-        (1e-16 + np.sqrt(abs(np.linalg.det(C1) * np.linalg.det(C2)))))
+        (1e-16 + np.sqrt(abs(np.linalg.det(C1) * np.linalg.det(C2)))),
+    )
     BB2 = 0.5 * np.log(ratio)
     DBB = BB1 + BB2
     # Bhatacharyya coefficient
     BC = np.exp(-DBB)
-    Hel = np.sqrt(1 - BC)
-    #probiou = 1 - Hel
-    adjusted_probiou = probiou_mapping(1 - Hel)
+    hel_val = np.sqrt(1 - BC)
+    #  probiou = 1 - hel_val
+    adjusted_probiou = probiou_mapping(1 - hel_val)
     return adjusted_probiou
 
 
@@ -88,11 +92,12 @@ def iou_ellipse(egbb1, egbb2):
     #
     #  Computes the IoU between two EGBBs
     #
-    # Creates ellipses (multiplies the semi-axes by a large value to reduce approximation errors)
+    # Creates ellipses (multiplies the semi-axes by a large value to reduce
+    # approximation errors)
     factor = 1
     el1 = create_ellipse(egbb1[0:2], factor * egbb1[2:4], egbb1[4])
     el2 = create_ellipse(egbb2[0:2], factor * egbb2[2:4], egbb2[4])
-    #Computes IoU
+    # Computes IoU
     inter = el1.buffer(0).intersection(el2).buffer(0).area
     a1 = el1.area
     a2 = el2.area
@@ -103,8 +108,8 @@ def iou_ellipse(egbb1, egbb2):
 
 
 def probiou_calculate(pred, GT, mode):
-    #print(pred)
-    #print(GT)
+    #  print(pred)
+    #  print(GT)
     GT_gbb, GT_egbb = convert_obb_to_gbb_egbb(GT)
     pred_gbb, pred_egbb = convert_obb_to_gbb_egbb(pred)
 
@@ -114,12 +119,14 @@ def probiou_calculate(pred, GT, mode):
         return probiou(GT_gbb, pred_gbb)
 
 
-def tpfp_default(det_bboxes,
-                 gt_bboxes,
-                 gt_bboxes_ignore=None,
-                 iou_thr=0.5,
-                 area_ranges=None,
-                 opt='iou'):
+def tpfp_default(
+    det_bboxes,
+    gt_bboxes,
+    gt_bboxes_ignore=None,
+    iou_thr=0.5,
+    area_ranges=None,
+    opt='iou',
+):
     """Check if detected bboxes are true positive or false positive.
 
     Args:
@@ -138,9 +145,10 @@ def tpfp_default(det_bboxes,
     """
     # an indicator of ignored gts
     det_bboxes = np.array(det_bboxes)
-    gt_ignore_inds = np.concatenate(
-        (np.zeros(gt_bboxes.shape[0],
-                  dtype=bool), np.ones(gt_bboxes_ignore.shape[0], dtype=bool)))
+    gt_ignore_inds = np.concatenate((
+        np.zeros(gt_bboxes.shape[0], dtype=bool),
+        np.ones(gt_bboxes_ignore.shape[0], dtype=bool),
+    ))
     # stack gt_bboxes and gt_bboxes_ignore for convenience
     gt_bboxes = np.vstack((gt_bboxes, gt_bboxes_ignore))
 
@@ -247,15 +255,17 @@ def get_cls_results(det_results, annotations, class_id):
     return cls_dets, cls_gts, cls_gts_ignore
 
 
-def eval_rbbox_map(det_results,
-                   annotations,
-                   scale_ranges=None,
-                   iou_thr=0.5,
-                   use_07_metric=True,
-                   dataset=None,
-                   logger=None,
-                   nproc=4,
-                   opt='iou'):
+def eval_rbbox_map(
+    det_results,
+    annotations,
+    scale_ranges=None,
+    iou_thr=0.5,
+    use_07_metric=True,
+    dataset=None,
+    logger=None,
+    nproc=4,
+    opt='iou',
+):
     """Evaluate mAP of a rotated dataset.
 
     Args:
@@ -308,10 +318,15 @@ def eval_rbbox_map(det_results,
 
         tpfp = pool.starmap(
             tpfp_default,
-            zip(cls_dets, cls_gts, cls_gts_ignore,
+            zip(
+                cls_dets,
+                cls_gts,
+                cls_gts_ignore,
                 [iou_thr for _ in range(num_imgs)],
-                [area_ranges
-                 for _ in range(num_imgs)], [opt] * len(range(num_imgs))))
+                [area_ranges for _ in range(num_imgs)],
+                [opt] * len(range(num_imgs)),
+            ),
+        )
 
         tp, fp = tuple(zip(*tpfp))
         # calculate gt number of each scale
@@ -349,7 +364,7 @@ def eval_rbbox_map(det_results,
             'num_dets': num_dets,
             'recall': recalls,
             'precision': precisions,
-            'ap': ap
+            'ap': ap,
         })
     pool.close()
     if scale_ranges is not None:
@@ -432,8 +447,11 @@ def print_map_summary(mean_ap,
         table_data = [header]
         for j in range(num_classes):
             row_data = [
-                label_names[j], num_gts[i, j], results[j]['num_dets'],
-                f'{recalls[i, j]:.3f}', f'{aps[i, j]:.3f}'
+                label_names[j],
+                num_gts[i, j],
+                results[j]['num_dets'],
+                f'{recalls[i, j]:.3f}',
+                f'{aps[i, j]:.3f}',
             ]
             table_data.append(row_data)
         table_data.append(['mAP', '', '', '', f'{mean_ap[i]:.4f}'])

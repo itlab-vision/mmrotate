@@ -71,10 +71,6 @@ DOTA_1_5_ITEMS = [
      '1wTwmxvPVujh1I6mCMreoKURxCUI8f-qv'),
 ]
 
-DOTA_2_0_ITEMS = [
-    # Add entries when links are available
-]
-
 TEMP_DIR = Path('./.dota_tmp_download')
 
 
@@ -98,7 +94,7 @@ def parse_args():
         '--dota-version',
         type=str,
         nargs='+',
-        choices=['1.0', '1.5', '2.0', 'all'],
+        choices=['1.0', '1.5', 'all'],
         default=['1.0'],
         help='version(s) of DOTA dataset to download (default: "1.0")')
     parser.add_argument(
@@ -314,7 +310,7 @@ def main():
 
     selected_versions = set(args.dota_version)
     if 'all' in selected_versions:
-        selected_versions = {'1.0', '1.5', '2.0'}
+        selected_versions = {'1.0', '1.5'}
 
     selected_splits = set(args.split)
     if 'all' in selected_splits:
@@ -348,18 +344,6 @@ def main():
                 version_name='DOTA-v1.5',
                 base_dir=out_base / 'DOTA_1_5',
                 items=DOTA_1_5_ITEMS,
-                selected_splits=selected_splits,
-                manifest_path=manifest_path,
-                overwrite=args.overwrite)
-            all_failed_items.extend(failed)
-            all_skipped_items.extend(skipped)
-
-        if '2.0' in selected_versions:
-            failed, skipped = process_version(
-                gdown_module=gdown_module,
-                version_name='DOTA-v2.0',
-                base_dir=out_base / 'DOTA_2_0',
-                items=DOTA_2_0_ITEMS,
                 selected_splits=selected_splits,
                 manifest_path=manifest_path,
                 overwrite=args.overwrite)

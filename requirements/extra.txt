@@ -1,0 +1,5 @@
+gdown
+mmcls
+python-dotenv
+shapely
+timm==0.6.13

@@ -1,11 +1,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import logging
+import os
 import shutil
 import sys
 import tarfile
 import zipfile
 from pathlib import Path
+
+import gdown
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 logger = logging.getLogger('dota_downloader')
 
@@ -71,6 +80,19 @@ DOTA_1_5_ITEMS = [
      '1wTwmxvPVujh1I6mCMreoKURxCUI8f-qv'),
 ]
 
+DOTA_2_0_ITEMS = [
+    # Training set
+    ('train', 'train/images', 'train/images part_1',
+     os.getenv('DOTA_2_TRAIN_IMG_PART1', '')),
+    ('train', 'train/labelTxt', 'train/labelTxt',
+     os.getenv('DOTA_2_TRAIN_LBL', '')),
+
+    # Validation set
+    ('val', 'val/images', 'val/images part_1', os.getenv('DOTA_2_VAL_IMG',
+                                                         '')),
+    ('val', 'val/labelTxt', 'val/labelTxt', os.getenv('DOTA_2_VAL_LBL', '')),
+]
+
 TEMP_DIR = Path('./.dota_tmp_download')
 
 
@@ -94,7 +116,7 @@ def parse_args():
         '--dota-version',
         type=str,
         nargs='+',
-        choices=['1.0', '1.5', 'all'],
+        choices=['1.0', '1.5', '2.0', 'all'],
         default=['1.0'],
         help='version(s) of DOTA dataset to download (default: "1.0")')
     parser.add_argument(
@@ -119,18 +141,6 @@ def parse_args():
     return args
 
 
-def check_gdown():
-    """Ensure gdown library is installed."""
-    try:
-        import gdown
-        return gdown
-    except ImportError:
-        logger.error(
-            'ERROR: "gdown" package is missing. Please install it via: pip '
-            'install gdown')
-        sys.exit(1)
-
-
 def load_manifest(manifest_path: Path) -> set:
     """Load set of already processed entries from manifest file."""
     if not manifest_path.exists():
@@ -147,10 +157,10 @@ def mark_as_downloaded(manifest_path: Path, manifest_key: str):
         f.write(f'{manifest_key}\n')
 
 
-def download_file(gdown_module, file_id: str, output_path: Path):
+def download_file(file_id: str, output_path: Path):
     """Download a file from Google Drive using gdown API."""
     url = f'https://drive.google.com/uc?id={file_id}'
-    gdown_module.download(url, str(output_path), quiet=False)
+    gdown.download(url, str(output_path), quiet=False)
 
 
 def extract_and_place(archive_path: Path, target_dir: Path):
@@ -201,8 +211,7 @@ def extract_and_place(archive_path: Path, target_dir: Path):
     shutil.rmtree(extract_tmp)
 
 
-def process_version(gdown_module,
-                    version_name: str,
+def process_version(version_name: str,
                     base_dir: Path,
                     items: list,
                     selected_splits: set,
@@ -250,7 +259,7 @@ def process_version(gdown_module,
                     f'({display_name})...')
 
         try:
-            download_file(gdown_module, file_id, temp_archive)
+            download_file(file_id, temp_archive)
             extract_and_place(temp_archive, full_target_dir)
             mark_as_downloaded(manifest_path, manifest_key)
         except Exception:
@@ -310,7 +319,7 @@ def main():
 
     selected_versions = set(args.dota_version)
     if 'all' in selected_versions:
-        selected_versions = {'1.0', '1.5'}
+        selected_versions = {'1.0', '1.5', '2.0'}
 
     selected_splits = set(args.split)
     if 'all' in selected_splits:
@@ -319,36 +328,35 @@ def main():
     out_base = Path(args.out_dir)
     manifest_path = out_base / '.downloaded_manifest.txt'
 
-    gdown_module = check_gdown()
     TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
     all_failed_items = []
     all_skipped_items = []
 
-    try:
-        if '1.0' in selected_versions:
-            failed, skipped = process_version(
-                gdown_module=gdown_module,
-                version_name='DOTA-v1.0',
-                base_dir=out_base / 'DOTA_1_0',
-                items=DOTA_1_0_ITEMS,
-                selected_splits=selected_splits,
-                manifest_path=manifest_path,
-                overwrite=args.overwrite)
-            all_failed_items.extend(failed)
-            all_skipped_items.extend(skipped)
+    dataset_configs = {
+        '1.0': ('DOTA-v1.0', 'DOTA_1_0', DOTA_1_0_ITEMS),
+        '1.5': ('DOTA-v1.5', 'DOTA_1_5', DOTA_1_5_ITEMS),
+        '2.0': ('DOTA-v2.0', 'DOTA_2_0', DOTA_2_0_ITEMS),
+    }
 
-        if '1.5' in selected_versions:
-            failed, skipped = process_version(
-                gdown_module=gdown_module,
-                version_name='DOTA-v1.5',
-                base_dir=out_base / 'DOTA_1_5',
-                items=DOTA_1_5_ITEMS,
-                selected_splits=selected_splits,
-                manifest_path=manifest_path,
-                overwrite=args.overwrite)
-            all_failed_items.extend(failed)
-            all_skipped_items.extend(skipped)
+    try:
+        for version in selected_versions:
+            if version in dataset_configs:
+                ver_name, folder_name, items = dataset_configs[version]
+
+                failed, skipped = process_version(
+                    version_name=ver_name,
+                    base_dir=out_base / folder_name,
+                    items=items,
+                    selected_splits=selected_splits,
+                    manifest_path=manifest_path,
+                    overwrite=args.overwrite)
+
+                all_failed_items.extend(failed)
+                all_skipped_items.extend(skipped)
+            else:
+                logger.error(
+                    f"ERROR: Unknown dataset version '{version}' requested.")
     finally:
         if TEMP_DIR.exists():
             shutil.rmtree(TEMP_DIR)

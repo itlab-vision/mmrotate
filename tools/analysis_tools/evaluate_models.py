@@ -17,7 +17,7 @@ logger = logging.getLogger('evaluator')
 DATASET_TYPE = {
     '1.0': 'DOTADataset',
     '1.5': 'DOTAv15Dataset',
-    # Add '2.0'
+    '2.0': 'DOTAv2Dataset',
 }
 
 

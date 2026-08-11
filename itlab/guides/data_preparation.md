@@ -8,14 +8,6 @@ ______________________________________________________________________
 
 To simplify dataset retrieval from Google Drive, use the custom automation script `./tools/data/dota/download_dota.py`.
 
-### Prerequisites
-
-Ensure `gdown` is installed:
-
-```bash
-pip install gdown
-```
-
 ### Key Arguments
 
 - `--dota-version`: DOTA version(s) to download (`1.0`, `1.5`, `2.0`, or `all`). Default: `1.0`.
@@ -49,6 +41,30 @@ Overwrite existing downloads:
 ```bash
 python ./tools/data/dota/download_dota.py --dota-version all --split all --overwrite
 ```
+
+### Specifics for Downloading DOTA-v2.0
+
+Automated downloading for DOTA-v2.0 requires custom Google Drive IDs. These IDs must be configured in a `.env` file using the provided [`.env.example`](../../tools/data/dota/.env.template) template.
+
+If custom links are unavailable, the dataset must be downloaded manually and organized according to the following directory structure:
+
+```
+./data
+└── DOTA_2_0
+    ├── train
+    │   ├── images
+    │   └── labelTxt
+    └── val
+        ├── images
+        └── labelTxt
+```
+
+**Official Resource:** [DOTA Dataset Official Website](https://captain-whu.github.io/DOTA/dataset.html)
+
+**Alternative Mirrors:**
+
+- **Original Images:** [Dataset Ninja](https://datasetninja.com/dota#introduction).
+- **Original Labels (OBB format):** [Ultralytics Assets Release](https://github.com/ultralytics/assets/releases/download/v0.0.0/DOTAv2.zip).
 
 ______________________________________________________________________
 

@@ -11,7 +11,7 @@ ______________________________________________________________________
 Before running code, configure your GPU server environment:
 
 - Read **[environment_setup.md](environment_setup.md)**.
-- Create the `openmmlab` Conda environment (Python 3.8, PyTorch 1.8.0, CUDA 11.1/10.2).
+- Create the `openmmlab` Conda environment (Python 3.8, PyTorch 1.8.0, CUDA 11.1).
 - Install OpenMMLab packages (`mmcv-full`, `mmdet`, `mmcls`) and install MMRotate in editable mode.
 - Apply the server-specific `opencv-python-headless` fix and verify installation via PyTorch and demo scripts.
 

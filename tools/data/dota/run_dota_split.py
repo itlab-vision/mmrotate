@@ -78,8 +78,6 @@ def generate_split_config(version, split, scale, nproc):
             f'data/DOTA_{v_str}/train/images/',
             f'data/DOTA_{v_str}/val/images/'
         ]
-        # Note: Horizontal bounding box (ann_hbb_dir) annotations are currently
-        # not processed for the trainval split.
         config['ann_dirs'] = [
             f'data/DOTA_{v_str}/train/labelTxt/',
             f'data/DOTA_{v_str}/val/labelTxt/'
@@ -89,7 +87,6 @@ def generate_split_config(version, split, scale, nproc):
 
         if split != 'test':
             config['ann_dirs'] = [f'data/DOTA_{v_str}/{split}/labelTxt/']
-            config['ann_hbb_dir'] = f'data/DOTA_{v_str}/{split}/labelTxtHbb/'
 
     if scale == 'ss':
         config['gaps'] = [200]

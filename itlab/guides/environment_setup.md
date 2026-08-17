@@ -72,7 +72,7 @@ pip install opencv-python-headless
 
 ______________________________________________________________________
 
-## 3. Verification
+## 3. Verification (optional)
 
 ### Verification Step 1: Check PyTorch CUDA Setup
 

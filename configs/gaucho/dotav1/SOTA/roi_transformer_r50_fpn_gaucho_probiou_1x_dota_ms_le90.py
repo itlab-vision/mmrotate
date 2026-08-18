@@ -124,8 +124,7 @@ model = dict(
                 roi_feat_size=7,
                 num_classes=num_classes,
                 bbox_coder=dict(
-                    type=coder,
-                    horizontal=True,
+                    type='DeltaXYWHAHBBoxCoder',
                     angle_range=angle_version,
                     norm_factor=2,
                     edge_swap=True,
@@ -136,9 +135,8 @@ model = dict(
                     type='CrossEntropyLoss',
                     use_sigmoid=False,
                     loss_weight=1.0),
-                gaucho_encoding=use_gaucho,
-                reg_decoded_bbox=reg_decoded_bbox,
-                loss_bbox=gaussian_loss),
+                loss_bbox=dict(type='SmoothL1Loss', beta=1.0,
+                               loss_weight=1.0)),
             dict(
                 type='RotatedShared2FCBBoxHead',
                 in_channels=256,

@@ -14,4 +14,4 @@ conda activate openmmlab
 
 cd ~/mmrotate
 
-python tools/train.py $MODEL_CONFIG
+python tools/train.py $MODEL_CONFIG --auto-resume

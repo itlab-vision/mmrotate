@@ -31,8 +31,12 @@ ______________________________________________________________________
 To launch model training directly in an interactive GPU session or node:
 
 ```bash
-python tools/train.py configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py
+python tools/train.py configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py --auto-resume
 ```
+
+The `--auto-resume` flag automatically resumes training from the latest completed epoch.
+The script first checks for the `latest.pth` file; if not found, it parses all available `epoch_*.pth` files and loads the weights from the highest epoch number.
+If no saved weights are found (e.g., during an initial run), training starts from the first epoch.
 
 ### Slurm Job Submission
 
@@ -41,6 +45,8 @@ To submit model training as a non-interactive background batch job on the ITLab 
 ```bash
 sbatch tools/train_model.slurm configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py
 ```
+
+***Note:** The `--auto-resume` flag is applied by default within this script.*
 
 ______________________________________________________________________
 

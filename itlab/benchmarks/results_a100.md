@@ -108,7 +108,7 @@ To clarify the exact setups and metrics used for the models in the benchmark, th
 - **Rotation (Augmentation):** Refers to the data augmentation applied dynamically during the training pipeline.
   - `-` denotes **no rotation augmentation**.
   - `RR` denotes **Random Rotation**. When enabled, both the images and their corresponding bounding box coordinates are randomly rotated by arbitrary angles (e.g., uniformly between $\[0, 360)$ degrees) on the fly before being fed into the network. This vastly improves the model's rotation invariance.
-- **Angle (Bounding Box Representation):** Oriented bounding boxes (OBB) can be mathematically parameterized in several ways. For a detailed explanation of the angle definitions (e.g., `oc`, `le90`, `le135`) expected by the specific model's detection head, please refer to the [Definition of Rotated Box](../docs/en/intro.md#definition-of-rotated-box) section in documentation.
+- **Angle (Bounding Box Representation):** Oriented bounding boxes (OBB) can be mathematically parameterized in several ways. For a detailed explanation of the angle definitions (e.g., `oc`, `le90`, `le135`) expected by the specific model's detection head, please refer to the [Definition of Rotated Box](../../docs/en/intro.md#definition-of-rotated-box) section in documentation.
 
 ### 4. Benchmark Results
 

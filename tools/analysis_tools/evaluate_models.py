@@ -118,13 +118,11 @@ def check_directories(version, split):
     dirs = {
         'ss': {
             'img': f'data/split_ss_dota_{v_str}/{split}/images',
-            'ann': f'data/split_ss_dota_{v_str}/{split}/annfiles',
-            'ann_hbb': f'data/split_ss_dota_{v_str}/{split}/annfiles_hbb'
+            'ann': f'data/split_ss_dota_{v_str}/{split}/annfiles'
         },
         'ms': {
             'img': f'data/split_ms_dota_{v_str}/{split}/images',
-            'ann': f'data/split_ms_dota_{v_str}/{split}/annfiles',
-            'ann_hbb': f'data/split_ms_dota_{v_str}/{split}/annfiles_hbb'
+            'ann': f'data/split_ms_dota_{v_str}/{split}/annfiles'
         }
     }
 
@@ -297,8 +295,7 @@ def prepare_model_paths(model_entry, data_dirs):
     scale = 'ms' if '_ms_' in name else 'ss'
     rotation = 'rr' if '_rr_' in name else 'none'
     img_prefix = data_dirs[scale]['img']
-    ann_file = data_dirs[scale]['ann_hbb'] if '_hbb_' in name else data_dirs[
-        scale]['ann']
+    ann_file = data_dirs[scale]['ann']
     checkpoint_path = os.path.join('checkpoints',
                                    os.path.basename(weights_url))
     angle = name.rsplit('_', 1)[-1]

@@ -34,16 +34,12 @@ DOTA_1_0_ITEMS = [
      '1pEmwJtugIWhiwgBqOtplNUtTG2T454zn'),
     ('train', 'train/labelTxt', 'train/labelTxt',
      '1I-faCP-DOxf6mxcjUTc8mYVPqUgSQxx6'),
-    ('train', 'train/labelTxtHbb', 'train/labelTxtHbb',
-     '1sS9hveKtYAiTsGVxC4msF5qJjhn3wYpY'),
 
     # Validation set
     ('val', 'val/images', 'val/images part_1',
      '1uCCCFhFQOJLfjBpcL5MC0DHJ9lgOaXWP'),
     ('val', 'val/labelTxt', 'val/labelTxt',
      '1uFwxA4B7H8zcI1oD11bj0U8z88qroMlG'),
-    ('val', 'val/labelTxtHbb', 'val/labelTxtHbb',
-     '1roMkDBK9753uS5tCmtYlRTyzrObjjJ83'),
 
     # Testing set
     ('test', 'test/images', 'test/images part_1',
@@ -62,16 +58,12 @@ DOTA_1_5_ITEMS = [
      '1pEmwJtugIWhiwgBqOtplNUtTG2T454zn'),
     ('train', 'train/labelTxt', 'train/labelTxt',
      '12uPWoADKggo9HGaqGh2qOmcXXn-zKjeX'),
-    ('train', 'train/labelTxtHbb', 'train/labelTxtHbb',
-     '1-vLCMhIW9CV2cmCPPBbDR9_hdecf5bLb'),
 
     # Validation set
     ('val', 'val/images', 'val/images part_1',
      '1uCCCFhFQOJLfjBpcL5MC0DHJ9lgOaXWP'),
     ('val', 'val/labelTxt', 'val/labelTxt',
      '1FkCSOCy4ieNg1UZj1-Irfw6-Jgqa37cC'),
-    ('val', 'val/labelTxtHbb', 'val/labelTxtHbb',
-     '1XDWNx3FkH9layL8jVUkEHJ_-CY8K4zse'),
 
     # Testing set
     ('test', 'test/images', 'test/images part_1',

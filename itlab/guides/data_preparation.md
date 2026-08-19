@@ -8,6 +8,8 @@ ______________________________________________________________________
 
 To simplify dataset retrieval from Google Drive, use the custom automation script `./tools/data/dota/download_dota.py`.
 
+In addition to downloading and extracting raw dataset archives into `./data/DOTA_<version>`, the script automatically generates an image listing text file (`<split>_set.txt`, e.g., `val_set.txt`, `train_set.txt`) in the root of the dataset version directory (`data/DOTA_1_0/val_set.txt`). This file contains the sorted list of all original `.png` image IDs (without file extension) for the target split and is required for offline evaluation via `DOTA_devkit`.
+
 ### Key Arguments
 
 - `--dota-version`: DOTA version(s) to download (`1.0`, `1.5`, `2.0`, or `all`). Default: `1.0`.

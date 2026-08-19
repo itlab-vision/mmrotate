@@ -136,6 +136,10 @@ ______________________________________________________________________
 
 Use `tools/analysis_tools/evaluate_models.py` to automate multi-model evaluation (mAP and FPS benchmarking) across dataset splits and export JSON log files.
 
+### Evaluation Workflow
+- **Scale-Aware Evaluation:** Multi-Scale (`ms`) models are evaluated on the `ms` dataset split (`data/split_ms_dota_...`), while Single-Scale (`ss`) models are evaluated on the `ss` split (`data/split_ss_dota_...`).
+- **`DOTA_devkit` Integration:** For mAP evaluation, `tools/test.py` runs with `--format-only` to format prediction results into temporary `.txt` files. These formatted files are then processed by the official DOTA evaluation scripts using the original dataset image list (`data/DOTA_<ver>/<split>_set.txt`).
+
 ### Key Arguments
 
 - `--dota-version`: DOTA dataset version (`1.0`, `1.5`, or `2.0`). Default: `1.0`.

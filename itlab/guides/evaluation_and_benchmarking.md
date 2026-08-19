@@ -194,10 +194,10 @@ Evaluate on DOTA v1.5 test split:
 python tools/analysis_tools/evaluate_models.py --dota-version 1.5 --data-split test
 ```
 
-Evaluate specific list of models on a sample dataset split:
+Evaluate specific list of models on a `test` dataset split:
 
 ```bash
-python tools/analysis_tools/evaluate_models.py --data-split sample \
+python tools/analysis_tools/evaluate_models.py --data-split test \
   --models rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90 \
            rotated_atss_hbb_r50_fpn_1x_dota_oc \
            rotated_retinanet_obb_r50_fpn_1x_dota_le90

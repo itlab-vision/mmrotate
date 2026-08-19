@@ -204,7 +204,8 @@ def extract_and_place(archive_path: Path, target_dir: Path):
 
 
 def generate_imageset_file(base_dir: Path, split_name: str):
-    """Generates a text file listing all original image IDs for a dataset split."""
+    """Generates a text file listing all original image IDs for a dataset
+    split."""
     images_dir = base_dir / split_name / 'images'
     if not images_dir.exists():
         return
@@ -219,8 +220,7 @@ def generate_imageset_file(base_dir: Path, split_name: str):
         with open(txt_path, 'w', encoding='utf-8', newline='\n') as f:
             f.write('\n'.join(image_ids) + '\n')
 
-        logger.info(
-            f'Generated {txt_path.name} ({len(image_ids)} images).')
+        logger.info(f'Generated {txt_path.name} ({len(image_ids)} images).')
 
 
 def process_version(version_name: str,

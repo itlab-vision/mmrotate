@@ -94,8 +94,7 @@ def get_imageset_file(version, split):
 
 def get_model_dota_version(name):
     """Determines the DOTA dataset version from the model name based on name
-    keywords.
-    """
+    keywords."""
     if not name:
         return None
 
@@ -357,11 +356,10 @@ def evaluate_mAP(paths, args):
     logger.info('\n[+] Running mAP evaluation...')
 
     submission_dir = os.path.join(
-        args.work_dir,
-        'formatted_results',
+        args.work_dir, 'formatted_results',
         f"{paths['name']}_dota{args.dota_version.replace('.', '_')}_{args.data_split}"
     ).replace('\\', '/')
-    os.makedirs(submission_dir, exist_ok=True)
+    os.removedirs(submission_dir) if os.path.exists(submission_dir) else None
 
     try:
         # Run tools/test.py with --format-only
@@ -384,8 +382,9 @@ def evaluate_mAP(paths, args):
         # Retrieve imagesetfile from original dataset directory
         imagesetfile = get_imageset_file(args.dota_version, args.data_split)
         if not os.path.exists(imagesetfile):
-            err_msg = (f'Imageset file not found at {imagesetfile}. '
-                       'Please ensure the original dataset imageset file exists.')
+            err_msg = (
+                f'Imageset file not found at {imagesetfile}. '
+                'Please ensure the original dataset imageset file exists.')
             logger.info(f'\n[-] {err_msg}')
             return None, err_msg
 
@@ -397,15 +396,15 @@ def evaluate_mAP(paths, args):
 
         eval_script = EVALUATION_SCRIPT[args.dota_version]
 
-        detpath = os.path.join(submission_dir, 'Task1_{:s}.txt').replace('\\', '/')
-        annopath = os.path.join(paths['ann_file'], '{:s}.txt').replace('\\', '/')
+        detpath = os.path.join(submission_dir,
+                               'Task1_{:s}.txt').replace('\\', '/')
+        annopath = os.path.join(paths['ann_file'],
+                                '{:s}.txt').replace('\\', '/')
 
-        cmd_eval = (
-            f'python {eval_script} '
-            f'--detpath "{detpath}" '
-            f'--annopath "{annopath}" '
-            f'--imagesetfile "{imagesetfile}"'
-        )
+        cmd_eval = (f'python {eval_script} '
+                    f'--detpath "{detpath}" '
+                    f'--annopath "{annopath}" '
+                    f'--imagesetfile "{imagesetfile}"')
         success_eval, out_eval, err_eval = run_command(cmd_eval)
 
         if not success_eval:

@@ -2,9 +2,38 @@
 
 This document describes how to download model weights, run local offline evaluation (mAP), compute FPS benchmarks, and execute automated batch evaluations across multiple models using MMRotate tools.
 
+### Important Evaluation Guidelines
+
+- **Scale-Aware Evaluation:** Models trained on a Multi-Scale (`ms`) dataset must be evaluated on the `ms` dataset split (`data/split_ms_dota_...`), while Single-Scale (`ss`) models must be evaluated on the `ss` split (`data/split_ss_dota_...`).
+- **Dataset Version Consistency:** Models must be evaluated on the same dataset version (e.g., DOTA v1.0, v1.5, or v2.0) that they were trained on.
+
 ______________________________________________________________________
 
-## 1. Downloading Pre-trained Model Checkpoints
+## 1. Preparing Dataset Imageset Files
+
+Before performing offline evaluation, you must generate an imageset text file that lists all target image IDs for your dataset version and split (for example, `data/DOTA_1_0/val_set.txt` for the DOTA v1.0 validation split).
+
+These text files are generated automatically when downloading datasets using the download script. For detailed instructions, refer to [1. Dataset Downloading](data_preparation.md#1-dataset-downloading).
+
+Alternatively, you can generate this list manually (example for DOTA v1.0 validation split):
+
+1. Navigate to the validation images directory:
+
+```bash
+cd data/DOTA_1_0/val/images
+```
+
+2. Run the following command to generate the text file:
+
+```bash
+ls *.png | sed 's/\.png//' > ../../val_set.txt
+```
+
+This will create a `val_set.txt` file at `data/DOTA_1_0/val_set.txt` containing only the image IDs (e.g., `P0001`, `P0002`).
+
+______________________________________________________________________
+
+## 2. Downloading Pre-trained Model Checkpoints
 
 To download pre-trained MMRotate checkpoints required for benchmarks:
 
@@ -14,57 +43,52 @@ python tools/analysis_tools/download_dota_weights.py
 
 ______________________________________________________________________
 
-## 2. Offline Evaluation (`tools/test.py`)
+## 3. Offline Evaluation
 
-Offline evaluation computes mean Average Precision (mAP) on local validation or test sets, formats predictions, generates visualization images, and exports detection pickle files for confusion matrix analysis.
+Offline evaluation computes mean Average Precision (mAP) metrics on local validation or test sets. This process consists of two sequential steps: model inference and metric computation.
 
-***Note:** By default, dataset directory paths are defined in the `configs/_base_/datasets/dotav1.py` file or in the corresponding configuration file (which takes precedence over `_base_`). These paths can be overridden via command-line arguments at runtime (see example in [Overriding Dataset Paths at Runtime](#overriding-dataset-paths-at-runtime)).*
+### Step 1: Model Inference (`tools/test.py`)
 
-### Key Arguments
+Run `tools/test.py` with the `--format-only` flag to perform model inference and export rotated bounding box predictions into text files formatted for `DOTA_devkit` evaluation.
+
+***Note:** By default, dataset directory paths are defined in `configs/_base_/datasets/dotav1.py` or in the specific model configuration file. You can override dataset paths, dataloader workers/samples per GPU, and dataset types at runtime using `--cfg-options` as shown below.*
+
+#### Key Arguments (`tools/test.py`)
 
 - `config`: Path to the model configuration Python file.
 - `checkpoint`: Path to the pre-trained model checkpoint file (`.pth`).
-- `--eval`: Evaluation metric(s) to calculate (e.g., `mAP`).
-- `--format-only`: Format prediction results into text files for server submission without computing evaluation metrics.
+- `--format-only`: Format prediction results into text files for DOTA devkit evaluation or server submission without computing standard metrics directly.
 - `--eval-options`: Custom evaluation options dictionary (e.g., `submission_dir=work_dirs/Task1_results`).
 - `--show-dir`: Output directory path to save images with drawn rotated bounding box predictions.
 - `--out`: Output path to dump raw prediction results into a `.pkl` file.
 - `--cfg-options`: Override specific configuration options at runtime (e.g., `data.test.ann_file=...`).
 
-### Basic Local Evaluation Command
-
-```bash
-python -W ignore ./tools/test.py \
-  configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py \
-  checkpoints/rotated_retinanet_obb_r50_fpn_1x_dota_le90-c0097bc4.pth \
-  --eval mAP
-```
-
-### Overriding Dataset Paths at Runtime
-
-You can override dataset paths directly via command line arguments without altering config files:
-
-```bash
-python -W ignore ./tools/test.py \
-  configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py \
-  checkpoints/rotated_retinanet_obb_r50_fpn_1x_dota_le90-c0097bc4.pth \
-  --eval mAP \
-  --cfg-options data.test_dataloader.workers_per_gpu=2 \
-                data.test_dataloader.samples_per_gpu=2 \
-                data.test.ann_file=data/split_ss_dota_1_0/val/annfiles \
-                data.test.img_prefix=data/split_ss_dota_1_0/val/images
-```
-
-### Formatting Predictions for Online Server Submission
-
-To generate submission text files for the official DOTA evaluation server:
+#### Command Example
 
 ```bash
 python -W ignore ./tools/test.py \
   configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py \
   checkpoints/rotated_retinanet_obb_r50_fpn_1x_dota_le90-c0097bc4.pth \
   --format-only \
-  --eval-options submission_dir=work_dirs/Task1_results
+  --eval-options submission_dir=work_dirs/formatted_results/retinanet_dota1_0_val \
+  --cfg-options data.test_dataloader.workers_per_gpu=2 \
+                data.test_dataloader.samples_per_gpu=2 \
+                data.test.ann_file=data/split_ss_dota_1_0/val/annfiles \
+                data.test.img_prefix=data/split_ss_dota_1_0/val/images \
+                data.test.type=DOTADataset
+```
+
+### Step 2: Metric Computation (`dota_evaluation_task1.py`)
+
+Execute the official evaluation script from `DOTA_devkit` to compute mAP statistics by comparing the formatted predictions against ground-truth annotations.
+
+Pass the formatted prediction directory (`--detpath`), ground-truth annotation folder (`--annopath`), and the dataset imageset text file prepared in Section 1 (`--imagesetfile`) to the script (e.g., `dota_evaluation_task1.py` for v1.0, `dota-v1.5_evaluation_task1.py` for v1.5):
+
+```bash
+python 3rdparty/DOTA_devkit/dota_evaluation_task1.py \
+  --detpath "work_dirs/formatted_results/retinanet_dota1_0_val/Task1_{:s}.txt" \
+  --annopath "data/split_ss_dota_1_0/val/annfiles/{:s}.txt" \
+  --imagesetfile "data/DOTA_1_0/val_set.txt"
 ```
 
 ### Visualization of Bounding Boxes
@@ -103,7 +127,7 @@ python tools/analysis_tools/confusion_matrix.py \
 
 ______________________________________________________________________
 
-## 3. FPS Benchmark Utility (`benchmark.py`)
+## 4. FPS Benchmark Utility (`benchmark.py`)
 
 MMRotate provides a distributed benchmark tool to measure single-model inference speed (forward pass + post-processing).
 
@@ -132,7 +156,7 @@ Standard MMRotate benchmark code evaluates with `batch_size = 1` regardless of c
 
 ______________________________________________________________________
 
-## 4. Automated Multi-Model Batch Evaluation (`evaluate_models.py`)
+## 5. Automated Multi-Model Batch Evaluation (`evaluate_models.py`)
 
 Use `tools/analysis_tools/evaluate_models.py` to automate multi-model evaluation (mAP and FPS benchmarking) across dataset splits and export JSON log files.
 
@@ -170,10 +194,10 @@ Evaluate on DOTA v1.5 test split:
 python tools/analysis_tools/evaluate_models.py --dota-version 1.5 --data-split test
 ```
 
-Evaluate specific list of models on a sample dataset split:
+Evaluate specific list of models on a `test` dataset split:
 
 ```bash
-python tools/analysis_tools/evaluate_models.py --data-split sample \
+python tools/analysis_tools/evaluate_models.py --data-split test \
   --models rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90 \
            rotated_atss_hbb_r50_fpn_1x_dota_oc \
            rotated_retinanet_obb_r50_fpn_1x_dota_le90

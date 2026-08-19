@@ -203,6 +203,26 @@ def extract_and_place(archive_path: Path, target_dir: Path):
     shutil.rmtree(extract_tmp)
 
 
+def generate_imageset_file(base_dir: Path, split_name: str):
+    """Generates a text file listing all original image IDs for a dataset
+    split."""
+    images_dir = base_dir / split_name / 'images'
+    if not images_dir.exists():
+        return
+
+    image_ids = sorted([
+        f.name[:-4] for f in images_dir.iterdir()
+        if f.is_file() and f.name.endswith('.png')
+    ])
+
+    if image_ids:
+        txt_path = base_dir / f'{split_name}_set.txt'
+        with open(txt_path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write('\n'.join(image_ids) + '\n')
+
+        logger.info(f'Generated {txt_path.name} ({len(image_ids)} images).')
+
+
 def process_version(version_name: str,
                     base_dir: Path,
                     items: list,
@@ -271,6 +291,9 @@ def process_version(version_name: str,
             if temp_archive.exists():
                 temp_archive.unlink()
 
+    for split in selected_splits:
+        generate_imageset_file(base_dir, split)
+
     return failed_items, skipped_items
 
 
@@ -333,22 +356,18 @@ def main():
 
     try:
         for version in selected_versions:
-            if version in dataset_configs:
-                ver_name, folder_name, items = dataset_configs[version]
+            ver_name, folder_name, items = dataset_configs[version]
 
-                failed, skipped = process_version(
-                    version_name=ver_name,
-                    base_dir=out_base / folder_name,
-                    items=items,
-                    selected_splits=selected_splits,
-                    manifest_path=manifest_path,
-                    overwrite=args.overwrite)
+            failed, skipped = process_version(
+                version_name=ver_name,
+                base_dir=out_base / folder_name,
+                items=items,
+                selected_splits=selected_splits,
+                manifest_path=manifest_path,
+                overwrite=args.overwrite)
 
-                all_failed_items.extend(failed)
-                all_skipped_items.extend(skipped)
-            else:
-                logger.error(
-                    f"ERROR: Unknown dataset version '{version}' requested.")
+            all_failed_items.extend(failed)
+            all_skipped_items.extend(skipped)
     finally:
         if TEMP_DIR.exists():
             shutil.rmtree(TEMP_DIR)

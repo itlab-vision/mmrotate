@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -18,6 +19,12 @@ DATASET_TYPE = {
     '1.0': 'DOTADataset',
     '1.5': 'DOTAv15Dataset',
     '2.0': 'DOTAv2Dataset',
+}
+
+EVALUATION_SCRIPT = {
+    '1.0': '3rdparty/DOTA_devkit/dota_evaluation_task1.py',
+    '1.5': '3rdparty/DOTA_devkit/dota-v1.5_evaluation_task1.py',
+    # '2.0': '3rdparty/DOTA_devkit/dota-v2.0_evaluation_task1.py',
 }
 
 
@@ -76,6 +83,41 @@ def parse_args():
         help='Specific metafile paths to process. Scans configs/ if empty.')
 
     return parser.parse_args()
+
+
+def get_submission_dir(work_dir, name, dota_version, data_split):
+    """Generates the directory path for saving formatted prediction results."""
+    dota_v_str = dota_version.replace('.', '_')
+    res_name = f'{name}_dota{dota_v_str}_{data_split}'
+    return os.path.join(work_dir, 'formatted_results',
+                        res_name).replace('\\', '/')
+
+
+def get_dataset_paths(version, split):
+    """Returns paths to the original dataset imageset text file and annotation
+    directory for a given DOTA version and split."""
+    v_str = version.replace('.', '_')
+    imagesetfile = f'data/DOTA_{v_str}/{split}_set.txt'
+    annopath = f'data/DOTA_{v_str}/{split}/labelTxt/{{:s}}.txt'
+    return imagesetfile, annopath
+
+
+def get_model_dota_version(name):
+    """Determines the DOTA dataset version from the model name based on name
+    keywords."""
+    if not name:
+        return None
+
+    name_lower = name.lower()
+
+    if '_dota15' in name_lower:
+        return '1.5'
+    elif '_dota2' in name_lower:
+        return '2.0'
+    elif '_dota' in name_lower:
+        return '1.0'
+
+    return None
 
 
 def generate_out_prefix(args):
@@ -174,7 +216,7 @@ def check_metafiles(metafiles_args):
     return metafiles
 
 
-def check_checkpoints(metafiles, target_models):
+def check_checkpoints(metafiles, target_models, dota_version):
     """Scans all metafile configurations and verifies local availability of
     required model weights.
 
@@ -205,6 +247,9 @@ def check_checkpoints(metafiles, target_models):
             training_data = meta.get('Training Data', '').lower()
 
             if 'dota' not in training_data and 'dota' not in config.lower():
+                continue
+
+            if get_model_dota_version(name) != dota_version:
                 continue
 
             found_models_count += 1
@@ -280,7 +325,7 @@ def extract_collection_name(data, mf_path):
     return os.path.basename(os.path.dirname(mf_path))
 
 
-def prepare_model_paths(model_entry, data_dirs):
+def prepare_model_paths(model_entry, data_dirs, dota_version):
     """Extracts model metadata and constructs corresponding dataset and
     checkpoint paths."""
     name = model_entry.get('Name', '')
@@ -290,6 +335,9 @@ def prepare_model_paths(model_entry, data_dirs):
     training_data = meta.get('Training Data', '').lower()
 
     if 'dota' not in training_data and 'dota' not in config.lower():
+        return None
+
+    if get_model_dota_version(name) != dota_version:
         return None
 
     scale = 'ms' if '_ms_' in name else 'ss'
@@ -314,22 +362,64 @@ def prepare_model_paths(model_entry, data_dirs):
 
 
 def evaluate_mAP(paths, args):
-    """Executes mAP evaluation for a given model and parses results from
-    output."""
+    """Executes mAP evaluation for a given model and parses results."""
     logger.info('\n[+] Running mAP evaluation...')
-    cmd_map = (
-        f"python -W ignore ./tools/test.py {paths['config']} "
-        f"{paths['checkpoint_path']} --eval mAP "
-        f'--cfg-options data.test_dataloader.workers_per_gpu='
-        f'{args.map_workers_per_gpu} '
-        f'data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} '
-        f"data.test.ann_file={paths['ann_file']} "
-        f"data.test.img_prefix={paths['img_prefix']} "
-        f'data.test.type={DATASET_TYPE[args.dota_version]}')
-    success, out_map, err_msg = run_command(cmd_map)
 
-    if success:
-        map_match = re.search(r"'mAP':\s*([0-9.]+)", out_map)
+    submission_dir = get_submission_dir(args.work_dir, paths['name'],
+                                        args.dota_version, args.data_split)
+    os.removedirs(submission_dir) if os.path.exists(submission_dir) else None
+
+    try:
+        # Run tools/test.py with --format-only
+        cmd_format = (
+            f"python -W ignore ./tools/test.py {paths['config']} "
+            f"{paths['checkpoint_path']} --format-only "
+            f'--eval-options submission_dir={submission_dir} '
+            f'--cfg-options data.test_dataloader.workers_per_gpu='
+            f'{args.map_workers_per_gpu} '
+            f'data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} '
+            f"data.test.ann_file={paths['ann_file']} "
+            f"data.test.img_prefix={paths['img_prefix']} "
+            f'data.test.type={DATASET_TYPE[args.dota_version]}')
+        success_format, out_format, err_format = run_command(cmd_format)
+
+        if not success_format:
+            logger.info(f'\n[-] Test formatting failed: {err_format}')
+            return None, err_format
+
+        imagesetfile, annopath = get_dataset_paths(args.dota_version,
+                                                   args.data_split)
+        if not os.path.exists(imagesetfile):
+            err_msg = (
+                f'Imageset file not found at {imagesetfile}. '
+                'Please ensure the original dataset imageset file exists.')
+            logger.info(f'\n[-] {err_msg}')
+            return None, err_msg
+
+        # Run DOTA devkit evaluation script
+        if args.dota_version not in EVALUATION_SCRIPT:
+            err_msg = (f'Evaluation script for DOTA version '
+                       f'{args.dota_version} is not configured.')
+            logger.info(f'\n[-] {err_msg}')
+            return None, err_msg
+
+        eval_script = EVALUATION_SCRIPT[args.dota_version]
+
+        detpath = os.path.join(submission_dir,
+                               'Task1_{:s}.txt').replace('\\', '/')
+
+        cmd_eval = (f'python {eval_script} '
+                    f'--detpath "{detpath}" '
+                    f'--annopath "{annopath}" '
+                    f'--imagesetfile "{imagesetfile}"')
+        success_eval, out_eval, err_eval = run_command(cmd_eval)
+
+        if not success_eval:
+            logger.info(f'\n[-] DOTA devkit evaluation failed: {err_eval}')
+            return None, err_eval
+
+        # Extract mAP metric from output
+        map_match = re.search(r'^map:\s*([0-9.]+)', out_eval, re.MULTILINE)
         if map_match:
             raw_map = float(map_match.group(1))
             if raw_map <= 1.0:
@@ -340,9 +430,9 @@ def evaluate_mAP(paths, args):
         else:
             logger.info('\n[-] Failed to extract mAP metric from output.')
             return None, 'Regex match failed. Output might be malformed.'
-    else:
-        logger.info(f'\n[-] mAP evaluation failed: {err_msg}')
-        return None, err_msg
+    finally:
+        if os.path.exists(submission_dir):
+            shutil.rmtree(submission_dir, ignore_errors=True)
 
 
 def evaluate_benchmark(paths, args):
@@ -384,7 +474,8 @@ def process_model(model_entry, data_dirs, collection_name, args, errors_db):
     if args.models and name not in args.models:
         return None
 
-    paths = prepare_model_paths(model_entry, data_dirs)
+    paths = prepare_model_paths(
+        model_entry, data_dirs, dota_version=args.dota_version)
     if not paths:
         return None
 
@@ -456,7 +547,7 @@ def main():
 
     data_dirs = check_directories(args.dota_version, args.data_split)
     metafiles = check_metafiles(args.metafiles)
-    check_checkpoints(metafiles, args.models)
+    check_checkpoints(metafiles, args.models, args.dota_version)
 
     results_db = {}
     errors_db = {}

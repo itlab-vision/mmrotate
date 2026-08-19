@@ -1,0 +1,3 @@
+[submodule "3rdparty/DOTA_devkit"]
+	path = 3rdparty/DOTA_devkit
+	url = https://github.com/itlab-vision/DOTA_devkit.git

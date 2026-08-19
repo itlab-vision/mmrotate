@@ -85,11 +85,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_imageset_file(version, split):
-    """Returns path to the original dataset imageset text file for a given DOTA
-    version and split."""
+def get_dataset_paths(version, split):
+    """Returns paths to the original dataset imageset text file and annotation
+    directory for a given DOTA version and split."""
     v_str = version.replace('.', '_')
-    return f'data/DOTA_{v_str}/{split}_set.txt'
+    imagesetfile = f'data/DOTA_{v_str}/{split}_set.txt'
+    annopath = f'data/DOTA_{v_str}/{split}/labelTxt/{{:s}}.txt'
+    return imagesetfile, annopath
 
 
 def get_model_dota_version(name):
@@ -379,8 +381,7 @@ def evaluate_mAP(paths, args):
             logger.info(f'\n[-] Test formatting failed: {err_format}')
             return None, err_format
 
-        # Retrieve imagesetfile from original dataset directory
-        imagesetfile = get_imageset_file(args.dota_version, args.data_split)
+        imagesetfile, annopath = get_dataset_paths(args.dota_version, args.data_split)
         if not os.path.exists(imagesetfile):
             err_msg = (
                 f'Imageset file not found at {imagesetfile}. '
@@ -398,8 +399,6 @@ def evaluate_mAP(paths, args):
 
         detpath = os.path.join(submission_dir,
                                'Task1_{:s}.txt').replace('\\', '/')
-        annopath = os.path.join(paths['ann_file'],
-                                '{:s}.txt').replace('\\', '/')
 
         cmd_eval = (f'python {eval_script} '
                     f'--detpath "{detpath}" '

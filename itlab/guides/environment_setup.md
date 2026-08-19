@@ -52,8 +52,11 @@ ______________________________________________________________________
 Clone the repository and install MMRotate in editable mode along with required dependencies:
 
 ```bash
-git clone https://github.com/itlab-vision/mmrotate.git
+git clone --recursive https://github.com/itlab-vision/mmrotate.git
 cd mmrotate
+```
+
+```bash
 pip install -r requirements/build.txt
 pip install -v -e .
 pip install -r requirements/extra.txt
@@ -68,6 +71,27 @@ Headless GPU servers require `opencv-python-headless` to avoid GUI/display depen
 ```bash
 pip uninstall opencv-python opencv-contrib-python -y
 pip install opencv-python-headless
+```
+
+______________________________________________________________________
+
+### Step 6: DOTA Devkit C++ Extension Setup
+
+To evaluate DOTA dataset metrics, install `swig` and build the C++ `polyiou` extension:
+
+```bash
+# Option A: Install via pip (recommended for servers without sudo/root access)
+pip install swig
+
+# Option B: Install via apt-get (requires sudo)
+# sudo apt-get install swig
+```
+
+```bash
+cd 3rdparty/DOTA_devkit
+swig -c++ -python polyiou.i
+python setup.py build_ext --inplace
+cd ../..
 ```
 
 ______________________________________________________________________

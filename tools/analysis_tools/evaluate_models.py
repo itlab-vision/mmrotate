@@ -92,6 +92,25 @@ def get_imageset_file(version, split):
     return f'data/DOTA_{v_str}/{split}_set.txt'
 
 
+def get_model_dota_version(name):
+    """Determines the DOTA dataset version from the model name based on name
+    keywords.
+    """
+    if not name:
+        return None
+
+    name_lower = name.lower()
+
+    if '_dota15' in name_lower:
+        return '1.5'
+    elif '_dota2' in name_lower:
+        return '2.0'
+    elif '_dota' in name_lower:
+        return '1.0'
+
+    return None
+
+
 def generate_out_prefix(args):
     """Generates a structured output file path prefix based on CLI arguments
     and current timestamp."""
@@ -188,7 +207,7 @@ def check_metafiles(metafiles_args):
     return metafiles
 
 
-def check_checkpoints(metafiles, target_models):
+def check_checkpoints(metafiles, target_models, dota_version):
     """Scans all metafile configurations and verifies local availability of
     required model weights.
 
@@ -219,6 +238,9 @@ def check_checkpoints(metafiles, target_models):
             training_data = meta.get('Training Data', '').lower()
 
             if 'dota' not in training_data and 'dota' not in config.lower():
+                continue
+
+            if get_model_dota_version(name) != dota_version:
                 continue
 
             found_models_count += 1
@@ -294,7 +316,7 @@ def extract_collection_name(data, mf_path):
     return os.path.basename(os.path.dirname(mf_path))
 
 
-def prepare_model_paths(model_entry, data_dirs):
+def prepare_model_paths(model_entry, data_dirs, dota_version):
     """Extracts model metadata and constructs corresponding dataset and
     checkpoint paths."""
     name = model_entry.get('Name', '')
@@ -304,6 +326,9 @@ def prepare_model_paths(model_entry, data_dirs):
     training_data = meta.get('Training Data', '').lower()
 
     if 'dota' not in training_data and 'dota' not in config.lower():
+        return None
+
+    if get_model_dota_version(name) != dota_version:
         return None
 
     scale = 'ms' if '_ms_' in name else 'ss'
@@ -443,7 +468,8 @@ def process_model(model_entry, data_dirs, collection_name, args, errors_db):
     if args.models and name not in args.models:
         return None
 
-    paths = prepare_model_paths(model_entry, data_dirs)
+    paths = prepare_model_paths(
+        model_entry, data_dirs, dota_version=args.dota_version)
     if not paths:
         return None
 
@@ -515,7 +541,7 @@ def main():
 
     data_dirs = check_directories(args.dota_version, args.data_split)
     metafiles = check_metafiles(args.metafiles)
-    check_checkpoints(metafiles, args.models)
+    check_checkpoints(metafiles, args.models, args.dota_version)
 
     results_db = {}
     errors_db = {}

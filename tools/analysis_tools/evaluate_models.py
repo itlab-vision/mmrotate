@@ -88,9 +88,9 @@ def parse_args():
 def get_submission_dir(work_dir, name, dota_version, data_split):
     """Generates the directory path for saving formatted prediction results."""
     dota_v_str = dota_version.replace('.', '_')
-    res_name = f"{name}_dota{dota_v_str}_{data_split}"
-    return os.path.join(
-        work_dir, 'formatted_results', res_name).replace('\\', '/')
+    res_name = f'{name}_dota{dota_v_str}_{data_split}'
+    return os.path.join(work_dir, 'formatted_results',
+                        res_name).replace('\\', '/')
 
 
 def get_dataset_paths(version, split):
@@ -365,8 +365,8 @@ def evaluate_mAP(paths, args):
     """Executes mAP evaluation for a given model and parses results."""
     logger.info('\n[+] Running mAP evaluation...')
 
-    submission_dir = get_submission_dir(
-        args.work_dir, paths['name'], args.dota_version, args.data_split)
+    submission_dir = get_submission_dir(args.work_dir, paths['name'],
+                                        args.dota_version, args.data_split)
     os.removedirs(submission_dir) if os.path.exists(submission_dir) else None
 
     try:
@@ -387,7 +387,8 @@ def evaluate_mAP(paths, args):
             logger.info(f'\n[-] Test formatting failed: {err_format}')
             return None, err_format
 
-        imagesetfile, annopath = get_dataset_paths(args.dota_version, args.data_split)
+        imagesetfile, annopath = get_dataset_paths(args.dota_version,
+                                                   args.data_split)
         if not os.path.exists(imagesetfile):
             err_msg = (
                 f'Imageset file not found at {imagesetfile}. '

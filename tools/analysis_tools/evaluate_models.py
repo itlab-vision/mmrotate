@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -18,6 +19,12 @@ DATASET_TYPE = {
     '1.0': 'DOTADataset',
     '1.5': 'DOTAv15Dataset',
     '2.0': 'DOTAv2Dataset',
+}
+
+EVALUATION_SCRIPT = {
+    '1.0': '3rdparty/DOTA_devkit/dota_evaluation_task1.py',
+    '1.5': '3rdparty/DOTA_devkit/dota-v1.5_evaluation_task1.py',
+    # '2.0': '3rdparty/DOTA_devkit/dota-v2.0_evaluation_task1.py',
 }
 
 
@@ -76,6 +83,13 @@ def parse_args():
         help='Specific metafile paths to process. Scans configs/ if empty.')
 
     return parser.parse_args()
+
+
+def get_imageset_file(version, split):
+    """Returns path to the original dataset imageset text file for a given DOTA
+    version and split."""
+    v_str = version.replace('.', '_')
+    return f'data/DOTA_{v_str}/{split}_set.txt'
 
 
 def generate_out_prefix(args):
@@ -314,22 +328,67 @@ def prepare_model_paths(model_entry, data_dirs):
 
 
 def evaluate_mAP(paths, args):
-    """Executes mAP evaluation for a given model and parses results from
-    output."""
+    """Executes mAP evaluation for a given model and parses results."""
     logger.info('\n[+] Running mAP evaluation...')
-    cmd_map = (
-        f"python -W ignore ./tools/test.py {paths['config']} "
-        f"{paths['checkpoint_path']} --eval mAP "
-        f'--cfg-options data.test_dataloader.workers_per_gpu='
-        f'{args.map_workers_per_gpu} '
-        f'data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} '
-        f"data.test.ann_file={paths['ann_file']} "
-        f"data.test.img_prefix={paths['img_prefix']} "
-        f'data.test.type={DATASET_TYPE[args.dota_version]}')
-    success, out_map, err_msg = run_command(cmd_map)
 
-    if success:
-        map_match = re.search(r"'mAP':\s*([0-9.]+)", out_map)
+    submission_dir = os.path.join(
+        args.work_dir,
+        'formatted_results',
+        f"{paths['name']}_dota{args.dota_version.replace('.', '_')}_{args.data_split}"
+    ).replace('\\', '/')
+    os.makedirs(submission_dir, exist_ok=True)
+
+    try:
+        # Run tools/test.py with --format-only
+        cmd_format = (
+            f"python -W ignore ./tools/test.py {paths['config']} "
+            f"{paths['checkpoint_path']} --format-only "
+            f'--eval-options submission_dir={submission_dir} '
+            f'--cfg-options data.test_dataloader.workers_per_gpu='
+            f'{args.map_workers_per_gpu} '
+            f'data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} '
+            f"data.test.ann_file={paths['ann_file']} "
+            f"data.test.img_prefix={paths['img_prefix']} "
+            f'data.test.type={DATASET_TYPE[args.dota_version]}')
+        success_format, out_format, err_format = run_command(cmd_format)
+
+        if not success_format:
+            logger.info(f'\n[-] Test formatting failed: {err_format}')
+            return None, err_format
+
+        # Retrieve imagesetfile from original dataset directory
+        imagesetfile = get_imageset_file(args.dota_version, args.data_split)
+        if not os.path.exists(imagesetfile):
+            err_msg = (f'Imageset file not found at {imagesetfile}. '
+                       'Please ensure the original dataset imageset file exists.')
+            logger.info(f'\n[-] {err_msg}')
+            return None, err_msg
+
+        # Run DOTA devkit evaluation script
+        if args.dota_version not in EVALUATION_SCRIPT:
+            err_msg = f'Evaluation script for DOTA version {args.dota_version} is not configured.'
+            logger.info(f'\n[-] {err_msg}')
+            return None, err_msg
+
+        eval_script = EVALUATION_SCRIPT[args.dota_version]
+
+        detpath = os.path.join(submission_dir, 'Task1_{:s}.txt').replace('\\', '/')
+        annopath = os.path.join(paths['ann_file'], '{:s}.txt').replace('\\', '/')
+
+        cmd_eval = (
+            f'python {eval_script} '
+            f'--detpath "{detpath}" '
+            f'--annopath "{annopath}" '
+            f'--imagesetfile "{imagesetfile}"'
+        )
+        success_eval, out_eval, err_eval = run_command(cmd_eval)
+
+        if not success_eval:
+            logger.info(f'\n[-] DOTA devkit evaluation failed: {err_eval}')
+            return None, err_eval
+
+        # Extract mAP metric from output
+        map_match = re.search(r'^map:\s*([0-9.]+)', out_eval, re.MULTILINE)
         if map_match:
             raw_map = float(map_match.group(1))
             if raw_map <= 1.0:
@@ -340,9 +399,9 @@ def evaluate_mAP(paths, args):
         else:
             logger.info('\n[-] Failed to extract mAP metric from output.')
             return None, 'Regex match failed. Output might be malformed.'
-    else:
-        logger.info(f'\n[-] mAP evaluation failed: {err_msg}')
-        return None, err_msg
+    finally:
+        if os.path.exists(submission_dir):
+            shutil.rmtree(submission_dir, ignore_errors=True)
 
 
 def evaluate_benchmark(paths, args):

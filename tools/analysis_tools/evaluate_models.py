@@ -85,6 +85,14 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_submission_dir(work_dir, name, dota_version, data_split):
+    """Generates the directory path for saving formatted prediction results."""
+    dota_v_str = dota_version.replace('.', '_')
+    res_name = f"{name}_dota{dota_v_str}_{data_split}"
+    return os.path.join(
+        work_dir, 'formatted_results', res_name).replace('\\', '/')
+
+
 def get_dataset_paths(version, split):
     """Returns paths to the original dataset imageset text file and annotation
     directory for a given DOTA version and split."""
@@ -357,10 +365,8 @@ def evaluate_mAP(paths, args):
     """Executes mAP evaluation for a given model and parses results."""
     logger.info('\n[+] Running mAP evaluation...')
 
-    submission_dir = os.path.join(
-        args.work_dir, 'formatted_results',
-        f"{paths['name']}_dota{args.dota_version.replace('.', '_')}_{args.data_split}"
-    ).replace('\\', '/')
+    submission_dir = get_submission_dir(
+        args.work_dir, paths['name'], args.dota_version, args.data_split)
     os.removedirs(submission_dir) if os.path.exists(submission_dir) else None
 
     try:
@@ -391,7 +397,8 @@ def evaluate_mAP(paths, args):
 
         # Run DOTA devkit evaluation script
         if args.dota_version not in EVALUATION_SCRIPT:
-            err_msg = f'Evaluation script for DOTA version {args.dota_version} is not configured.'
+            err_msg = (f'Evaluation script for DOTA version '
+                       f'{args.dota_version} is not configured.')
             logger.info(f'\n[-] {err_msg}')
             return None, err_msg
 

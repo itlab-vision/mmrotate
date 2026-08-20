@@ -191,15 +191,15 @@ def probiou_loss(pred, target, fun='log1p', tau=1.0):
     # Refer to https://arxiv.org/abs/2106.06072
 
     xy_diffs = xy_p - xy_t
-    det_p = Sigma_p[:, 0, 0] * Sigma_p[:, 1, 1] - (Sigma_p[:, 0, 1]**2)
-    det_t = Sigma_t[:, 0, 0] * Sigma_t[:, 1, 1] - (Sigma_t[:, 0, 1]**2)
+    det_p = (Sigma_p[:, 0, 0] * Sigma_p[:, 1, 1] - (Sigma_p[:, 0, 1]**2)).clamp(min=1e-7)
+    det_t = (Sigma_t[:, 0, 0] * Sigma_t[:, 1, 1] - (Sigma_t[:, 0, 1]**2)).clamp(min=1e-7)
 
     x = xy_diffs[:, 0]
     y = xy_diffs[:, 1]
     a = Sigma[:, 0, 0]
     b = Sigma[:, 1, 1]
     c = Sigma[:, 0, 1]
-    det = a * b - (c**2)
+    det = (a * b - (c**2)).clamp(min=1e-7)
 
     B1 = 0.125 * ((a * y**2) + (b * x**2) + 2 * (-c * x * y)) / det
     B2 = 0.5 * torch.log(det / (torch.sqrt((det_p * det_t) + 1e-7)))

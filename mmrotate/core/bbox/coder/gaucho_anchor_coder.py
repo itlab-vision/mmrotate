@@ -264,13 +264,13 @@ def delta2bbox(
     pa = rois[:, 4].unsqueeze(1).expand_as(dgamma)
     dx_width = pw * dx
     dy_height = ph * dy
-    np.abs(np.log(wh_ratio_clip))
+    max_ratio = np.abs(np.log(wh_ratio_clip))
 
-    # if add_ctr_clamp:
-    #     raise NotImplemented
-    # else:
-    #     dalpha = dalpha.clamp(min=-max_ratio, max=max_ratio)
-    #     dbeta = dbeta.clamp(min=-max_ratio, max=max_ratio)
+    if add_ctr_clamp:
+        raise NotImplementedError
+    else:
+        dalpha = dalpha.clamp(min=-max_ratio, max=max_ratio)
+        dbeta = dbeta.clamp(min=-max_ratio, max=max_ratio)
 
     # Due to the nature of OBB->GBB conversion, the highest eigenvalue
     # should be the width and the lowest the height

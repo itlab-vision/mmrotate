@@ -76,8 +76,8 @@ def gwd_loss(pred, target, fun='sqrt', tau=2.0):
         dim1=-2, dim2=-1).sum(dim=-1)
 
     _t_tr = (sigma_p.bmm(sigma_t)).diagonal(dim1=-2, dim2=-1).sum(dim=-1)
-    _t_det_sqrt = (sigma_p.det() * sigma_t.det()).clamp(0).sqrt()
-    whr_distance += (-2) * (_t_tr + 2 * _t_det_sqrt).clamp(0).sqrt()
+    _t_det_sqrt = (sigma_p.det() * sigma_t.det()).clamp(min=1e-7).sqrt()
+    whr_distance += (-2) * (_t_tr + 2 * _t_det_sqrt).clamp(min=1e-7).sqrt()
 
     dis = xy_distance + whr_distance
     gwd_dis = dis.clamp(min=1e-6)
@@ -117,8 +117,8 @@ def bcd_loss(pred, target, fun='log1p', tau=1.0):
     sigma_inv = torch.inverse(sigma)
 
     term1 = torch.log(
-        torch.det(sigma) /
-        (torch.sqrt(torch.det(sigma_t.matmul(sigma_p))))).reshape(-1, 1)
+        torch.det(sigma).clamp(min=1e-7) /
+        (torch.sqrt(torch.det(sigma_t.matmul(sigma_p)).clamp(min=1e-7)))).reshape(-1, 1)
     term2 = delta.transpose(-1, -2).matmul(sigma_inv).matmul(delta).squeeze(-1)
     dis = 0.5 * term1 + 0.125 * term2
     bcd_dis = dis.clamp(min=1e-6)
@@ -159,8 +159,8 @@ def kld_loss(pred, target, fun='log1p', tau=1.0):
     term2 = torch.diagonal(
         sigma_t_inv.matmul(sigma_p),
         dim1=-2, dim2=-1).sum(dim=-1, keepdim=True) + \
-        torch.log(torch.det(sigma_t) /
-                  torch.det(sigma_p).clamp(1e-3)).reshape(-1, 1)
+        torch.log(torch.det(sigma_t).clamp(min=1e-7) /
+                  torch.det(sigma_p).clamp(min=1e-7)).reshape(-1, 1)
     dis = term1 + term2 - 2
     kl_dis = dis.clamp(min=1e-6)
 

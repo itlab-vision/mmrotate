@@ -1,0 +1,692 @@
+{
+    "run_config": {
+        "dota_version": "1.0",
+        "data_split": "val",
+        "map_samples_per_gpu": 2,
+        "benchmark_samples_per_gpu": 1,
+        "benchmark_workers_per_gpu": 0,
+        "map_workers_per_gpu": 2,
+        "tasks": "map+benchmark",
+        "work_dir": "work_dirs",
+        "models": [],
+        "metafiles": []
+    },
+    "hardware": {
+        "gpu_name": "NVIDIA A100-PCIE-40GB"
+    },
+    "results": {
+        "s2anet": [
+            {
+                "name": "s2anet_r50_fpn_1x_dota_le135",
+                "config": "configs/s2anet/s2anet_r50_fpn_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/s2anet/s2anet_r50_fpn_1x_dota_le135/s2anet_r50_fpn_1x_dota_le135-5dfcf396.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 82.97,
+                "FPS": 21.7
+            },
+            {
+                "name": "s2anet_r50_fpn_fp16_1x_dota_le135",
+                "config": "configs/s2anet/s2anet_r50_fpn_fp16_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/s2anet/s2anet_r50_fpn_fp16_1x_dota_le135/s2anet_r50_fpn_fp16_1x_dota_le135-5cac515c.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 82.75,
+                "FPS": 21.4
+            }
+        ],
+        "rotated_faster_rcnn": [
+            {
+                "name": "rotated_faster_rcnn_r50_fpn_1x_dota_le90",
+                "config": "configs/rotated_faster_rcnn/rotated_faster_rcnn_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_faster_rcnn/rotated_faster_rcnn_r50_fpn_1x_dota_le90/rotated_faster_rcnn_r50_fpn_1x_dota_le90-0393aa5c.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 83.31,
+                "FPS": 24.0
+            }
+        ],
+        "oriented_rcnn": [
+            {
+                "name": "oriented_rcnn_r50_fpn_fp16_1x_dota_le90",
+                "config": "configs/oriented_rcnn/oriented_rcnn_r50_fpn_fp16_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/oriented_rcnn/oriented_rcnn_r50_fpn_fp16_1x_dota_le90/oriented_rcnn_r50_fpn_fp16_1x_dota_le90-57c88621.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 84.96,
+                "FPS": 22.6
+            },
+            {
+                "name": "oriented_rcnn_r50_fpn_1x_dota_le90",
+                "config": "configs/oriented_rcnn/oriented_rcnn_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/oriented_rcnn/oriented_rcnn_r50_fpn_1x_dota_le90/oriented_rcnn_r50_fpn_1x_dota_le90-6d2b2ce0.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 85.12,
+                "FPS": 23.3
+            }
+        ],
+        "csl": [
+            {
+                "name": "rotated_retinanet_obb_csl_gaussian_r50_fpn_fp16_1x_dota_le90",
+                "config": "configs/csl/rotated_retinanet_obb_csl_gaussian_r50_fpn_fp16_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/csl/rotated_retinanet_obb_csl_gaussian_r50_fpn_fp16_1x_dota_le90/rotated_retinanet_obb_csl_gaussian_r50_fpn_fp16_1x_dota_le90-b4271aed.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 76.89,
+                "FPS": 23.2
+            }
+        ],
+        "oriented_reppoints": [
+            {
+                "name": "oriented_reppoints_r50_fpn_1x_dota_le135",
+                "config": "configs/oriented_reppoints/oriented_reppoints_r50_fpn_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/orientedreppoints/oriented_reppoints_r50_fpn_1x_dota_le135/oriented_reppoints_r50_fpn_1x_dota_le135-ef072de9.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 81.43,
+                "FPS": 24.3
+            },
+            {
+                "name": "oriented_reppoints_r50_fpn_40e_dota_ms_le135",
+                "config": "configs/oriented_reppoints/oriented_reppoints_r50_fpn_40e_dota_ms_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/orientedreppoints/oriented_reppoints_r50_fpn_40e_dota_ms_le135/oriented_reppoints_r50_fpn_40e_dota_ms_le135-bb0323fd.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 84.81,
+                "FPS": 22.7
+            }
+        ],
+        "ConvNeXt": [
+            {
+                "name": "rotated_retinanet_obb_kld_stable_convnext_adamw_fpn_1x_dota_le90",
+                "config": "configs/convnext/rotated_retinanet_obb_kld_stable_convnext_adamw_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/convnext/rotated_retinanet_obb_kld_stable_convnext_adamw_fpn_1x_dota_le90/rotated_retinanet_obb_kld_stable_convnext_adamw_fpn_1x_dota_le90-388184f6.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 83.25,
+                "FPS": 28.1
+            }
+        ],
+        "roi_trans": [
+            {
+                "name": "roi_trans_r50_fpn_fp16_1x_dota_le90",
+                "config": "configs/roi_trans/roi_trans_r50_fpn_fp16_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/roi_trans/roi_trans_r50_fpn_fp16_1x_dota_le90/roi_trans_r50_fpn_fp16_1x_dota_le90-62eb88b1.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 87.07,
+                "FPS": 24.4
+            },
+            {
+                "name": "roi_trans_r50_fpn_1x_dota_le90",
+                "config": "configs/roi_trans/roi_trans_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/roi_trans/roi_trans_r50_fpn_1x_dota_le90/roi_trans_r50_fpn_1x_dota_le90-d1f0b77a.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 86.62,
+                "FPS": 24.5
+            },
+            {
+                "name": "roi_trans_swin_tiny_fpn_1x_dota_le90",
+                "config": "configs/roi_trans/roi_trans_swin_tiny_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/roi_trans/roi_trans_swin_tiny_fpn_1x_dota_le90/roi_trans_swin_tiny_fpn_1x_dota_le90-ddeee9ae.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 89.11,
+                "FPS": 24.5
+            },
+            {
+                "name": "roi_trans_r50_fpn_1x_dota_ms_le90",
+                "config": "configs/roi_trans/roi_trans_r50_fpn_1x_dota_ms_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/roi_trans/roi_trans_r50_fpn_1x_dota_ms_rr_le90/roi_trans_r50_fpn_1x_dota_ms_rr_le90-fa99496f.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 88.11,
+                "FPS": 24.5
+            }
+        ],
+        "rotated_reppoints": [
+            {
+                "name": "rotated_reppoints_r50_fpn_1x_dota_oc",
+                "config": "configs/rotated_reppoints/rotated_reppoints_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_reppoints/rotated_reppoints_r50_fpn_1x_dota_oc/rotated_reppoints_r50_fpn_1x_dota_oc-d38ce217.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 68.78,
+                "FPS": null
+            }
+        ],
+        "redet": [
+            {
+                "name": "redet_re50_refpn_fp16_1x_dota_le90",
+                "config": "configs/redet/redet_re50_refpn_fp16_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/redet/redet_re50_refpn_fp16_1x_dota_le90/redet_re50_refpn_fp16_1x_dota_le90-1e34da2d.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 84.89,
+                "FPS": 15.9
+            },
+            {
+                "name": "redet_re50_refpn_1x_dota_le90",
+                "config": "configs/redet/redet_re50_refpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/redet/redet_re50_fpn_1x_dota_le90/redet_re50_fpn_1x_dota_le90-724ab2da.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 85.49,
+                "FPS": 16.0
+            },
+            {
+                "name": "redet_re50_refpn_1x_dota_ms_rr_le90",
+                "config": "configs/redet/redet_re50_refpn_1x_dota_ms_rr_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/redet/redet_re50_fpn_1x_dota_ms_rr_le90/redet_re50_fpn_1x_dota_ms_rr_le90-fc9217b5.pth",
+                "scale": "ms",
+                "rotation": "rr",
+                "angle": "le90",
+                "mAP": 87.84,
+                "FPS": 16.0
+            }
+        ],
+        "rotated_retinanet": [
+            {
+                "name": "rotated_retinanet_hbb_r50_fpn_1x_dota_oc",
+                "config": "configs/rotated_retinanet/rotated_retinanet_hbb_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_retinanet/rotated_retinanet_hbb_r50_fpn_1x_dota_oc/rotated_retinanet_hbb_r50_fpn_1x_dota_oc-e8a7c7df.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 74.1,
+                "FPS": 24.0
+            },
+            {
+                "name": "rotated_retinanet_obb_r50_fpn_1x_dota_le90",
+                "config": "configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le90/rotated_retinanet_obb_r50_fpn_1x_dota_le90-c0097bc4.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 77.2,
+                "FPS": 24.9
+            },
+            {
+                "name": "rotated_retinanet_obb_r50_fpn_fp16_1x_dota_le90",
+                "config": "configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_fp16_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_retinanet/rotated_retinanet_obb_r50_fpn_fp16_1x_dota_le90/rotated_retinanet_obb_r50_fpn_fp16_1x_dota_le90-01de71b5.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 77.55,
+                "FPS": 24.9
+            },
+            {
+                "name": "rotated_retinanet_obb_r50_fpn_1x_dota_le135",
+                "config": "configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_le135/rotated_retinanet_obb_r50_fpn_1x_dota_le135-e4131166.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 78.03,
+                "FPS": 25.3
+            },
+            {
+                "name": "rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90",
+                "config": "configs/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_retinanet/rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90/rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90-1da1ec9c.pth",
+                "scale": "ms",
+                "rotation": "rr",
+                "angle": "le90",
+                "mAP": 84.17,
+                "FPS": 25.2
+            }
+        ],
+        "FAA": [
+            {
+                "name": "lsk_s_fpn_1x_dota_le90_faa",
+                "config": "configs/faa/lsk_s_fpn_1x_dota_le90_faa.py",
+                "weights_url": "checkpoint/lsk_s_fpn_1x_dota_le90_faa.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faa",
+                "mAP": 86.29,
+                "FPS": 2.5
+            },
+            {
+                "name": "lsk_s_fpn_1x_dota_le90_faahead",
+                "config": "configs/faa/lsk_s_fpn_1x_dota_le90_faahead.py",
+                "weights_url": "checkpoint/lsk_s_fpn_1x_dota_le90_faahead.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faahead",
+                "mAP": 86.52,
+                "FPS": 5.6
+            },
+            {
+                "name": "oriented_rcnn_r50_fpn_1x_dota_le90_faa",
+                "config": "configs/faa/oriented_rcnn_r50_fpn_1x_dota_le90_faa.py",
+                "weights_url": "checkpoint/oriented_rcnn_r50_fpn_1x_dota_le90_faa.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faa",
+                "mAP": 84.75,
+                "FPS": 2.5
+            },
+            {
+                "name": "oriented_rcnn_r50_fpn_1x_dota_le90_faahead",
+                "config": "configs/faa/oriented_rcnn_r50_fpn_1x_dota_le90_faahead.py",
+                "weights_url": "checkpoint/oriented_rcnn_r50_fpn_1x_dota_le90_faahead.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faahead",
+                "mAP": 84.32,
+                "FPS": 5.7
+            },
+            {
+                "name": "strip_rcnn_s_fpn_1x_dota_le90_faa",
+                "config": "configs/faa/strip_rcnn_s_fpn_1x_dota_le90_faa.py",
+                "weights_url": "checkpoint/strip_rcnn_s_fpn_1x_dota_le90_faa.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faa",
+                "mAP": 84.95,
+                "FPS": 2.5
+            },
+            {
+                "name": "strip_rcnn_s_fpn_1x_dota_le90_faahead",
+                "config": "configs/faa/strip_rcnn_s_fpn_1x_dota_le90_faahead.py",
+                "weights_url": "checkpoint/strip_rcnn_s_fpn_1x_dota_le90_faahead.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faahead",
+                "mAP": 85.05,
+                "FPS": 5.6
+            }
+        ],
+        "kfiou": [
+            {
+                "name": "rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le90",
+                "config": "configs/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le90/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le90-03e02f75.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 78.94,
+                "FPS": 23.6
+            },
+            {
+                "name": "rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_oc",
+                "config": "configs/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_oc/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_oc-c00be030.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 79.16,
+                "FPS": 24.4
+            },
+            {
+                "name": "rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135",
+                "config": "configs/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kfiou/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135/rotated_retinanet_hbb_kfiou_r50_fpn_1x_dota_le135-0eaa4156.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 78.46,
+                "FPS": 24.1
+            },
+            {
+                "name": "r3det_kfiou_ln_r50_fpn_1x_dota_oc",
+                "config": "configs/kfiou/r3det_kfiou_ln_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kfiou/r3det_kfiou_ln_r50_fpn_1x_dota_oc/r3det_kfiou_ln_r50_fpn_1x_dota_oc-8e7f049d.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 81.27,
+                "FPS": 19.1
+            }
+        ],
+        "rotated_atss": [
+            {
+                "name": "rotated_atss_hbb_r50_fpn_1x_dota_oc",
+                "config": "configs/rotated_atss/rotated_atss_hbb_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_atss/rotated_atss_hbb_r50_fpn_1x_dota_oc/rotated_atss_hbb_r50_fpn_1x_dota_oc-eaa94033.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 76.83,
+                "FPS": 27.6
+            },
+            {
+                "name": "rotated_atss_obb_r50_fpn_1x_dota_le90",
+                "config": "configs/rotated_atss/rotated_atss_obb_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_atss/rotated_atss_obb_r50_fpn_1x_dota_le90/rotated_atss_obb_r50_fpn_1x_dota_le90-e029ca06.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 80.24,
+                "FPS": 26.8
+            },
+            {
+                "name": "rotated_atss_obb_r50_fpn_1x_dota_le135",
+                "config": "configs/rotated_atss/rotated_atss_obb_r50_fpn_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_atss/rotated_atss_obb_r50_fpn_1x_dota_le135/rotated_atss_obb_r50_fpn_1x_dota_le135-eab7bc12.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 81.82,
+                "FPS": 27.1
+            }
+        ],
+        "g_reppoints": [
+            {
+                "name": "g_reppoints_r50_fpn_1x_dota_le135",
+                "config": "configs/g_reppoints/g_reppoints_r50_fpn_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/g_reppoints/g_reppoints_r50_fpn_1x_dota_le135/g_reppoints_r50_fpn_1x_dota_le135-b840eed7.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": null,
+                "FPS": null
+            }
+        ],
+        "kld": [
+            {
+                "name": "rotated_retinanet_hbb_kld_r50_fpn_1x_dota_oc",
+                "config": "configs/kld/rotated_retinanet_hbb_kld_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kld/rotated_retinanet_hbb_kld_r50_fpn_1x_dota_oc/rotated_retinanet_hbb_kld_r50_fpn_1x_dota_oc-49c1f937.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 78.84,
+                "FPS": 24.1
+            },
+            {
+                "name": "rotated_retinanet_hbb_kld_stable_r50_fpn_1x_dota_oc",
+                "config": "configs/kld/rotated_retinanet_hbb_kld_stable_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kld/rotated_retinanet_hbb_kld_stable_r50_fpn_1x_dota_oc/rotated_retinanet_hbb_kld_stable_r50_fpn_1x_dota_oc-92a76443.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 77.95,
+                "FPS": 24.2
+            },
+            {
+                "name": "rotated_retinanet_obb_kld_stable_r50_fpn_1x_dota_le90",
+                "config": "configs/kld/rotated_retinanet_obb_kld_stable_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kld/rotated_retinanet_obb_kld_stable_r50_fpn_1x_dota_le90/rotated_retinanet_obb_kld_stable_r50_fpn_1x_dota_le90-31193e00.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 78.9,
+                "FPS": 25.0
+            },
+            {
+                "name": "r3det_kld_r50_fpn_1x_dota_oc",
+                "config": "configs/kld/r3det_kld_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kld/r3det_kld_r50_fpn_1x_dota_oc/r3det_kld_r50_fpn_1x_dota_oc-31866226.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 81.27,
+                "FPS": 19.2
+            },
+            {
+                "name": "r3det_kld_stable_r50_fpn_1x_dota_oc",
+                "config": "configs/kld/r3det_kld_stable_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kld/r3det_kld_stable_r50_fpn_1x_dota_oc/r3det_kld_stable_r50_fpn_1x_dota_oc-e011059d.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 81.11,
+                "FPS": 19.3
+            },
+            {
+                "name": "r3det_tiny_kld_r50_fpn_1x_dota_oc",
+                "config": "configs/kld/r3det_tiny_kld_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kld/r3det_tiny_kld_r50_fpn_1x_dota_oc/r3det_tiny_kld_r50_fpn_1x_dota_oc-589e142a.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 81.8,
+                "FPS": 20.8
+            },
+            {
+                "name": "rotated_retinanet_obb_kld_stable_r50_adamw_fpn_1x_dota_le90",
+                "config": "configs/kld/rotated_retinanet_obb_kld_stable_r50_adamw_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/kld/rotated_retinanet_obb_kld_stable_r50_adamw_fpn_1x_dota_le90/rotated_retinanet_obb_kld_stable_r50_adamw_fpn_1x_dota_le90-474d9955.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 80.36,
+                "FPS": 25.3
+            }
+        ],
+        "cfa": [
+            {
+                "name": "cfa_r50_fpn_1x_dota_le135",
+                "config": "configs/cfa/cfa_r50_fpn_1x_dota_le135.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/cfa/cfa_r50_fpn_1x_dota_le135/cfa_r50_fpn_1x_dota_le135-aed1cbc6.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le135",
+                "mAP": 79.26,
+                "FPS": 24.4
+            },
+            {
+                "name": "cfa_r50_fpn_40e_dota_oc",
+                "config": "configs/cfa/cfa_r50_fpn_40e_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/cfa/cfa_r50_fpn_40e_dota_oc/cfa_r50_fpn_40e_dota_oc-2f387232.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 85.78,
+                "FPS": 24.6
+            }
+        ],
+        "sasm": [
+            {
+                "name": "sasm_reppoints_r50_fpn_1x_dota_oc",
+                "config": "configs/sasm_reppoints/sasm_reppoints_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/sasm/sasm_reppoints_r50_fpn_1x_dota_oc/sasm_reppoints_r50_fpn_1x_dota_oc-6d9edded.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 75.87,
+                "FPS": 24.1
+            }
+        ],
+        "rotated_fcos": [
+            {
+                "name": "rotated_fcos_sep_angle_r50_fpn_1x_dota_le90",
+                "config": "configs/rotated_fcos/rotated_fcos_sep_angle_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_fcos/rotated_fcos_sep_angle_r50_fpn_1x_dota_le90/rotated_fcos_sep_angle_r50_fpn_1x_dota_le90-0be71a0c.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 80.73,
+                "FPS": 28.6
+            },
+            {
+                "name": "rotated_fcos_r50_fpn_1x_dota_le90",
+                "config": "configs/rotated_fcos/rotated_fcos_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_fcos/rotated_fcos_r50_fpn_1x_dota_le90/rotated_fcos_r50_fpn_1x_dota_le90-d87568ed.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 80.82,
+                "FPS": 28.7
+            },
+            {
+                "name": "rotated_fcos_csl_gaussian_r50_fpn_1x_dota_le90",
+                "config": "configs/rotated_fcos/rotated_fcos_csl_gaussian_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_fcos/rotated_fcos_csl_gaussian_r50_fpn_1x_dota_le90/rotated_fcos_csl_gaussian_r50_fpn_1x_dota_le90-4e044ad2.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 81.53,
+                "FPS": 28.4
+            },
+            {
+                "name": "rotated_fcos_kld_r50_fpn_1x_dota_le90",
+                "config": "configs/rotated_fcos/rotated_fcos_kld_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/rotated_fcos/rotated_fcos_kld_r50_fpn_1x_dota_le90/rotated_fcos_kld_r50_fpn_1x_dota_le90-ecafdb2b.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 82.01,
+                "FPS": 28.8
+            }
+        ],
+        "GauCho": [
+            {
+                "name": "gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_le90",
+                "config": "configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_le90.py",
+                "weights_url": "checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 87.93,
+                "FPS": 28.6
+            },
+            {
+                "name": "gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90",
+                "config": "configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.py",
+                "weights_url": "checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 88.72,
+                "FPS": 21.7
+            },
+            {
+                "name": "gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90",
+                "config": "configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.py",
+                "weights_url": "checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 89.0,
+                "FPS": 17.0
+            },
+            {
+                "name": "oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_le90",
+                "config": "configs/gaucho/dotav1/SOTA/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_le90.py",
+                "weights_url": "checkpoint/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 86.32,
+                "FPS": 25.3
+            },
+            {
+                "name": "oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90",
+                "config": "configs/gaucho/dotav1/SOTA/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.py",
+                "weights_url": "checkpoint/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 87.77,
+                "FPS": 19.6
+            },
+            {
+                "name": "oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90",
+                "config": "configs/gaucho/dotav1/SOTA/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.py",
+                "weights_url": "checkpoint/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 88.33,
+                "FPS": 15.6
+            },
+            {
+                "name": "roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_le90",
+                "config": "configs/gaucho/dotav1/SOTA/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_le90.py",
+                "weights_url": "checkpoint/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 88.24,
+                "FPS": 24.4
+            },
+            {
+                "name": "roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_r101_le90",
+                "config": "configs/gaucho/dotav1/SOTA/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_r101_le90.py",
+                "weights_url": "checkpoint/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_r101_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 89.11,
+                "FPS": 19.2
+            }
+        ],
+        "gwd": [
+            {
+                "name": "rotated_retinanet_hbb_gwd_r50_fpn_1x_dota_oc",
+                "config": "configs/gwd/rotated_retinanet_hbb_gwd_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/gwd/rotated_retinanet_hbb_gwd_r50_fpn_1x_dota_oc/rotated_retinanet_hbb_gwd_r50_fpn_1x_dota_oc-41fd7805.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 77.69,
+                "FPS": 24.1
+            }
+        ],
+        "gliding_vertex": [
+            {
+                "name": "gliding_vertex_r50_fpn_1x_dota_le90",
+                "config": "configs/gliding_vertex/gliding_vertex_r50_fpn_1x_dota_le90.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/gliding_vertex/gliding_vertex_r50_fpn_1x_dota_le90/gliding_vertex_r50_fpn_1x_dota_le90-12e7423c.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 83.66,
+                "FPS": 26.1
+            }
+        ],
+        "r3det": [
+            {
+                "name": "r3det_r50_fpn_1x_dota_oc",
+                "config": "configs/r3det/r3det_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/r3det/r3det_r50_fpn_1x_dota_oc/r3det_r50_fpn_1x_dota_oc-b1fb045c.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 78.5,
+                "FPS": 19.1
+            },
+            {
+                "name": "r3det_tiny_r50_fpn_1x_dota_oc",
+                "config": "configs/r3det/r3det_tiny_r50_fpn_1x_dota_oc.py",
+                "weights_url": "https://download.openmmlab.com/mmrotate/v0.1.0/r3det/r3det_tiny_r50_fpn_1x_dota_oc/r3det_tiny_r50_fpn_1x_dota_oc-c98a616c.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "oc",
+                "mAP": 78.14,
+                "FPS": 22.7
+            }
+        ]
+    },
+    "errors": {
+        "rotated_reppoints_r50_fpn_1x_dota_oc": {
+            "Benchmark": "Process exited with code 1"
+        },
+        "g_reppoints_r50_fpn_1x_dota_le135": {
+            "mAP": "Process exited with code 1",
+            "Benchmark": "Process exited with code 1"
+        }
+    }
+}

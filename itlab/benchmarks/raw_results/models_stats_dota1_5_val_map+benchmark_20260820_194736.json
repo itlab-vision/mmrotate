@@ -1,0 +1,84 @@
+{
+    "run_config": {
+        "dota_version": "1.5",
+        "data_split": "val",
+        "map_samples_per_gpu": 2,
+        "benchmark_samples_per_gpu": 1,
+        "benchmark_workers_per_gpu": 0,
+        "map_workers_per_gpu": 2,
+        "tasks": "map+benchmark",
+        "work_dir": "work_dirs",
+        "models": [],
+        "metafiles": []
+    },
+    "hardware": {
+        "gpu_name": "NVIDIA A100-PCIE-40GB"
+    },
+    "results": {
+        "FAA": [
+            {
+                "name": "lsk_s_fpn_1x_dota15_le90_faa",
+                "config": "configs/faa/lsk_s_fpn_1x_dota15_le90_faa.py",
+                "weights_url": "checkpoint/lsk_s_fpn_1x_dota15_le90_faa.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faa",
+                "mAP": 79.45,
+                "FPS": 2.5
+            },
+            {
+                "name": "oriented_rcnn_r50_fpn_1x_dota15_le90_faa",
+                "config": "configs/faa/oriented_rcnn_r50_fpn_1x_dota15_le90_faa.py",
+                "weights_url": "checkpoint/oriented_rcnn_r50_fpn_1x_dota15_le90_faa.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faa",
+                "mAP": 78.05,
+                "FPS": 2.5
+            },
+            {
+                "name": "strip_rcnn_s_fpn_1x_dota15_le90_faa",
+                "config": "configs/faa/strip_rcnn_s_fpn_1x_dota15_le90_faa.py",
+                "weights_url": "checkpoint/strip_rcnn_s_fpn_1x_dota15_le90_faa.pth",
+                "scale": "ss",
+                "rotation": "none",
+                "angle": "faa",
+                "mAP": 77.81,
+                "FPS": 2.5
+            }
+        ],
+        "GauCho": [
+            {
+                "name": "gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_le90",
+                "config": "configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_le90.py",
+                "weights_url": "checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 82.98,
+                "FPS": 27.2
+            },
+            {
+                "name": "gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r101_ms_le90",
+                "config": "configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r101_ms_le90.py",
+                "weights_url": "checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r101_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 86.0,
+                "FPS": 21.6
+            },
+            {
+                "name": "gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r152_ms_le90",
+                "config": "configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r152_ms_le90.py",
+                "weights_url": "checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r152_ms_le90.pth",
+                "scale": "ms",
+                "rotation": "none",
+                "angle": "le90",
+                "mAP": 86.45,
+                "FPS": 16.9
+            }
+        ]
+    },
+    "errors": {}
+}

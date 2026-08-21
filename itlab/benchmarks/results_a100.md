@@ -1,7 +1,5 @@
 ## Model Zoo
 
-***Note:** All pre-trained weights for the models evaluated in this benchmark were obtained from the official OpenMMLab resource (`download.openmmlab.com`). These models were originally trained on the DOTA v1.0 dataset.*
-
 - [Rotated RetinaNet-OBB/HBB](https://github.com/itlab-vision/mmrotate/blob/dev-itlab-vision/configs/rotated_retinanet/README.md) (ICCV'2017)
 - [Rotated FasterRCNN-OBB](https://github.com/itlab-vision/mmrotate/blob/dev-itlab-vision/configs/rotated_faster_rcnn/README.md) (TPAMI'2017)
 - [Rotated RepPoints-OBB](https://github.com/itlab-vision/mmrotate/blob/dev-itlab-vision/configs/rotated_reppoints/README.md) (ICCV'2019)
@@ -22,6 +20,12 @@
 - [KFIoU](https://github.com/itlab-vision/mmrotate/blob/dev-itlab-vision/configs/kfiou/README.md) (arXiv)
 - [GauCho](https://github.com/itlab-vision/mmrotate/blob/dev-itlab-vision/configs/gaucho/README.md) (CVPR'2025)
 - [FAA](https://github.com/itlab-vision/mmrotate/blob/dev-itlab-vision/configs/faa/README.md) (CVPR'2026)
+
+## Checkpoints and Training Details
+
+The pre-trained weights for the standard models referenced from the original [model_zoo.md](../../docs/en/model_zoo.md) were obtained from the official OpenMMLab resource (`download.openmmlab.com`). These models were originally trained on the DOTA v1.0 dataset.
+
+In contrast, the **GauCho** and **FAA** models were trained on the corresponding datasets directly using the `mmrotate` framework tools.
 
 ## Benchmark
 

@@ -40,7 +40,7 @@ If no saved weights are found (e.g., during an initial run), training starts fro
 
 ### Slurm Job Submission
 
-To submit model training as a non-interactive background batch job on the ITLab Slurm cluster:
+To submit model training as a non-interactive background batch job on the Slurm cluster:
 
 ```bash
 sbatch tools/train_model.slurm configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py

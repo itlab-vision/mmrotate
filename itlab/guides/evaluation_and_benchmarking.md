@@ -194,13 +194,21 @@ Evaluate on DOTA v1.5 test split:
 python tools/analysis_tools/evaluate_models.py --dota-version 1.5 --data-split test
 ```
 
-Evaluate specific list of models on a `test` dataset split:
+Evaluate specific list of models:
 
 ```bash
-python tools/analysis_tools/evaluate_models.py --data-split test \
+python tools/analysis_tools/evaluate_models.py \
   --models rotated_retinanet_obb_r50_fpn_1x_dota_ms_rr_le90 \
            rotated_atss_hbb_r50_fpn_1x_dota_oc \
            rotated_retinanet_obb_r50_fpn_1x_dota_le90
+```
+
+### Slurm Job Submission
+
+To submit multi-model evaluation as a non-interactive background batch job on the Slurm cluster:
+
+```bash
+sbatch tools/evaluate_models.slurm 1.0
 ```
 
 ### Converting JSON Results into Summary Tables

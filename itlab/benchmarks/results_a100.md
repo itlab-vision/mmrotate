@@ -25,7 +25,7 @@
 
 The pre-trained weights for the standard models referenced from the original [model_zoo.md](../../docs/en/model_zoo.md) were obtained from the official OpenMMLab resource (`download.openmmlab.com`). These models were originally trained on the DOTA v1.0 dataset.
 
-In contrast, the **GauCho** and **FAA** models were trained on the corresponding datasets directly using the `mmrotate` framework tools.
+In contrast, the **GauCho** and **FAA** models were trained on the corresponding datasets directly using the `mmrotate` framework tools. All models from these families were trained for a total of 12 epochs.
 
 ## Benchmark
 

@@ -25,7 +25,7 @@
 
 The pre-trained weights for the standard models referenced from the original [model_zoo.md](../../docs/en/model_zoo.md) were obtained from the official OpenMMLab resource (`download.openmmlab.com`). These models were originally trained on the DOTA v1.0 dataset.
 
-In contrast, the **GauCho** and **FAA** models were trained on the corresponding datasets directly using the `mmrotate` framework tools.
+In contrast, the **GauCho** and **FAA** models were trained on the corresponding datasets directly using the `mmrotate` framework tools. All models from these families were trained for a total of 12 epochs.
 
 ## Benchmark
 
@@ -76,10 +76,6 @@ The experiments are based on the **DOTA (Dataset for Object Detection in Aerial 
 - **DOTA v1.0:** Contains 2,806 large-scale aerial images with 15 object categories.
 - **DOTA v1.5:** Uses the same images as v1.0 but features updated and refined annotations. It introduces a new class (*container crane*, making it 16 classes in total) and includes annotations for extremely small object instances (less than 10 pixels).
 
-#### Data Split & Evaluation Policy
-
-The DOTA dataset is officially split into `training`, `validation`, and `testing` sets. Because the ground truth annotations for the `testing` set are closed-source and require submission to the official DOTA evaluation server, all local evaluations and FPS benchmarks in this document were strictly performed on the **`validation`** split.
-
 #### Image Cropping Strategies (SS vs. MS)
 
 Due to the massive resolution of aerial imagery, images cannot be fed directly into standard CNNs. Before training and evaluation, the original images are processed into smaller patches (e.g., 1024×1024) with a specific overlap. Two main strategies are used:
@@ -88,6 +84,12 @@ Due to the massive resolution of aerial imagery, images cannot be fed directly i
 - **Multi-Scale (MS):** The original images are first resized to multiple scaling factors (e.g., 0.5, 1.0, 1.5) and then cropped into patches. This provides the model with rich scale invariance during training.
 
 ***Note:** The model's evaluation is strictly performed using the same cropping strategy (SS or MS) that was utilized during its training phase. This is denoted in the `Scale` parameter of the benchmark table.*
+
+#### Data Split & Evaluation Policy
+
+The DOTA dataset is officially split into `training`, `validation`, and `testing` sets. Because the ground truth annotations for the `testing` set are closed-source and require submission to the official DOTA evaluation server, all local evaluations and FPS benchmarks in this document were strictly performed on the **`validation`** split.
+
+Following the initial evaluation on the cropped image patches (described above), the patch-level detections are merged back into the coordinate system of the original, full-resolution images. The final Mean Average Precision (mAP) is subsequently calculated on these merged images utilizing the official evaluation script from the `DOTA_devkit`.
 
 #### Downloads
 

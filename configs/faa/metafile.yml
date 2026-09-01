@@ -13,6 +13,11 @@ Models:
     Config: configs/faa/lsk_s_fpn_1x_dota15_le90_faa.py
     Metadata:
       Training Data: DOTAv1.5
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.5
+        Metrics:
+          Paper mAP: 72.28
     Weights: checkpoint/lsk_s_fpn_1x_dota15_le90_faa.pth
 
   - Name: lsk_s_fpn_1x_dota_le90_faa
@@ -20,6 +25,11 @@ Models:
     Config: configs/faa/lsk_s_fpn_1x_dota_le90_faa.py
     Metadata:
       Training Data: DOTAv1.0
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: 78.49
     Weights: checkpoint/lsk_s_fpn_1x_dota_le90_faa.pth
 
   - Name: lsk_s_fpn_1x_dota_le90_faahead
@@ -27,6 +37,11 @@ Models:
     Config: configs/faa/lsk_s_fpn_1x_dota_le90_faahead.py
     Metadata:
       Training Data: DOTAv1.0
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: -
     Weights: checkpoint/lsk_s_fpn_1x_dota_le90_faahead.pth
 
   - Name: oriented_rcnn_r50_fpn_1x_dota15_le90_faa
@@ -34,6 +49,11 @@ Models:
     Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota15_le90_faa.py
     Metadata:
       Training Data: DOTAv1.5
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.5
+        Metrics:
+          Paper mAP: 67.14
     Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota15_le90_faa.pth
 
   - Name: oriented_rcnn_r50_fpn_1x_dota_le90_faa
@@ -41,6 +61,11 @@ Models:
     Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota_le90_faa.py
     Metadata:
       Training Data: DOTAv1.0
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: 76.55
     Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota_le90_faa.pth
 
   - Name: oriented_rcnn_r50_fpn_1x_dota_le90_faahead
@@ -48,6 +73,11 @@ Models:
     Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota_le90_faahead.py
     Metadata:
       Training Data: DOTAv1.0
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: -
     Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota_le90_faahead.pth
 
   - Name: strip_rcnn_s_fpn_1x_dota15_le90_faa
@@ -55,6 +85,11 @@ Models:
     Config: configs/faa/strip_rcnn_s_fpn_1x_dota15_le90_faa.py
     Metadata:
       Training Data: DOTAv1.5
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.5
+        Metrics:
+          Paper mAP: 71.57
     Weights: checkpoint/strip_rcnn_s_fpn_1x_dota15_le90_faa.pth
 
   - Name: strip_rcnn_s_fpn_1x_dota_le90_faa
@@ -62,6 +97,11 @@ Models:
     Config: configs/faa/strip_rcnn_s_fpn_1x_dota_le90_faa.py
     Metadata:
       Training Data: DOTAv1.0
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: 78.72
     Weights: checkpoint/strip_rcnn_s_fpn_1x_dota_le90_faa.pth
 
   - Name: strip_rcnn_s_fpn_1x_dota_le90_faahead
@@ -69,4 +109,9 @@ Models:
     Config: configs/faa/strip_rcnn_s_fpn_1x_dota_le90_faahead.py
     Metadata:
       Training Data: DOTAv1.0
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: -
     Weights: checkpoint/strip_rcnn_s_fpn_1x_dota_le90_faahead.pth

@@ -161,3 +161,5 @@ optimizer = dict(
     lr=0.0001,  # /8*gpu_number,
     betas=(0.9, 0.999),
     weight_decay=0.05)
+
+runner = dict(type='EpochBasedRunner', max_epochs=16)

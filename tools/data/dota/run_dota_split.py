@@ -29,19 +29,19 @@ def parse_args():
     parser.add_argument(
         '--dota-version',
         nargs='+',
-        choices=['1.0', '1.5', '2.0', 'all'],
+        choices=['1.0', '1.5', '2.0'],
         default=['1.0'],
         help='DOTA dataset version(s) (default: 1.0)')
     parser.add_argument(
         '--data-split',
         nargs='+',
-        choices=['train', 'val', 'test', 'trainval', 'all'],
+        choices=['train', 'val', 'test', 'trainval'],
         default=['val'],
         help='Dataset split(s) to process (default: val)')
     parser.add_argument(
         '--scale',
         nargs='+',
-        choices=['ss', 'ms', 'all'],
+        choices=['ss', 'ms', 'ss-cfa', 'ms-cfa'],
         default=['ss', 'ms'],
         help='Scale mode(s): single-scale (ss) or multi-scale (ms) '
         '(default: ss ms)')
@@ -94,6 +94,12 @@ def generate_split_config(version, split, scale, nproc):
     elif scale == 'ms':
         config['gaps'] = [500]
         config['rates'] = [0.5, 1.0, 1.5]
+    elif scale == 'ss-cfa':
+        config['gaps'] = [200]
+        config['rates'] = [1.0]
+    elif scale == 'ms-cfa':
+        config['gaps'] = [500]
+        config['rates'] = [0.75, 1.0, 1.25]
 
     return config
 
@@ -164,19 +170,13 @@ def main():
     init_logger()
     args = parse_args()
 
-    versions = ['1.0', '1.5', '2.0'
-                ] if 'all' in args.dota_version else args.dota_version
-    splits = ['train', 'val', 'trainval', 'test'
-              ] if 'all' in args.data_split else args.data_split
-    scales = ['ss', 'ms'] if 'all' in args.scale else args.scale
-
     logger.info('=' * 60)
     logger.info('DOTA Splitter Workflow Initialization')
     logger.info('=' * 60)
 
-    for version in versions:
-        for split in splits:
-            for scale in scales:
+    for version in args.dota_version:
+        for split in args.data_split:
+            for scale in args.scale:
                 config = generate_split_config(version, split, scale,
                                                args.nproc)
                 run_split_command(config, version, split, scale,

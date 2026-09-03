@@ -3,6 +3,11 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
+# pretrained = (
+#     'https://huggingface.co/GreatBird/LSKNet/resolve/main/'
+#     'lsk_s_backbone.pth.tar?download=true'
+# )
+
 angle_version = 'le90'
 find_unused_parameters = True
 # gpu_number = 8

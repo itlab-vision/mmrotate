@@ -41,7 +41,9 @@ def parse_args():
     parser.add_argument(
         '--scale',
         nargs='+',
-        choices=['ss', 'ms', 'ss-cfa', 'ms-cfa'],
+        choices=[
+            'ss', 'ms', 'ms-cfa', 'ss-roi-test', 'ms-roi-test', 'ms-roi-train'
+        ],
         default=['ss', 'ms'],
         help='Scale mode(s): single-scale (ss) or multi-scale (ms) '
         '(default: ss ms)')
@@ -94,12 +96,18 @@ def generate_split_config(version, split, scale, nproc):
     elif scale == 'ms':
         config['gaps'] = [500]
         config['rates'] = [0.5, 1.0, 1.5]
-    elif scale == 'ss-cfa':
-        config['gaps'] = [200]
-        config['rates'] = [1.0]
     elif scale == 'ms-cfa':
         config['gaps'] = [500]
         config['rates'] = [0.75, 1.0, 1.25]
+    elif scale == 'ss-roi-test':
+        config['gaps'] = [512]
+        config['rates'] = [1.0]
+    elif scale == 'ms-roi-test':
+        config['gaps'] = [512]
+        config['rates'] = [0.5, 1.0]
+    elif scale == 'ms-roi-train':
+        config['gaps'] = [200]
+        config['rates'] = [0.4, 1.0]
 
     return config
 

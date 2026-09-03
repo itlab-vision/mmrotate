@@ -32,8 +32,6 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'trainval/annfiles/',
@@ -48,4 +46,8 @@ data = dict(
         type=dataset_type,
         ann_file=data_root + 'test/images/',
         img_prefix=data_root + 'test/images/',
-        pipeline=test_pipeline))
+        pipeline=test_pipeline),
+    train_dataloader=dict(samples_per_gpu=2, workers_per_gpu=2),
+    val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=2),
+    test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=0),
+)

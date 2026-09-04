@@ -64,8 +64,9 @@ def parse_args():
         help='Dataloader workers for mAP evaluation')
     parser.add_argument(
         '--tasks',
-        choices=['map', 'benchmark', 'map+benchmark'],
-        default='map+benchmark',
+        nargs='+',
+        choices=['map', 'benchmark'],
+        default=['map', 'benchmark'],
         help='Evaluation tasks to run for each model')
     parser.add_argument(
         '--work-dir',
@@ -125,8 +126,9 @@ def generate_out_prefix(args):
     and current timestamp."""
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     v_str = args.dota_version.replace('.', '_')
+    tasks_str = '+'.join(args.tasks)
     base_name = (f'models_stats_dota{v_str}_{args.data_split}_'
-                 f'{args.tasks}_{timestamp}')
+                 f'{tasks_str}_{timestamp}')
     return os.path.join(args.work_dir, base_name)
 
 
@@ -493,14 +495,14 @@ def process_model(model_entry, data_dirs, collection_name, args, errors_db):
     }
 
     # Evaluate mAP
-    if args.tasks in ['map', 'map+benchmark']:
+    if 'map' in args.tasks:
         mAP, err = evaluate_mAP(paths, args)
         model_info['mAP'] = mAP
         if err:
             errors_db.setdefault(name, {})['mAP'] = err
 
     # Evaluate FPS
-    if args.tasks in ['benchmark', 'map+benchmark']:
+    if 'benchmark' in args.tasks:
         fps, err = evaluate_benchmark(paths, args)
         model_info['FPS'] = fps
         if err:

@@ -15,12 +15,6 @@ import yaml
 
 logger = logging.getLogger('evaluator')
 
-DATASET_TYPE = {
-    '1.0': 'DOTADataset',
-    '1.5': 'DOTAv15Dataset',
-    '2.0': 'DOTAv2Dataset',
-}
-
 EVALUATION_SCRIPT = {
     '1.0': '3rdparty/DOTA_devkit/dota_evaluation_task1.py',
     '1.5': '3rdparty/DOTA_devkit/dota-v1.5_evaluation_task1.py',
@@ -381,8 +375,7 @@ def evaluate_mAP(paths, args):
             f'{args.map_workers_per_gpu} '
             f'data.test_dataloader.samples_per_gpu={args.map_samples_per_gpu} '
             f"data.test.ann_file={paths['ann_file']} "
-            f"data.test.img_prefix={paths['img_prefix']} "
-            f'data.test.type={DATASET_TYPE[args.dota_version]}')
+            f"data.test.img_prefix={paths['img_prefix']}")
         success_format, out_format, err_format = run_command(cmd_format)
 
         if not success_format:
@@ -452,8 +445,7 @@ def evaluate_benchmark(paths, args):
         f'data.test_dataloader.samples_per_gpu='
         f'{args.benchmark_samples_per_gpu} '
         f"data.test.ann_file={paths['ann_file']} "
-        f"data.test.img_prefix={paths['img_prefix']} "
-        f'data.test.type={DATASET_TYPE[args.dota_version]}')
+        f"data.test.img_prefix={paths['img_prefix']}")
     success, out_bench, err_msg = run_command(cmd_bench, env=env)
 
     if success:

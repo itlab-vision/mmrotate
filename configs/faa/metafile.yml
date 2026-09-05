@@ -8,65 +8,65 @@ Collections:
     README: configs/faa/README.md
 
 Models:
-  - Name: lsk_s_fpn_1x_dota15_le90_faa
+  - Name: lsk_s_fpn_1x_dota15_rr_le90_faa
     In Collection: FAA
-    Config: configs/faa/lsk_s_fpn_1x_dota15_le90_faa.py
+    Config: configs/faa/lsk_s_fpn_1x_dota15_rr_le90_faa.py
     Metadata:
       Training Data: DOTAv1.5
-    Weights: checkpoint/lsk_s_fpn_1x_dota15_le90_faa.pth
+    Weights: checkpoint/lsk_s_fpn_1x_dota15_rr_le90_faa.pth
 
-  - Name: lsk_s_fpn_1x_dota_le90_faa
+  - Name: lsk_s_fpn_1x_dota_rr_le90_faa
     In Collection: FAA
-    Config: configs/faa/lsk_s_fpn_1x_dota_le90_faa.py
+    Config: configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights: checkpoint/lsk_s_fpn_1x_dota_le90_faa.pth
+    Weights: checkpoint/lsk_s_fpn_1x_dota_rr_le90_faa.pth
 
-  - Name: lsk_s_fpn_1x_dota_le90_faahead
+  - Name: lsk_s_fpn_1x_dota_rr_le90_faahead
     In Collection: FAA
-    Config: configs/faa/lsk_s_fpn_1x_dota_le90_faahead.py
+    Config: configs/faa/lsk_s_fpn_1x_dota_rr_le90_faahead.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights: checkpoint/lsk_s_fpn_1x_dota_le90_faahead.pth
+    Weights: checkpoint/lsk_s_fpn_1x_dota_rr_le90_faahead.pth
 
-  - Name: oriented_rcnn_r50_fpn_1x_dota15_le90_faa
+  - Name: oriented_rcnn_r50_fpn_1x_dota15_rr_le90_faa
     In Collection: FAA
-    Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota15_le90_faa.py
+    Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota15_rr_le90_faa.py
     Metadata:
       Training Data: DOTAv1.5
-    Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota15_le90_faa.pth
+    Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota15_rr_le90_faa.pth
 
-  - Name: oriented_rcnn_r50_fpn_1x_dota_le90_faa
+  - Name: oriented_rcnn_r50_fpn_1x_dota_rr_le90_faa
     In Collection: FAA
-    Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota_le90_faa.py
+    Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota_rr_le90_faa.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota_le90_faa.pth
+    Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota_rr_le90_faa.pth
 
-  - Name: oriented_rcnn_r50_fpn_1x_dota_le90_faahead
+  - Name: oriented_rcnn_r50_fpn_1x_dota_rr_le90_faahead
     In Collection: FAA
-    Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota_le90_faahead.py
+    Config: configs/faa/oriented_rcnn_r50_fpn_1x_dota_rr_le90_faahead.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota_le90_faahead.pth
+    Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota_rr_le90_faahead.pth
 
-  - Name: strip_rcnn_s_fpn_1x_dota15_le90_faa
+  - Name: strip_rcnn_s_fpn_1x_dota15_rr_le90_faa
     In Collection: FAA
-    Config: configs/faa/strip_rcnn_s_fpn_1x_dota15_le90_faa.py
+    Config: configs/faa/strip_rcnn_s_fpn_1x_dota15_rr_le90_faa.py
     Metadata:
       Training Data: DOTAv1.5
-    Weights: checkpoint/strip_rcnn_s_fpn_1x_dota15_le90_faa.pth
+    Weights: checkpoint/strip_rcnn_s_fpn_1x_dota15_rr_le90_faa.pth
 
-  - Name: strip_rcnn_s_fpn_1x_dota_le90_faa
+  - Name: strip_rcnn_s_fpn_1x_dota_rr_le90_faa
     In Collection: FAA
-    Config: configs/faa/strip_rcnn_s_fpn_1x_dota_le90_faa.py
+    Config: configs/faa/strip_rcnn_s_fpn_1x_dota_rr_le90_faa.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights: checkpoint/strip_rcnn_s_fpn_1x_dota_le90_faa.pth
+    Weights: checkpoint/strip_rcnn_s_fpn_1x_dota_rr_le90_faa.pth
 
-  - Name: strip_rcnn_s_fpn_1x_dota_le90_faahead
+  - Name: strip_rcnn_s_fpn_1x_dota_rr_le90_faahead
     In Collection: FAA
-    Config: configs/faa/strip_rcnn_s_fpn_1x_dota_le90_faahead.py
+    Config: configs/faa/strip_rcnn_s_fpn_1x_dota_rr_le90_faahead.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights: checkpoint/strip_rcnn_s_fpn_1x_dota_le90_faahead.pth
+    Weights: checkpoint/strip_rcnn_s_fpn_1x_dota_rr_le90_faahead.pth

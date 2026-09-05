@@ -37,3 +37,38 @@ Models:
         Metrics:
           mAP: 73.45
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/cfa/cfa_r50_fpn_40e_dota_oc/cfa_r50_fpn_40e_dota_oc-2f387232.pth
+
+  - Name: cfa_r50_fpn_40e_dota_ms_oc
+    In Collection: cfa
+    Config: configs/cfa/cfa_r50_fpn_40e_dota_ms_oc.py
+    Metadata:
+      Training Data: DOTAv1.0 multi-scale (cfa split)
+    Weights: checkpoint/cfa_r50_fpn_40e_dota_ms_oc.pth
+
+  - Name: cfa_r101_fpn_40e_dota_oc
+    In Collection: cfa
+    Config: configs/cfa/cfa_r101_fpn_40e_dota_oc.py
+    Metadata:
+      Training Data: DOTAv1.0 (cfa split)
+    Weights: checkpoint/cfa_r101_fpn_40e_dota_oc.pth
+
+  - Name: cfa_r101_fpn_40e_dota_ms_oc
+    In Collection: cfa
+    Config: configs/cfa/cfa_r101_fpn_40e_dota_ms_oc.py
+    Metadata:
+      Training Data: DOTAv1.0 multi-scale (cfa split)
+    Weights: checkpoint/cfa_r101_fpn_40e_dota_ms_oc.pth
+
+  - Name: cfa_r152_fpn_40e_dota_oc
+    In Collection: cfa
+    Config: configs/cfa/cfa_r152_fpn_40e_dota_oc.py
+    Metadata:
+      Training Data: DOTAv1.0 (cfa split)
+    Weights: checkpoint/cfa_r152_fpn_40e_dota_oc.pth
+
+  - Name: cfa_r152_fpn_40e_dota_ms_oc
+    In Collection: cfa
+    Config: configs/cfa/cfa_r152_fpn_40e_dota_ms_oc.py
+    Metadata:
+      Training Data: DOTAv1.0 multi-scale (cfa split)
+    Weights: checkpoint/cfa_r152_fpn_40e_dota_ms_oc.pth

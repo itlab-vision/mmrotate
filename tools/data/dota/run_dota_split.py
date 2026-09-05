@@ -50,8 +50,8 @@ def parse_args():
     parser.add_argument(
         '--nproc',
         type=int,
-        default=10,
-        help='Number of processes for img_split.py (default: 10)')
+        default=6,
+        help='Number of processes for img_split.py (default: 6)')
     parser.add_argument(
         '--overwrite',
         action='store_true',

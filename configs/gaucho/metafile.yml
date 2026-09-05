@@ -8,26 +8,26 @@ Collections:
     README: configs/gaucho/README.md
 
 Models:
-  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_le90
+  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_le90.py
+    Config: configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.5 multi-scale
-    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_le90.pth
+    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.pth
 
-  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r101_ms_le90
+  - Name: gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota15_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r101_ms_le90.py
+    Config: configs/gaucho/dotav15/SOTA/gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.5 multi-scale
-    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r101_ms_le90.pth
+    Weights: checkpoint/gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.pth
 
-  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r152_ms_le90
+  - Name: gaussian_fcos_r152_fpn_gaucho_probiou_1x_dota15_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r152_ms_le90.py
+    Config: configs/gaucho/dotav15/SOTA/gaussian_fcos_r152_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.5 multi-scale
-    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_r152_ms_le90.pth
+    Weights: checkpoint/gaussian_fcos_r152_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.pth
 
   - Name: gaussian_fcos_r50_fpn_gaucho_gwd_1x_dota15_le90
     In Collection: GauCho
@@ -50,61 +50,61 @@ Models:
       Training Data: DOTAv1.5
     Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_le90.pth
 
-  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_le90
+  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_le90.py
+    Config: configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_le90.pth
+    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
-  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90
+  - Name: gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.py
+    Config: configs/gaucho/dotav1/SOTA/gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.pth
+    Weights: checkpoint/gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
-  - Name: gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90
+  - Name: gaussian_fcos_r152_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.py
+    Config: configs/gaucho/dotav1/SOTA/gaussian_fcos_r152_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.pth
+    Weights: checkpoint/gaussian_fcos_r152_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
-  - Name: oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_le90
+  - Name: oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_le90.py
+    Config: configs/gaucho/dotav1/SOTA/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_le90.pth
+    Weights: checkpoint/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
-  - Name: oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90
+  - Name: oriented_rcnn_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.py
+    Config: configs/gaucho/dotav1/SOTA/oriented_rcnn_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r101_ms_le90.pth
+    Weights: checkpoint/oriented_rcnn_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
-  - Name: oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90
+  - Name: oriented_rcnn_r152_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.py
+    Config: configs/gaucho/dotav1/SOTA/oriented_rcnn_r152_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/oriented_rcnn_r50_fpn_gaucho_probiou_1x_dota_r152_ms_le90.pth
+    Weights: checkpoint/oriented_rcnn_r152_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
-  - Name: roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_le90
+  - Name: roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_le90.py
+    Config: configs/gaucho/dotav1/SOTA/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_le90.pth
+    Weights: checkpoint/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
-  - Name: roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_r101_le90
+  - Name: roi_transformer_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90
     In Collection: GauCho
-    Config: configs/gaucho/dotav1/SOTA/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_r101_le90.py
+    Config: configs/gaucho/dotav1/SOTA/roi_transformer_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_r101_le90.pth
+    Weights: checkpoint/roi_transformer_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
   - Name: gaussian_fcos_r50_fpn_gaucho_gwd_1x_dota_le90
     In Collection: GauCho

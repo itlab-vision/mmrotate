@@ -45,8 +45,7 @@ def parse_args():
             'ss', 'ms', 'ms-cfa', 'ss-roi-test', 'ms-roi-test', 'ms-roi-train'
         ],
         default=['ss', 'ms'],
-        help='Scale mode(s): single-scale (ss) or multi-scale (ms) '
-        '(default: ss ms)')
+        help='Scale mode(s) (default: ss ms)')
     parser.add_argument(
         '--nproc',
         type=int,

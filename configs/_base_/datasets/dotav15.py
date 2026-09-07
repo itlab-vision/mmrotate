@@ -48,6 +48,6 @@ data = dict(
         img_prefix=data_root + 'test/images/',
         pipeline=test_pipeline),
     train_dataloader=dict(samples_per_gpu=2, workers_per_gpu=2),
-    val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=2),
+    val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=1),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=0),
 )

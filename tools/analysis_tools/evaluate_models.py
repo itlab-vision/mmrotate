@@ -326,6 +326,18 @@ class ModelEvaluator:
         self.results_db = {}
         self.errors_db = {}
 
+        if self.args.dota_version == '1.0':
+            from mmrotate.datasets.dota import DOTADataset
+            self.classes = DOTADataset.CLASSES
+        elif self.args.dota_version == '1.5':
+            from mmrotate.datasets.dotav15 import DOTAv15Dataset
+            self.classes = DOTAv15Dataset.CLASSES
+        elif self.args.dota_version == '2.0':
+            from mmrotate.datasets.dotav2 import DOTAv2Dataset
+            self.classes = DOTAv2Dataset.CLASSES
+        else:
+            self.classes = []
+
     @staticmethod
     def _run_command(cmd, env=None):
         """Executes a shell command, streams line-by-line output to the logger,
@@ -471,7 +483,7 @@ class ModelEvaluator:
 
             if not success_format:
                 logger.info(f'\n[-] Test formatting failed: {err_format}')
-                return None, err_format
+                return None, None, err_format
 
             imagesetfile, annopath = self._get_dataset_paths()
             if not os.path.exists(imagesetfile):
@@ -479,14 +491,14 @@ class ModelEvaluator:
                     f'Imageset file not found at {imagesetfile}. '
                     'Please ensure the original dataset imageset file exists.')
                 logger.info(f'\n[-] {err_msg}')
-                return None, err_msg
+                return None, None, err_msg
 
             # Run DOTA devkit evaluation script
             if self.args.dota_version not in EVALUATION_SCRIPT:
                 err_msg = (f'Evaluation script for DOTA version '
                            f'{self.args.dota_version} is not configured.')
                 logger.info(f'\n[-] {err_msg}')
-                return None, err_msg
+                return None, None, err_msg
 
             eval_script = EVALUATION_SCRIPT[self.args.dota_version]
             detpath = os.path.join(submission_dir,
@@ -499,7 +511,7 @@ class ModelEvaluator:
             success_eval, out_eval, err_eval = self._run_command(cmd_eval)
             if not success_eval:
                 logger.info(f'\n[-] DOTA devkit evaluation failed: {err_eval}')
-                return None, err_eval
+                return None, None, err_eval
 
             # Extract mAP metric from output
             map_match = re.search(r'^map:\s*([0-9.]+)', out_eval, re.MULTILINE)
@@ -509,10 +521,19 @@ class ModelEvaluator:
                     raw_map *= 100
                 val = round(raw_map, 2)
                 logger.info(f'\n[OK] Extracted mAP: {val}')
-                return val, None
+
+                classaps_dict = {}
+                classaps_match = re.search(r'^classaps:\s*\[(.*?)\]', out_eval, re.MULTILINE | re.DOTALL)
+                if classaps_match:
+                    aps = [float(x) for x in classaps_match.group(1).split()]
+
+                    for cls_name, ap in zip(self.classes, aps):
+                        classaps_dict[cls_name] = round(ap, 2)
+
+                return val, classaps_dict, None
             else:
                 logger.info('\n[-] Failed to extract mAP metric from output.')
-                return None, 'Regex match failed. Output might be malformed.'
+                return None, None, 'Regex match failed. Output might be malformed.'
         finally:
             if os.path.exists(submission_dir):
                 shutil.rmtree(submission_dir, ignore_errors=True)
@@ -575,8 +596,12 @@ class ModelEvaluator:
 
         # Evaluate mAP
         if 'map' in self.args.tasks:
-            mAP, err = self._evaluate_map(paths)
+            mAP, classaps_dict, err = self._evaluate_map(paths)
             model_info['mAP'] = mAP
+            
+            for cls_name in self.classes:
+                model_info[cls_name] = classaps_dict.get(cls_name) if classaps_dict else None
+
             if err:
                 self.errors_db.setdefault(name, {})['mAP'] = err
 

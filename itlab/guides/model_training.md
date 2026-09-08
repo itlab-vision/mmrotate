@@ -31,7 +31,7 @@ ______________________________________________________________________
 To launch model training directly in an interactive GPU session or node:
 
 ```bash
-python tools/train.py configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py --auto-resume
+python tools/train.py configs/gaucho/dotav1/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py --auto-resume
 ```
 
 The `--auto-resume` flag automatically resumes training from the latest completed epoch.
@@ -45,13 +45,15 @@ To submit model training as a non-interactive background batch job on the Slurm 
 The `--auto-resume` flag is applied by default within this script. The script also prints the configuration file path at the very beginning of the `train_%j.out` log file, allowing you to easily find the log for a specific experiment later by running `grep "CONFIG:" *.out` in your directory.
 
 **Single-GPU Training (Default):**
+
 ```bash
-sbatch tools/train_model.slurm configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py
+sbatch tools/train_model.slurm configs/gaucho/dotav1/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py
 ```
 
 **Multi-GPU Distributed Training (e.g., 4 GPUs):**
+
 ```bash
-sbatch --gres=gpu:4 tools/train_model.slurm configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py 4
+sbatch --gres=gpu:4 tools/train_model.slurm configs/gaucho/dotav1/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py 4
 ```
 
 When training on multiple GPUs, you must ensure that your configuration file supports dynamic multi-GPU scaling. This includes automatically scaling the learning rate (e.g., `lr = base_lr * gpu_number`) and switching normalization layers to `SyncBN` when more than one GPU is detected. You can use `configs/faa/oriented_rcnn_r50_fpn_1x_dota15_rr_le90_faa.py` as a reference example for a properly configured file.

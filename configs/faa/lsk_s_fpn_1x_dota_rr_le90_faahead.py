@@ -1,3 +1,5 @@
+import os
+
 _base_ = [
     '../_base_/datasets/dotav1.py', '../_base_/schedules/schedule_1x.py',
     '../_base_/default_runtime.py'
@@ -6,8 +8,7 @@ _base_ = [
 angle_version = 'le90'
 find_unused_parameters = True
 
-import os
-gpu_number = int(os.environ.get('NUM_GPUS', 4))
+gpu_number = int(os.environ.get('NUM_GPUS', 1))
 norm_type = 'SyncBN' if gpu_number > 1 else 'BN'
 
 model = dict(
@@ -171,4 +172,3 @@ runner = dict(type='EpochBasedRunner', max_epochs=16)
 
 evaluation = dict(interval=4, metric='mAP')
 checkpoint_config = dict(interval=1)
-

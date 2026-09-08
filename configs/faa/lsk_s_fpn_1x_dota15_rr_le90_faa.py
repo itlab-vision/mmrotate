@@ -5,8 +5,9 @@ _base_ = [
 
 angle_version = 'le90'
 find_unused_parameters = True
-# gpu_number = 8
-# fp16 = dict(loss_scale='dynamic')
+gpu_number = 4
+norm_type = 'SyncBN' if gpu_number > 1 else 'BN'
+
 model = dict(
     type='OrientedRCNN',
     backbone=dict(
@@ -18,7 +19,7 @@ model = dict(
         init_cfg=dict(
             type='Pretrained',
             checkpoint='data/pretrained/lsk_s_backbone.pth.tar'),
-        norm_cfg=dict(type='BN', requires_grad=True)
+        norm_cfg=dict(type=norm_type, requires_grad=True)
     ),  # if more than one gpu, use SyncBN instead of BN
     neck=dict(
         type='FAAFusionFPN',
@@ -166,8 +167,11 @@ data = dict(
 optimizer = dict(
     _delete_=True,
     type='AdamW',
-    lr=0.0001,  # /8*gpu_number,
+    lr=0.0001 * gpu_number,
     betas=(0.9, 0.999),
     weight_decay=0.05)
 
 runner = dict(type='EpochBasedRunner', max_epochs=16)
+
+evaluation = dict(interval=4, metric='mAP')
+checkpoint_config = dict(interval=1)

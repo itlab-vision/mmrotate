@@ -47,23 +47,3 @@ sbatch tools/train_model.slurm configs_gaucho/gaucho_anchorless_dotav1/gaussian_
 ```
 
 ***Note:** The `--auto-resume` flag is applied by default within this script.*
-
-______________________________________________________________________
-
-## 4. Batch Training Job Generation
-
-To submit multiple training jobs across an entire directory of model configurations automatically:
-
-First, ensure execution permissions for the batch training script:
-
-```bash
-chmod +x tools/batch_train.sh
-```
-
-Then execute batch job submission specifying the config directory:
-
-```bash
-./tools/batch_train.sh configs/gaucho/dotav1
-```
-
-This script scans all `.py` configuration files within the specified folder and queues individual Slurm training jobs for each configuration.

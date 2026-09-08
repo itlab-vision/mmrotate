@@ -19,7 +19,7 @@ ______________________________________________________________________
 High-resolution aerial images in DOTA must be cropped into overlapping patches for model training. Prepare combined `trainval` splits with patch splitting using `run_dota_split.py`:
 
 ```bash
-python tools/data/dota/run_dota_split.py --nproc 12 --dota-version 1.0 1.5 --data-split trainval --scale all
+python tools/data/dota/run_dota_split.py --dota-version 1.0 1.5 --data-split trainval
 ```
 
 ______________________________________________________________________

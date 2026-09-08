@@ -5,7 +5,9 @@ _base_ = [
 
 angle_version = 'le90'
 find_unused_parameters = True
-gpu_number = 4
+
+import os
+gpu_number = int(os.environ.get('NUM_GPUS', 4))
 norm_type = 'SyncBN' if gpu_number > 1 else 'BN'
 
 # fp16 = dict(loss_scale='dynamic')

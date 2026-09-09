@@ -523,7 +523,8 @@ class ModelEvaluator:
                 logger.info(f'\n[OK] Extracted mAP: {val}')
 
                 classaps_dict = {}
-                classaps_match = re.search(r'^classaps:\s*\[(.*?)\]', out_eval, re.MULTILINE | re.DOTALL)
+                classaps_match = re.search(r'^classaps:\s*\[(.*?)\]', out_eval,
+                                           re.MULTILINE | re.DOTALL)
                 if classaps_match:
                     aps = [float(x) for x in classaps_match.group(1).split()]
 
@@ -533,7 +534,8 @@ class ModelEvaluator:
                 return val, classaps_dict, None
             else:
                 logger.info('\n[-] Failed to extract mAP metric from output.')
-                return None, None, 'Regex match failed. Output might be malformed.'
+                return (None, None,
+                        'Regex match failed. Output might be malformed.')
         finally:
             if os.path.exists(submission_dir):
                 shutil.rmtree(submission_dir, ignore_errors=True)
@@ -598,9 +600,10 @@ class ModelEvaluator:
         if 'map' in self.args.tasks:
             mAP, classaps_dict, err = self._evaluate_map(paths)
             model_info['mAP'] = mAP
-            
+
             for cls_name in self.classes:
-                model_info[cls_name] = classaps_dict.get(cls_name) if classaps_dict else None
+                model_info[cls_name] = classaps_dict.get(
+                    cls_name) if classaps_dict else None
 
             if err:
                 self.errors_db.setdefault(name, {})['mAP'] = err

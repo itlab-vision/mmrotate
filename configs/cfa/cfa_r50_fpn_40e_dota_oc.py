@@ -5,4 +5,4 @@ evaluation = dict(interval=5, metric='mAP')
 # learning policy
 lr_config = dict(step=[24, 32, 38])
 runner = dict(type='EpochBasedRunner', max_epochs=40)
-checkpoint_config = dict(interval=5)
+checkpoint_config = dict(interval=1)

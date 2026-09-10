@@ -170,5 +170,5 @@ optimizer = dict(
 
 runner = dict(type='EpochBasedRunner', max_epochs=16)
 
-evaluation = dict(interval=4, metric='mAP')
+evaluation = dict(interval=16, metric='mAP')
 checkpoint_config = dict(interval=1)

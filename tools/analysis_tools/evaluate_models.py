@@ -101,23 +101,6 @@ def init_logger(log_filepath):
     logger.addHandler(stream_handler)
 
 
-def get_model_dota_version(name):
-    """Determines the DOTA dataset version from the model name based on name
-    keywords."""
-    if not name:
-        return None
-
-    name_lower = name.lower()
-
-    if '_dota15' in name_lower:
-        return '1.5'
-    elif '_dota2' in name_lower:
-        return '2.0'
-    elif '_dota' in name_lower:
-        return '1.0'
-
-    return None
-
 
 class EnvironmentValidator:
     """A unified validator for metafiles, model configs, directories, and
@@ -126,15 +109,21 @@ class EnvironmentValidator:
     def __init__(self, args):
         self.args = args
         self.metafiles = []
-        self.configs = set()
+        self.valid_models = []
 
     def validate_all(self):
         """Runs the entire validation pipeline."""
         self._check_metafiles()
-        self._get_configs_to_check()
+        self._extract_models()
+        
+        if not self.valid_models:
+            logger.error('Error: No matching models found for evaluation'
+                         ' based on the provided arguments.')
+            sys.exit(1)
+            
         self._check_directories()
         self._check_checkpoints()
-        return self.metafiles
+        return self.valid_models
 
     def _check_metafiles(self):
         """Validates the existence of explicitly provided metafiles or scans
@@ -163,9 +152,37 @@ class EnvironmentValidator:
                 '\nError: No metafiles found or specified to process.')
             sys.exit(1)
 
-    def _get_configs_to_check(self):
-        """Parses metafiles and extracts valid model config paths to
-        evaluate."""
+    @staticmethod
+    def _get_model_dota_version(name):
+        """Determines the DOTA dataset version from the model name based on name
+        keywords."""
+        if not name:
+            return None
+
+        name_lower = name.lower()
+
+        if '_dota15' in name_lower:
+            return '1.5'
+        elif '_dota2' in name_lower:
+            return '2.0'
+        elif '_dota' in name_lower:
+            return '1.0'
+
+        return None
+
+    @staticmethod
+    def _extract_collection_name(data, mf_path):
+        """Extracts collection name from metafile YAML or falls back to parent
+        directory name."""
+        if 'Collections' in data and isinstance(
+                data['Collections'], list) and len(data['Collections']) > 0:
+            coll_name = data['Collections'][0].get('Name')
+            if coll_name:
+                return coll_name
+        return os.path.basename(os.path.dirname(mf_path))
+
+    def _extract_models(self):
+        """Parses metafiles and extracts valid models to evaluate."""
         for mf_path in self.metafiles:
             with open(mf_path, 'r', encoding='utf-8') as f:
                 try:
@@ -176,76 +193,73 @@ class EnvironmentValidator:
             if not data or 'Models' not in data:
                 continue
 
+            collection_name = self._extract_collection_name(data, mf_path)
+
             for model in data['Models']:
                 name = model.get('Name', '')
                 if self.args.models and name not in self.args.models:
                     continue
 
                 config_path = model.get('Config', '')
-                meta = model.get('Metadata', {})
-                training_data = meta.get('Training Data', '').lower()
-
-                if ('dota' not in training_data
-                        and 'dota' not in config_path.lower()):
-                    continue
-                if get_model_dota_version(name) != self.args.dota_version:
-                    continue
-                if config_path:
-                    self.configs.add(config_path)
-
-    def _extract_dataset_paths(self, cfg):
-        """Extracts all required dataset paths from a parsed MMCV config."""
-        paths = set()
-        for split in ['train', 'val', 'test']:
-            split_info = cfg.data.get(split)
-            if not split_info:
-                continue
-
-            if isinstance(split_info, list):
-                datasets = split_info
-            elif split_info.get('type') == 'ConcatDataset':
-                datasets = split_info.get('datasets', [])
-            elif split_info.get('type') == 'MultiImageMixDataset':
-                datasets = [split_info.get('dataset', {})]
-            else:
-                datasets = [split_info]
-
-            for ds in datasets:
-                if not isinstance(ds, dict):
+                weights_url = model.get('Weights', '')
+                if not weights_url or not config_path:
                     continue
 
-                for key in ['img_prefix', 'ann_file']:
-                    val = ds.get(key, '')
-                    if not val:
-                        continue
+                if self._get_model_dota_version(name) != self.args.dota_version:
+                    continue
+                
+                scale = 'ms' if '_ms_' in name else 'ss'
+                rotation = 'rr' if '_rr_' in name else 'none'
+                checkpoint_path = os.path.join('checkpoints',
+                                               os.path.basename(weights_url))
+                angle = name.rsplit('_', 1)[-1]
 
-                    paths_to_check = val if isinstance(val, list) else [val]
-                    for p in paths_to_check:
-                        if split == 'test':
-                            val_p = p.replace('test/',
-                                              f'{self.args.data_split}/')
-                            if (key == 'ann_file' and 'images' in val_p
-                                    and self.args.data_split != 'test'):
-                                val_p = val_p.replace('images', 'annfiles')
-                            paths.add(val_p)
-                        else:
-                            paths.add(p)
-        return paths
+                self.valid_models.append({
+                    'name': name,
+                    'config': config_path,
+                    'weights_url': weights_url,
+                    'checkpoint_path': checkpoint_path,
+                    'scale': scale,
+                    'rotation': rotation,
+                    'angle': angle,
+                    'collection_name': collection_name,
+                    'img_prefix': '',
+                    'ann_file': ''
+                })
 
     def _check_directories(self):
         """Verifies local availability of required dataset directories for all
         targets."""
         missing_dirs = set()
 
-        for config_path in self.configs:
+        for model in self.valid_models:
+            config_path = model['config']
+
             try:
                 cfg = Config.fromfile(config_path)
-                paths = self._extract_dataset_paths(cfg)
-                missing_dirs.update(p for p in paths if not os.path.exists(p))
             except Exception as e:
                 logger.error(f'Failed to load config {config_path}'
                              f' during directory check: {e}')
                 continue
+
+            test_dict = cfg.data.get('test', {})
+            img_prefix = test_dict.get('img_prefix', '')
+            ann_file = test_dict.get('ann_file', '')
+
+            if self.args.data_split != 'test':
+                img_prefix = img_prefix.replace('test/', f'{self.args.data_split}/')
+                ann_file = ann_file.replace('test/', f'{self.args.data_split}/')
+
+                if 'images' in ann_file:
+                    ann_file = ann_file.replace('images', 'annfiles')
+
+            model['img_prefix'] = img_prefix
+            model['ann_file'] = ann_file
+
+            if img_prefix and not os.path.exists(img_prefix):
+                missing_dirs.add(img_prefix)
+            if ann_file and not os.path.exists(ann_file):
+                missing_dirs.add(ann_file)
 
         if missing_dirs:
             logger.error('\nError: The following required data'
@@ -256,53 +270,16 @@ class EnvironmentValidator:
                          ' and ensure data is split correctly.')
             sys.exit(1)
 
-        if self.configs:
-            logger.info('All required data directories exist.')
+        logger.info('All required data directories exist.')
 
     def _check_checkpoints(self):
-        """Scans all metafile configurations and verifies local availability of
-        required model weights."""
+        """Verifies local availability of required model weights."""
         missing_checkpoints = []
-        found_models_count = 0
 
-        for mf_path in self.metafiles:
-            with open(mf_path, 'r', encoding='utf-8') as f:
-                try:
-                    data = yaml.safe_load(f)
-                except yaml.YAMLError:
-                    continue
-
-            if not data or 'Models' not in data:
-                continue
-
-            for model in data['Models']:
-                name = model.get('Name', '')
-
-                if self.args.models and name not in self.args.models:
-                    continue
-
-                config = model.get('Config', '')
-                weights_url = model.get('Weights', '')
-                meta = model.get('Metadata', {})
-                training_data = meta.get('Training Data', '').lower()
-
-                if 'dota' not in training_data and 'dota' not in config.lower(
-                ):
-                    continue
-
-                if get_model_dota_version(name) != self.args.dota_version:
-                    continue
-
-                found_models_count += 1
-                checkpoint_path = os.path.join('checkpoints',
-                                               os.path.basename(weights_url))
-                if not os.path.exists(checkpoint_path):
-                    missing_checkpoints.append((name, checkpoint_path))
-
-        if found_models_count == 0:
-            logger.error('Error: No matching models found for evaluation'
-                         ' based on the provided arguments.')
-            sys.exit(1)
+        for model in self.valid_models:
+            checkpoint_path = model['checkpoint_path']
+            if not os.path.exists(checkpoint_path):
+                missing_checkpoints.append((model['name'], checkpoint_path))
 
         if missing_checkpoints:
             logger.error('\nError: The following required model'
@@ -320,9 +297,9 @@ class EnvironmentValidator:
 class ModelEvaluator:
     """Handles the evaluation workflow (mAP, FPS) for models."""
 
-    def __init__(self, args, metafiles):
+    def __init__(self, args, valid_models):
         self.args = args
-        self.metafiles = metafiles
+        self.valid_models = valid_models
         self.results_db = {}
         self.errors_db = {}
 
@@ -375,14 +352,14 @@ class ModelEvaluator:
             return False, '', str(e)
 
     def _get_submission_dir(self, name):
-        """Generates the directory path for saving formatted prediction
+        """Returns the directory path for saving formatted prediction
         results."""
         dota_v_str = self.args.dota_version.replace('.', '_')
         res_name = f'{name}_dota{dota_v_str}_{self.args.data_split}'
         return os.path.join(self.args.work_dir, 'formatted_results',
                             res_name).replace('\\', '/')
 
-    def _get_dataset_paths(self):
+    def _get_dota_eval_paths(self):
         """Returns paths to the original dataset imageset text file and
         annotation directory for a given DOTA version and split."""
         v_str = self.args.dota_version.replace('.', '_')
@@ -391,83 +368,14 @@ class ModelEvaluator:
                     f'{self.args.data_split}/labelTxt/{{:s}}.txt')
         return imagesetfile, annopath
 
-    @staticmethod
-    def _extract_collection_name(data, mf_path):
-        """Extracts collection name from metafile YAML or falls back to parent
-        directory name."""
-        if 'Collections' in data and isinstance(
-                data['Collections'], list) and len(data['Collections']) > 0:
-            coll_name = data['Collections'][0].get('Name')
-            if coll_name:
-                return coll_name
-        return os.path.basename(os.path.dirname(mf_path))
-
-    def _prepare_model_paths(self, model_entry):
-        """Extracts model metadata and constructs corresponding dataset and
-        checkpoint paths."""
-        name = model_entry.get('Name', '')
-        config_path = model_entry.get('Config', '')
-        weights_url = model_entry.get('Weights', '')
-        meta = model_entry.get('Metadata', {})
-        training_data = meta.get('Training Data', '').lower()
-
-        if 'dota' not in training_data and 'dota' not in config_path.lower():
-            return None
-
-        if get_model_dota_version(name) != self.args.dota_version:
-            return None
-
-        try:
-            cfg = Config.fromfile(config_path)
-            test_dict = cfg.data.get('test', {})
-            img_prefix = test_dict.get('img_prefix', '')
-            ann_file = test_dict.get('ann_file', '')
-
-            # Replace 'test' with the requested data_split (e.g. 'val')
-            if self.args.data_split != 'test':
-                img_prefix = img_prefix.replace('test/',
-                                                f'{self.args.data_split}/')
-                ann_file = ann_file.replace('test/',
-                                            f'{self.args.data_split}/')
-
-                # In DOTA configs, 'test' ann_file often points to 'images/'.
-                # When switching to 'val' or another split,
-                # we need actual annotations.
-                if 'images' in ann_file:
-                    ann_file = ann_file.replace('images', 'annfiles')
-
-        except Exception as e:
-            logger.error(f'Failed to load config {config_path}: {e}')
-            return None
-
-        scale = 'ms' if '_ms_' in name else 'ss'
-        rotation = 'rr' if '_rr_' in name else 'none'
-        checkpoint_path = os.path.join('checkpoints',
-                                       os.path.basename(weights_url))
-        angle = name.rsplit('_', 1)[-1]
-
-        return {
-            'name': name,
-            'config': config_path,
-            'weights_url': weights_url,
-            'checkpoint_path': checkpoint_path,
-            'scale': scale,
-            'rotation': rotation,
-            'angle': angle,
-            'img_prefix': img_prefix,
-            'ann_file': ann_file
-        }
-
     def _evaluate_map(self, paths):
         """Executes mAP evaluation for a given model and parses results."""
         logger.info('\n[+] Running mAP evaluation...')
 
         submission_dir = self._get_submission_dir(paths['name'])
-        os.removedirs(submission_dir) if os.path.exists(
-            submission_dir) else None
+        shutil.rmtree(submission_dir, ignore_errors=True)
 
         try:
-            # Run tools/test.py with --format-only
             cmd_format = (
                 f"python -W ignore ./tools/test.py {paths['config']} "
                 f"{paths['checkpoint_path']} --format-only "
@@ -485,7 +393,7 @@ class ModelEvaluator:
                 logger.info(f'\n[-] Test formatting failed: {err_format}')
                 return None, None, err_format
 
-            imagesetfile, annopath = self._get_dataset_paths()
+            imagesetfile, annopath = self._get_dota_eval_paths()
             if not os.path.exists(imagesetfile):
                 err_msg = (
                     f'Imageset file not found at {imagesetfile}. '
@@ -515,27 +423,26 @@ class ModelEvaluator:
 
             # Extract mAP metric from output
             map_match = re.search(r'^map:\s*([0-9.]+)', out_eval, re.MULTILINE)
-            if map_match:
-                raw_map = float(map_match.group(1))
-                if raw_map <= 1.0:
-                    raw_map *= 100
-                val = round(raw_map, 2)
-                logger.info(f'\n[OK] Extracted mAP: {val}')
-
-                classaps_dict = {}
-                classaps_match = re.search(r'^classaps:\s*\[(.*?)\]', out_eval,
-                                           re.MULTILINE | re.DOTALL)
-                if classaps_match:
-                    aps = [float(x) for x in classaps_match.group(1).split()]
-
-                    for cls_name, ap in zip(self.classes, aps):
-                        classaps_dict[cls_name] = round(ap, 2)
-
-                return val, classaps_dict, None
-            else:
+            if not map_match:
                 logger.info('\n[-] Failed to extract mAP metric from output.')
-                return (None, None,
-                        'Regex match failed. Output might be malformed.')
+                return None, None, 'Regex match failed. Output might be malformed.'
+
+            raw_map = float(map_match.group(1))
+            if raw_map <= 1.0:
+                raw_map *= 100
+            val = round(raw_map, 2)
+            logger.info(f'\n[OK] Extracted mAP: {val}')
+
+            classaps_dict = {}
+            classaps_match = re.search(r'^classaps:\s*\[(.*?)\]', out_eval,
+                                       re.MULTILINE | re.DOTALL)
+            if classaps_match:
+                aps = [float(x) for x in classaps_match.group(1).split()]
+
+                for cls_name, ap in zip(self.classes, aps):
+                    classaps_dict[cls_name] = round(ap, 2)
+
+            return val, classaps_dict, None
         finally:
             if os.path.exists(submission_dir):
                 shutil.rmtree(submission_dir, ignore_errors=True)
@@ -550,7 +457,7 @@ class ModelEvaluator:
             f'python -m torch.distributed.launch --nproc_per_node=1 '
             f'--master_port=29500 tools/analysis_tools/benchmark.py '
             f"{paths['config']} {paths['checkpoint_path']} --launcher pytorch "
-            f'--log-interval 5 --cfg-options '
+            f'--log-interval 50 --cfg-options '
             f'data.test_dataloader.workers_per_gpu='
             f'{self.args.benchmark_workers_per_gpu} '
             f'data.test_dataloader.samples_per_gpu='
@@ -561,84 +468,62 @@ class ModelEvaluator:
 
         if success:
             fps_match = re.search(r'Overall fps:\s*([0-9.]+)', out_bench)
-            if fps_match:
-                val = float(fps_match.group(1))
-                logger.info(f'\n[OK] Extracted FPS: {val}')
-                return val, None
-            else:
+            if not fps_match:
                 logger.info('\n[-] Failed to extract FPS metric from output.')
                 return None, 'Regex match failed. Output might be malformed.'
+                
+            val = float(fps_match.group(1))
+            logger.info(f'\n[OK] Extracted FPS: {val}')
+            return val, None
         else:
             logger.info(f'\n[-] Benchmark failed: {err_msg}')
             return None, err_msg
 
-    def process(self, model_entry, collection_name):
+    def process(self, model_info):
         """Coordinates overall evaluation workflow for an individual model."""
-        name = model_entry.get('Name', '')
-        if self.args.models and name not in self.args.models:
-            return None
-
-        paths = self._prepare_model_paths(model_entry)
-        if not paths:
-            return None
+        name = model_info['name']
+        collection_name = model_info['collection_name']
 
         logger.info(f"\n{'='*80}")
         logger.info(
             f'Processing model: {name} (Collection: {collection_name})')
         logger.info(f"{'='*80}")
 
-        model_info = {
+        res_info = {
             'name': name,
-            'config': paths['config'],
-            'weights_url': paths['weights_url'],
-            'scale': paths['scale'],
-            'rotation': paths['rotation'],
-            'angle': paths['angle']
+            'config': model_info['config'],
+            'weights_url': model_info['weights_url'],
+            'scale': model_info['scale'],
+            'rotation': model_info['rotation'],
+            'angle': model_info['angle']
         }
 
         # Evaluate mAP
         if 'map' in self.args.tasks:
-            mAP, classaps_dict, err = self._evaluate_map(paths)
-            model_info['mAP'] = mAP
+            mAP, classaps_dict, err = self._evaluate_map(model_info)
+            res_info['mAP'] = mAP
 
-            for cls_name in self.classes:
-                model_info[cls_name] = classaps_dict.get(
-                    cls_name) if classaps_dict else None
+            classaps = classaps_dict or {}
+            res_info.update({cls: classaps.get(cls, None) for cls in self.classes})
 
             if err:
                 self.errors_db.setdefault(name, {})['mAP'] = err
 
         # Evaluate FPS
         if 'benchmark' in self.args.tasks:
-            fps, err = self._evaluate_benchmark(paths)
-            model_info['FPS'] = fps
+            fps, err = self._evaluate_benchmark(model_info)
+            res_info['FPS'] = fps
             if err:
                 self.errors_db.setdefault(name, {})['Benchmark'] = err
 
-        return model_info
+        return res_info
 
     def evaluate_all(self):
-        """Iterates over all metafiles and processes their models."""
-        for mf_path in self.metafiles:
-            with open(mf_path, 'r', encoding='utf-8') as f:
-                try:
-                    data = yaml.safe_load(f)
-                except yaml.YAMLError:
-                    continue
-
-            if not data or 'Models' not in data:
-                continue
-
-            collection_name = self._extract_collection_name(data, mf_path)
-            group_results = []
-
-            for model_entry in data['Models']:
-                model_info = self.process(model_entry, collection_name)
-                if model_info:
-                    group_results.append(model_info)
-
-            if group_results:
-                self.results_db[collection_name] = group_results
+        """Iterates over all valid models and evaluates them."""
+        for model_info in self.valid_models:
+            collection_name = model_info['collection_name']
+            res_info = self.process(model_info)
+            self.results_db.setdefault(collection_name, []).append(res_info)
 
         return self.results_db, self.errors_db
 
@@ -691,9 +576,9 @@ def main():
     init_logger(f'{out_prefix}.log')
 
     validator = EnvironmentValidator(args)
-    metafiles = validator.validate_all()
+    valid_models = validator.validate_all()
 
-    evaluator = ModelEvaluator(args, metafiles)
+    evaluator = ModelEvaluator(args, valid_models)
     results_db, errors_db = evaluator.evaluate_all()
 
     save_report(results_db, errors_db, args, out_prefix)

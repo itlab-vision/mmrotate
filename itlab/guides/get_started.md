@@ -44,4 +44,4 @@ Train custom or baseline models on DOTA datasets:
 
 - Read **[model_training.md](model_training.md)**.
 - Prepare `trainval` patch splits using `tools/data/dota/run_dota_split.py`.
-- Launch training directly (`tools/train.py`) or submit Slurm cluster jobs (`tools/train_model.slurm` & `tools/batch_train.sh`).
+- Launch training directly (`tools/train.py`) or submit Slurm cluster jobs (`tools/train_model.slurm`).

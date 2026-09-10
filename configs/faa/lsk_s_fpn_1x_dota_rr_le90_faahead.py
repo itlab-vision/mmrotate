@@ -1,3 +1,5 @@
+import os
+
 _base_ = [
     '../_base_/datasets/dotav1.py', '../_base_/schedules/schedule_1x.py',
     '../_base_/default_runtime.py'
@@ -5,30 +7,28 @@ _base_ = [
 
 angle_version = 'le90'
 find_unused_parameters = True
+
+gpu_number = int(os.environ.get('NUM_GPUS', 1))
+norm_type = 'SyncBN' if gpu_number > 1 else 'BN'
+
 model = dict(
     type='OrientedRCNN',
     backbone=dict(
-        type='ResNet',
-        depth=50,
-        num_stages=4,
-        out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=True
-                      ),  # if more than one gpu, use SyncBN instead of BN
-        norm_eval=True,
-        style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        type='LSKNet',
+        embed_dims=[64, 128, 320, 512],
+        drop_rate=0.1,
+        drop_path_rate=0.1,
+        depths=[2, 2, 4, 2],
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='data/pretrained/lsk_s_backbone.pth.tar'),
+        norm_cfg=dict(type=norm_type, requires_grad=True)
+    ),  # if more than one gpu, use SyncBN instead of BN
     neck=dict(
-        type='FAAFusionFPN',
-        in_channels=[256, 512, 1024, 2048],
+        type='FPN',
+        in_channels=[64, 128, 320, 512],
         out_channels=256,
-        num_outs=5,
-        fusion_modes=['add', 'add',
-                      'faa'],  # P5→P4: add, P4→P3: add, P3→P2: faa
-        start_level=0,
-        end_level=-1,
-        add_extra_convs='on_input',
-        fam_cfg=dict(m=7, c_mid=64)),
+        num_outs=5),
     rpn_head=dict(
         type='OrientedRPNHead',
         in_channels=256,
@@ -85,6 +85,7 @@ model = dict(
                 neg_iou_thr=0.3,
                 min_pos_iou=0.3,
                 match_low_quality=True,
+                gpu_assign_thr=800,
                 ignore_iof_thr=-1),
             sampler=dict(
                 type='RandomSampler',
@@ -108,6 +109,7 @@ model = dict(
                 min_pos_iou=0.5,
                 match_low_quality=False,
                 iou_calculator=dict(type='RBboxOverlaps2D'),
+                gpu_assign_thr=800,
                 ignore_iof_thr=-1),
             sampler=dict(
                 type='RRandomSampler',
@@ -155,8 +157,6 @@ train_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=4,
     train=dict(pipeline=train_pipeline, version=angle_version),
     val=dict(version=angle_version),
     test=dict(version=angle_version))
@@ -164,6 +164,11 @@ data = dict(
 optimizer = dict(
     _delete_=True,
     type='AdamW',
-    lr=0.0001,  # /8*gpu_number,
+    lr=0.0001 * gpu_number,
     betas=(0.9, 0.999),
     weight_decay=0.05)
+
+runner = dict(type='EpochBasedRunner', max_epochs=16)
+
+evaluation = dict(interval=16, metric='mAP')
+checkpoint_config = dict(interval=1)

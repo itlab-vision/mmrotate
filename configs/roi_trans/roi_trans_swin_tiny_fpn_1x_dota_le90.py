@@ -28,7 +28,9 @@ model = dict(
         out_channels=256,
         num_outs=5))
 
-data = dict(samples_per_gpu=1, workers_per_gpu=1)
+# data = dict(
+#     train_dataloader=dict(samples_per_gpu=1, workers_per_gpu=1),
+# )
 
 optimizer = dict(
     _delete_=True,

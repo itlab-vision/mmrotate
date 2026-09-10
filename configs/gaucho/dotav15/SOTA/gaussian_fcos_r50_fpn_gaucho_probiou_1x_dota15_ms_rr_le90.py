@@ -1,8 +1,13 @@
-# Custom DOTA v1.5 multi-scale dataset configuration.
-# Used exclusively by models integrated by ITLab, including experiments from
-# featured papers (e.g., GauCho).
+_base_ = [
+    '../gaucho_anchorless_dotav1_5/'
+    'gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_le90.py'
+]
 
-# dataset settings
+################################################
+################################################
+
+angle_version = 'le90'
+
 dataset_type = 'DOTAv15Dataset'
 data_root = 'data/split_ms_dota_1_5/'
 img_norm_cfg = dict(
@@ -11,41 +16,38 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='RResize', img_scale=(1024, 1024)),
-    dict(type='RRandomFlip', flip_ratio=0.5),
+    dict(
+        type='RRandomFlip',
+        flip_ratio=[0.25, 0.25, 0.25],
+        direction=['horizontal', 'vertical', 'diagonal'],
+        version=angle_version),
+    dict(
+        type='PolyRandomRotate',
+        rotate_ratio=0.5,
+        angles_range=180,
+        auto_bound=False,
+        rect_classes=[9, 11],
+        version=angle_version),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
-test_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(
-        type='MultiScaleFlipAug',
-        img_scale=(1024, 1024),
-        flip=False,
-        transforms=[
-            dict(type='RResize'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(type='DefaultFormatBundle'),
-            dict(type='Collect', keys=['img'])
-        ])
-]
+
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'trainval/annfiles/',
         img_prefix=data_root + 'trainval/images/',
-        pipeline=train_pipeline),
+        pipeline=train_pipeline,
+        version=angle_version),
     val=dict(
         type=dataset_type,
         ann_file=data_root + 'trainval/annfiles/',
         img_prefix=data_root + 'trainval/images/',
-        pipeline=test_pipeline),
+        version=angle_version),
     test=dict(
         type=dataset_type,
         ann_file=data_root + 'test/images/',
         img_prefix=data_root + 'test/images/',
-        pipeline=test_pipeline))
+        version=angle_version))

@@ -19,7 +19,7 @@ ______________________________________________________________________
 High-resolution aerial images in DOTA must be cropped into overlapping patches for model training. Prepare combined `trainval` splits with patch splitting using `run_dota_split.py`:
 
 ```bash
-python tools/data/dota/run_dota_split.py --nproc 12 --dota-version 1.0 1.5 --data-split trainval --scale all
+python tools/data/dota/run_dota_split.py --dota-version 1.0 1.5 --data-split trainval
 ```
 
 ______________________________________________________________________
@@ -31,7 +31,7 @@ ______________________________________________________________________
 To launch model training directly in an interactive GPU session or node:
 
 ```bash
-python tools/train.py configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py --auto-resume
+python tools/train.py configs/faa/lsk_s_fpn_1x_dota_rr_le90_faahead.py --auto-resume
 ```
 
 The `--auto-resume` flag automatically resumes training from the latest completed epoch.
@@ -40,30 +40,20 @@ If no saved weights are found (e.g., during an initial run), training starts fro
 
 ### Slurm Job Submission
 
-To submit model training as a non-interactive background batch job on the Slurm cluster:
+To submit model training as a non-interactive background batch job on the Slurm cluster, use the `train_model.slurm` script. This script supports both single-GPU and multi-GPU distributed training with automatic port conflict resolution.
+
+The `--auto-resume` flag is applied by default within this script. The script also prints the configuration file path at the very beginning of the `train_%j.out` log file, allowing you to easily find the log for a specific experiment later by running `grep "CONFIG:" *.out` in your directory.
+
+**Single-GPU Training (Default):**
 
 ```bash
-sbatch tools/train_model.slurm configs_gaucho/gaucho_anchorless_dotav1/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_le90.py
+sbatch tools/train_model.slurm configs/faa/lsk_s_fpn_1x_dota_rr_le90_faahead.py
 ```
 
-***Note:** The `--auto-resume` flag is applied by default within this script.*
-
-______________________________________________________________________
-
-## 4. Batch Training Job Generation
-
-To submit multiple training jobs across an entire directory of model configurations automatically:
-
-First, ensure execution permissions for the batch training script:
+**Multi-GPU Distributed Training (e.g., 4 GPUs):**
 
 ```bash
-chmod +x tools/batch_train.sh
+sbatch --gres=gpu:4 tools/train_model.slurm configs/faa/lsk_s_fpn_1x_dota_rr_le90_faahead.py 4
 ```
 
-Then execute batch job submission specifying the config directory:
-
-```bash
-./tools/batch_train.sh configs/gaucho/dotav1
-```
-
-This script scans all `.py` configuration files within the specified folder and queues individual Slurm training jobs for each configuration.
+When training on multiple GPUs, you must ensure that your configuration file supports dynamic multi-GPU scaling. This includes automatically scaling the learning rate (e.g., `lr = base_lr * gpu_number`) and switching normalization layers to `SyncBN` when more than one GPU is detected. You can use `configs/faa/lsk_s_fpn_1x_dota_rr_le90_faahead.py` as a reference example for a properly configured file.

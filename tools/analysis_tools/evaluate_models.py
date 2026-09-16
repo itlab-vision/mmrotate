@@ -101,7 +101,6 @@ def init_logger(log_filepath):
     logger.addHandler(stream_handler)
 
 
-
 class EnvironmentValidator:
     """A unified validator for metafiles, model configs, directories, and
     checkpoints."""
@@ -115,12 +114,12 @@ class EnvironmentValidator:
         """Runs the entire validation pipeline."""
         self._check_metafiles()
         self._extract_models()
-        
+
         if not self.valid_models:
             logger.error('Error: No matching models found for evaluation'
                          ' based on the provided arguments.')
             sys.exit(1)
-            
+
         self._check_directories()
         self._check_checkpoints()
         return self.valid_models
@@ -154,8 +153,8 @@ class EnvironmentValidator:
 
     @staticmethod
     def _get_model_dota_version(name):
-        """Determines the DOTA dataset version from the model name based on name
-        keywords."""
+        """Determines the DOTA dataset version from the model name based on
+        name keywords."""
         if not name:
             return None
 
@@ -205,9 +204,10 @@ class EnvironmentValidator:
                 if not weights_url or not config_path:
                     continue
 
-                if self._get_model_dota_version(name) != self.args.dota_version:
+                if self._get_model_dota_version(
+                        name) != self.args.dota_version:
                     continue
-                
+
                 scale = 'ms' if '_ms_' in name else 'ss'
                 rotation = 'rr' if '_rr_' in name else 'none'
                 checkpoint_path = os.path.join('checkpoints',
@@ -247,8 +247,10 @@ class EnvironmentValidator:
             ann_file = test_dict.get('ann_file', '')
 
             if self.args.data_split != 'test':
-                img_prefix = img_prefix.replace('test/', f'{self.args.data_split}/')
-                ann_file = ann_file.replace('test/', f'{self.args.data_split}/')
+                img_prefix = img_prefix.replace('test/',
+                                                f'{self.args.data_split}/')
+                ann_file = ann_file.replace('test/',
+                                            f'{self.args.data_split}/')
 
                 if 'images' in ann_file:
                     ann_file = ann_file.replace('images', 'annfiles')
@@ -425,7 +427,8 @@ class ModelEvaluator:
             map_match = re.search(r'^map:\s*([0-9.]+)', out_eval, re.MULTILINE)
             if not map_match:
                 logger.info('\n[-] Failed to extract mAP metric from output.')
-                return None, None, 'Regex match failed. Output might be malformed.'
+                return (None, None,
+                        'Regex match failed. Output might be malformed.')
 
             raw_map = float(map_match.group(1))
             if raw_map <= 1.0:
@@ -471,7 +474,7 @@ class ModelEvaluator:
             if not fps_match:
                 logger.info('\n[-] Failed to extract FPS metric from output.')
                 return None, 'Regex match failed. Output might be malformed.'
-                
+
             val = float(fps_match.group(1))
             logger.info(f'\n[OK] Extracted FPS: {val}')
             return val, None
@@ -504,7 +507,9 @@ class ModelEvaluator:
             res_info['mAP'] = mAP
 
             classaps = classaps_dict or {}
-            res_info.update({cls: classaps.get(cls, None) for cls in self.classes})
+            res_info.update(
+                {cls: classaps.get(cls, None)
+                 for cls in self.classes})
 
             if err:
                 self.errors_db.setdefault(name, {})['mAP'] = err

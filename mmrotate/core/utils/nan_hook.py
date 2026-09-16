@@ -82,12 +82,32 @@ class RestartOnNanHook(Hook):
                     # Restore cached initial state
                     runner.model.load_state_dict(self.initial_state['model'])
                     runner.optimizer.load_state_dict(
-                        self.initial_state['optimizer'])
+                        copy.deepcopy(self.initial_state['optimizer']))
 
                     # Reset counters
                     runner._epoch = 0
                     runner._iter = 0
                     runner._inner_iter = 0
+
+            # Fix ETA calculation issue by resetting timer hooks.
+            # When iter rolls back, time_sec_tot must be reset
+            # to prevent ETA blow up.
+            for hook in runner.hooks:
+                if hasattr(hook, 'time_sec_tot'):
+                    hook.time_sec_tot = 0
+                if hasattr(hook, 'start_iter'):
+                    hook.start_iter = runner.iter
+
+            # Force garbage collection and empty cache to prevent memory leaks
+            # and zombie dataloader workers that slow down training.
+            import gc
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+            # Synchronize all processes to avoid desync
+            if world_size > 1:
+                dist.barrier()
 
             # Synchronously abort the current epoch loop
             raise RuntimeError('NaN_ABORT_EPOCH')

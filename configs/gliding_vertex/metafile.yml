@@ -31,4 +31,4 @@ Models:
     Config: configs/gliding_vertex/gliding_vertex_r50_fpn_1x_dota_ms_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights: checkpoint/gliding_vertex_r50_fpn_1x_dota_ms_le90.pth
+    Weights:

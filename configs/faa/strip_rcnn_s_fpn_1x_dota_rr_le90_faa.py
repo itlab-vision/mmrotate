@@ -1,3 +1,5 @@
+import os
+
 _base_ = [
     '../_base_/datasets/dotav1.py', '../_base_/schedules/schedule_1x.py',
     '../_base_/default_runtime.py'
@@ -5,20 +7,23 @@ _base_ = [
 
 angle_version = 'le90'
 find_unused_parameters = True
-# gpu_number = 8
-# fp16 = dict(loss_scale='dynamic')
+
+gpu_number = int(os.environ.get('NUM_GPUS', 1))
+norm_type = 'SyncBN' if gpu_number > 1 else 'BN'
+
 model = dict(
-    type='OrientedRCNN',
+    type='StripRCNN',
     backbone=dict(
-        type='LSKNet',
+        type='StripNet',
         embed_dims=[64, 128, 320, 512],
+        k1s=[1, 1, 1, 1],
+        k2s=[19, 19, 19, 19],
         drop_rate=0.1,
-        drop_path_rate=0.1,
+        drop_path_rate=0.15,
         depths=[2, 2, 4, 2],
         init_cfg=dict(
-            type='Pretrained',
-            checkpoint='data/pretrained/lsk_s_backbone.pth.tar'),
-        norm_cfg=dict(type='BN', requires_grad=True)
+            type='Pretrained', checkpoint='data/pretrained/stripnet_s.pth'),
+        norm_cfg=dict(type=norm_type, requires_grad=True)
     ),  # if more than one gpu, use SyncBN instead of BN
     neck=dict(
         type='FAAFusionFPN',
@@ -159,8 +164,6 @@ train_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=4,
     train=dict(pipeline=train_pipeline, version=angle_version),
     val=dict(version=angle_version),
     test=dict(version=angle_version))
@@ -168,6 +171,11 @@ data = dict(
 optimizer = dict(
     _delete_=True,
     type='AdamW',
-    lr=0.0001,  # /8*gpu_number,
+    lr=0.0001 * gpu_number,
     betas=(0.9, 0.999),
     weight_decay=0.05)
+
+runner = dict(type='EpochBasedRunner', max_epochs=16)
+
+evaluation = dict(interval=16, metric='mAP')
+checkpoint_config = dict(interval=1)

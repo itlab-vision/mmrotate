@@ -144,6 +144,11 @@ def bbox2delta(proposals,
     px, py, pw, ph, pa = proposals.unbind(dim=-1)
     gx, gy, gw, gh, ga = gt.unbind(dim=-1)
 
+    # Clamp widths and heights to prevent division by zero
+    # causing inf in loss_bbox
+    pw = pw.clamp(min=1e-4)
+    ph = ph.clamp(min=1e-4)
+
     if proj_xy:
         dx = (torch.cos(pa) * (gx - px) + torch.sin(pa) * (gy - py)) / pw
         dy = (-torch.sin(pa) * (gx - px) + torch.cos(pa) * (gy - py)) / ph

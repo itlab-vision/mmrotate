@@ -164,7 +164,7 @@ Use `tools/analysis_tools/evaluate_models.py` to automate multi-model evaluation
 
 - `--dota-version`: DOTA dataset version (`1.0`, `1.5`, or `2.0`). Default: `1.0`.
 - `--data-split`: Dataset split to evaluate on (`val` or `test`). Default: `val`.
-- `--tasks`: Evaluation tasks to execute (`map`, `benchmark`, or `map+benchmark`). Default: `map+benchmark`.
+- `--tasks`: Evaluation tasks to execute (`map`, `benchmark`). Default: `map benchmark`.
 - `--metafiles`: Specific metafile paths to process. Scans the entire configs/ directory if empty.
 - `--models`: List of specific model names to evaluate. Evaluates all matching models if empty.
 - `--map-samples-per-gpu`: Batch size per GPU for mAP evaluation. Default: `2`.

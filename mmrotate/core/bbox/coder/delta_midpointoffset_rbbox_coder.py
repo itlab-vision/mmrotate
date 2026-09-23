@@ -122,6 +122,10 @@ def bbox2delta(proposals,
     gw = hbb[..., 2] - hbb[..., 0]
     gh = hbb[..., 3] - hbb[..., 1]
 
+    # Clamp widths and heights to prevent division by zero causing inf in loss
+    pw = pw.clamp(min=1e-4)
+    ph = ph.clamp(min=1e-4)
+
     x_coor, y_coor = poly[:, 0::2], poly[:, 1::2]
     y_min, _ = torch.min(y_coor, dim=1, keepdim=True)
     x_max, _ = torch.max(x_coor, dim=1, keepdim=True)

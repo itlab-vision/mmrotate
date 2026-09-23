@@ -93,34 +93,34 @@ Use `tools/data/dota/run_dota_split.py` to dynamically generate split configurat
 
 #### Key Arguments
 
-- `--dota-version`: DOTA version(s) to process (`1.0`, `1.5`, `2.0`, or `all`). Default: `1.0`.
-- `--data-split`: Dataset split(s) to process (`train`, `val`, `test`, or `all`). Default: `val`.
-- `--scale`: Scaling mode (`ss` for single-scale, `ms` for multi-scale, or `all`). Default: `ss ms`.
-- `--nproc`: Number of parallel worker processes. Default: `10`.
+- `--dota-version`: DOTA version(s) to process (`1.0`, `1.5`, `2.0`). Default: `1.0`.
+- `--data-split`: Dataset split(s) to process (`train`, `val`, `test`, `trainval`). Default: `val`.
+- `--scale`: Scaling mode (`ss`, `ms`, `ms-cfa`, `ss-roi-test`, `ms-roi-test`, `ms-roi-train`). Default: `ss ms`.
+- `--nproc`: Number of parallel worker processes. Default: `6`.
 - `--overwrite`: Overwrite target directories if they already exist. Default: `False`.
 
 #### Usage Examples
 
-Run default splitting (DOTA v1.0, validation split, single-scale and multi-scale with 10 processes):
+Run default splitting (DOTA v1.0, validation split, single-scale and multi-scale with 6 processes):
 
 ```bash
 python tools/data/dota/run_dota_split.py
 ```
 
-Process DOTA v1.5 with 6 worker processes:
-
-```bash
-python tools/data/dota/run_dota_split.py --nproc 6 --dota-version 1.5
-```
-
-Process all splits (train, val, test) and scales for DOTA 1.0 with 8 processes:
-
-```bash
-python tools/data/dota/run_dota_split.py --dota-version 1.0 --data-split all --scale all --nproc 8
-```
-
 Overwrite existing split directories:
 
 ```bash
-python tools/data/dota/run_dota_split.py --dota-version 1.0 --data-split val --overwrite
+python tools/data/dota/run_dota_split.py --overwrite
+```
+
+Process DOTA v1.5 with 12 worker processes:
+
+```bash
+python tools/data/dota/run_dota_split.py --nproc 12 --dota-version 1.5
+```
+
+Process trainval split / roi-scales for DOTA 1.0 and DOTA 1.5:
+
+```bash
+python tools/data/dota/run_dota_split.py --data-split trainval --scale s-roi-test ms-roi-test ms-roi-train --dota-version 1.0 1.5
 ```

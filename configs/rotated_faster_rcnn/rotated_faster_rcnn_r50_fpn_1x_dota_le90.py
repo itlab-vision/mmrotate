@@ -1,7 +1,12 @@
+import os
+
 _base_ = [
     '../_base_/datasets/dotav1.py', '../_base_/schedules/schedule_1x.py',
     '../_base_/default_runtime.py'
 ]
+
+gpu_number = int(os.environ.get('NUM_GPUS', 1))
+norm_type = 'SyncBN' if gpu_number > 1 else 'BN'
 
 angle_version = 'le90'
 model = dict(
@@ -12,7 +17,7 @@ model = dict(
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_cfg=dict(type=norm_type, requires_grad=True),
         norm_eval=True,
         style='pytorch',
         init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
@@ -137,4 +142,6 @@ data = dict(
     val=dict(version=angle_version),
     test=dict(version=angle_version))
 
-optimizer = dict(lr=0.005)
+optimizer = dict(lr=0.005 * gpu_number)
+
+evaluation = dict(interval=12, metric='mAP')

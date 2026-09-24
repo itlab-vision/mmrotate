@@ -50,7 +50,7 @@ Models:
     Config: configs/cfa/cfa_r101_fpn_40e_dota_oc.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights:
+    Weights: checkpoint/cfa_r101_fpn_40e_dota_oc.pth
 
   - Name: cfa_r101_fpn_40e_dota_ms_oc
     In Collection: cfa
@@ -64,11 +64,11 @@ Models:
     Config: configs/cfa/cfa_r152_fpn_40e_dota_oc.py
     Metadata:
       Training Data: DOTAv1.0
-    Weights:
+    Weights: checkpoint/cfa_r152_fpn_40e_dota_oc.pth
 
   - Name: cfa_r152_fpn_40e_dota_ms_oc
     In Collection: cfa
     Config: configs/cfa/cfa_r152_fpn_40e_dota_ms_oc.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale (cfa split)
-    Weights:
+    Weights: checkpoint/cfa_r152_fpn_40e_dota_ms_oc.pth

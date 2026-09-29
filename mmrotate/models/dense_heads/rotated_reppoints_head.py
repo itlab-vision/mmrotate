@@ -1145,7 +1145,17 @@ class RotatedRepPointsHead(BaseDenseHead):
                 points_pred = points_pred[topk_inds, :]
                 scores = scores[topk_inds, :]
 
+            valid_mask = torch.isfinite(points_pred).all(dim=1)
+            if not valid_mask.all():
+                points_pred = points_pred[valid_mask]
+                points = points[valid_mask]
+                scores = scores[valid_mask]
+
             points_pred = points_pred.clamp(min=-1000000.0, max=1000000.0)
+            if points_pred.shape[0] == 0:
+                mlvl_bboxes.append(points_pred.new_zeros((0, 5)))
+                mlvl_scores.append(scores)
+                continue
 
             poly_pred = self.points2rotrect(points_pred, y_first=True)
             bbox_pos_center = points[:, :2].repeat(1, 4)

@@ -1145,9 +1145,14 @@ class RotatedRepPointsHead(BaseDenseHead):
                 points_pred = points_pred[topk_inds, :]
                 scores = scores[topk_inds, :]
 
+            points_pred = points_pred.clamp(min=-1000000.0, max=1000000.0)
+
             poly_pred = self.points2rotrect(points_pred, y_first=True)
             bbox_pos_center = points[:, :2].repeat(1, 4)
             polys = poly_pred * self.point_strides[level_idx] + bbox_pos_center
+
+            polys = polys.clamp(min=-1000000.0, max=1000000.0)
+
             bboxes = poly2obb(polys, self.version)
 
             mlvl_bboxes.append(bboxes)

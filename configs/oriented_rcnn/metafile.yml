@@ -44,3 +44,10 @@ Models:
     Metadata:
       Training Data: DOTAv1.0
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/oriented_rcnn/oriented_rcnn_r50_fpn_1x_dota_ms_le90/oriented_rcnn_r50_fpn_1x_dota_ms_le90.pth
+
+  - Name: oriented_rcnn_r50_fpn_1x_dota_ms_le90
+    In Collection: oriented_rcnn
+    Config: configs/oriented_rcnn/oriented_rcnn_r50_fpn_1x_dota_ms_le90.py
+    Metadata:
+      Training Data: DOTAv1.0 multi-scale
+    Weights: checkpoint/oriented_rcnn_r50_fpn_1x_dota_ms_le90.pth

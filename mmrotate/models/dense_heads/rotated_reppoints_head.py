@@ -235,6 +235,15 @@ class RotatedRepPointsHead(BaseDenseHead):
         pts_out_init_grad_mul = (1 - self.gradient_mul) * pts_out_init.detach(
         ) + self.gradient_mul * pts_out_init
         dcn_offset = pts_out_init_grad_mul - dcn_base_offset
+
+        # Replace NaN/Inf with 0.0 to prevent DCN kernel memory violation
+        invalid_mask = ~torch.isfinite(dcn_offset)
+        if invalid_mask.any():
+            dcn_offset[invalid_mask] = 0.0
+
+        # Clamp extreme offsets to keep memory access within bounds
+        dcn_offset = dcn_offset.clamp(min=-1000.0, max=1000.0)
+
         cls_out = self.reppoints_cls_out(
             self.relu(self.reppoints_cls_conv(cls_feat, dcn_offset)))
         pts_out_refine = self.reppoints_pts_refine_out(

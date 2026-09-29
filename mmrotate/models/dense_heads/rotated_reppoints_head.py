@@ -208,6 +208,12 @@ class RotatedRepPointsHead(BaseDenseHead):
             pts = torch.cat([pts_dx, pts_dy],
                             dim=2).reshape(-1, 2 * self.num_points)
         if self.transform_method == 'rotrect':
+            # Add a static, alternating microscopic offset (0.0001 pixels)
+            # to break collinear points without using random noise.
+            epsilon = torch.tensor([1e-4, -1e-4], device=pts.device)
+            epsilon = epsilon.repeat(self.num_points).unsqueeze(0)
+            pts = pts + epsilon
+
             rotrect_pred = min_area_polygons(pts)
             return rotrect_pred
         else:

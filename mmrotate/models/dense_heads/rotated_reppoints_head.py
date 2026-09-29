@@ -1145,6 +1145,7 @@ class RotatedRepPointsHead(BaseDenseHead):
                 points_pred = points_pred[topk_inds, :]
                 scores = scores[topk_inds, :]
 
+            # Filter out NaN and Inf values
             valid_mask = torch.isfinite(points_pred).all(dim=1)
             if not valid_mask.all():
                 points_pred = points_pred[valid_mask]
@@ -1152,6 +1153,20 @@ class RotatedRepPointsHead(BaseDenseHead):
                 scores = scores[valid_mask]
 
             points_pred = points_pred.clamp(min=-1000000.0, max=1000000.0)
+
+            # Filter out degenerate/collapsed polygons
+            if points_pred.shape[0] > 0:
+                pts_1 = points_pred[:, 0::2]
+                pts_2 = points_pred[:, 1::2]
+                span_1 = pts_1.max(dim=1)[0] - pts_1.min(dim=1)[0]
+                span_2 = pts_2.max(dim=1)[0] - pts_2.min(dim=1)[0]
+                geom_mask = (span_1 > 1e-3) & (span_2 > 1e-3)
+
+                points_pred = points_pred[geom_mask]
+                points = points[geom_mask]
+                scores = scores[geom_mask]
+
+            # Handle empty predictions to prevent C++ core crash
             if points_pred.shape[0] == 0:
                 mlvl_bboxes.append(points_pred.new_zeros((0, 5)))
                 mlvl_scores.append(scores)

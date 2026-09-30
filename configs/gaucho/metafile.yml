@@ -34,6 +34,11 @@ Models:
     Config: configs/gaucho/dotav1/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: 78.85
     Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
   - Name: gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90
@@ -76,6 +81,11 @@ Models:
     Config: configs/gaucho/dotav1/SOTA/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: 80.61
     Weights: checkpoint/roi_transformer_r50_fpn_gaucho_probiou_1x_dota_ms_rr_le90.pth
 
   - Name: roi_transformer_r101_fpn_gaucho_probiou_1x_dota_ms_rr_le90

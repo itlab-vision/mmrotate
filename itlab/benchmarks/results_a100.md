@@ -119,9 +119,9 @@ To clarify the exact setups and metrics used for the models in the benchmark, th
 
 ### 4. Benchmark Results
 
-#### Results on DOTA v1.0
+***Note:** The `Ref mAP (%)` column displays reference metrics. Values marked with an asterisk (`*`) denote results reported in the original paper, whereas values without an asterisk represent official baselines from the `mmrotate` repository.*
 
-***Note:** The `Ref mAP (%)` column displays official baseline metrics extracted from the `metafile.yml` files located in the `configs/` directory. These reference values were likely obtained on the test split by submitting predictions to the official DOTA evaluation server.*
+#### Results on DOTA v1.0
 
 | Family              | Model Name                                                         | mAP (%) | Ref mAP (%) | FPS  | Scale | Rotation | Angle | Config                                                                                                   | Download                                                                                                                                                                                                        |
 | ------------------- | ------------------------------------------------------------------ | ------- | ----------- | ---- | ----- | -------- | ----- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

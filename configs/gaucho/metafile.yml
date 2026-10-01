@@ -13,6 +13,11 @@ Models:
     Config: configs/gaucho/dotav15/SOTA/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.py
     Metadata:
       Training Data: DOTAv1.5 multi-scale
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          Paper mAP: 65.09
     Weights: checkpoint/gaussian_fcos_r50_fpn_gaucho_probiou_1x_dota15_ms_rr_le90.pth
 
   - Name: gaussian_fcos_r101_fpn_gaucho_probiou_1x_dota15_ms_rr_le90

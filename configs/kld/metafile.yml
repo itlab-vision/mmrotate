@@ -48,6 +48,7 @@ Models:
         Dataset: DOTAv1.0
         Metrics:
           mAP: 70.22
+          Paper mAP: 75.28
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/kld/rotated_retinanet_obb_kld_stable_r50_fpn_1x_dota_le90/rotated_retinanet_obb_kld_stable_r50_fpn_1x_dota_le90-31193e00.pth
 
   - Name: r3det_kld_r50_fpn_1x_dota_oc
@@ -72,6 +73,7 @@ Models:
         Dataset: DOTAv1.0
         Metrics:
           mAP: 72.12
+          Paper mAP: 77.36
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/kld/r3det_kld_stable_r50_fpn_1x_dota_oc/r3det_kld_stable_r50_fpn_1x_dota_oc-e011059d.pth
 
   - Name: r3det_tiny_kld_r50_fpn_1x_dota_oc

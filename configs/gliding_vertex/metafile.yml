@@ -24,7 +24,6 @@ Models:
         Dataset: DOTAv1.0
         Metrics:
           mAP: 73.23
-          Paper mAP: 75.02
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/gliding_vertex/gliding_vertex_r50_fpn_1x_dota_le90/gliding_vertex_r50_fpn_1x_dota_le90-12e7423c.pth
 
   - Name: gliding_vertex_r50_fpn_1x_dota_ms_le90

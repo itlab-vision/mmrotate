@@ -36,6 +36,7 @@ Models:
         Dataset: DOTAv1.0
         Metrics:
           mAP: 76.68
+          Paper mAP: 76.25
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/redet/redet_re50_fpn_1x_dota_le90/redet_re50_fpn_1x_dota_le90-724ab2da.pth
 
   - Name: redet_re50_refpn_1x_dota_ms_rr_le90
@@ -48,6 +49,7 @@ Models:
         Dataset: DOTAv1.0
         Metrics:
           mAP: 79.87
+          Paper mAP: 80.10
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/redet/redet_re50_fpn_1x_dota_ms_rr_le90/redet_re50_fpn_1x_dota_ms_rr_le90-fc9217b5.pth
 
   - Name: redet_re50_refpn_3x_hrsc_le90

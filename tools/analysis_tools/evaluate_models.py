@@ -73,6 +73,11 @@ def parse_args():
         default=[],
         help='Specific model names to evaluate. Runs all models if empty.')
     parser.add_argument(
+        '--models-exclude',
+        nargs='+',
+        default=[],
+        help='Specific model names to exclude from evaluation.')
+    parser.add_argument(
         '--metafiles',
         nargs='+',
         default=[],
@@ -196,6 +201,11 @@ class EnvironmentValidator:
 
             for model in data['Models']:
                 name = model.get('Name', '')
+
+                if (self.args.models_exclude
+                        and name in self.args.models_exclude):
+                    continue
+
                 if self.args.models and name not in self.args.models:
                     continue
 

@@ -82,6 +82,11 @@ def parse_args():
         nargs='+',
         default=[],
         help='Specific metafile paths to process. Scans configs/ if empty.')
+    parser.add_argument(
+        '--metafiles-exclude',
+        nargs='+',
+        default=[],
+        help='Specific metafile paths to exclude.')
 
     return parser.parse_args()
 
@@ -151,9 +156,23 @@ class EnvironmentValidator:
             logger.info(
                 f'Found {len(self.metafiles)} metafiles in configs directory.')
 
+        if self.args.metafiles_exclude:
+            excludes = set(self.args.metafiles_exclude)
+            excluded_mfs = [mf for mf in self.metafiles if mf in excludes]
+
+            if excluded_mfs:
+                logger.info(f'\nExcluded {len(excluded_mfs)} metafile(s):')
+                for m in excluded_mfs:
+                    logger.info(f'  - {m}')
+
+            self.metafiles = [
+                mf for mf in self.metafiles if mf not in excludes
+            ]
+
         if not self.metafiles:
             logger.error(
-                '\nError: No metafiles found or specified to process.')
+                '\nError: No valid metafiles available for processing. '
+                'Please check your paths and exclusion filters.')
             sys.exit(1)
 
     @staticmethod

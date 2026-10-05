@@ -219,5 +219,6 @@ To convert evaluation JSON output files into consolidated summary tables, use `t
 
 ```bash
 python tools/analysis_tools/build_summary_table.py \
-  --input '/path/to/models_stats_dota1_0_val_map+benchmark_20260729_120008.json'
+  --input </path/to/models_stats_dota1_0_val_map+benchmark_20260729_120008.json> \
+  --include-ref-map
 ```

@@ -72,9 +72,17 @@ class ReportConverter:
                 if isinstance(results, list) and len(results) > 0:
                     metrics = results[0].get('Metrics', {})
                     if 'Paper mAP' in metrics:
-                        ref_map = f"{metrics['Paper mAP']}\\*"
+                        try:
+                            val = float(metrics['Paper mAP'])
+                            ref_map = f'{val:.2f}\\*'
+                        except (ValueError, TypeError):
+                            ref_map = f"{metrics['Paper mAP']}\\*"
                     elif 'mAP' in metrics:
-                        ref_map = str(metrics['mAP'])
+                        try:
+                            val = float(metrics['mAP'])
+                            ref_map = f'{val:.2f}'
+                        except (ValueError, TypeError):
+                            ref_map = str(metrics['mAP'])
 
                 ref_map_dict[name] = ref_map
 

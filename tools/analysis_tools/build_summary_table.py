@@ -72,7 +72,7 @@ class ReportConverter:
                 if isinstance(results, list) and len(results) > 0:
                     metrics = results[0].get('Metrics', {})
                     if 'Paper mAP' in metrics:
-                        ref_map = f"{metrics['Paper mAP']}*"
+                        ref_map = f"{metrics['Paper mAP']}\\*"
                     elif 'mAP' in metrics:
                         ref_map = str(metrics['mAP'])
 

@@ -274,6 +274,9 @@ class EnvironmentValidator:
                     'ann_file': ''
                 })
 
+        logger.info(f'\nExtracted {len(self.valid_models)} '
+                    f'valid model(s) matching the criteria.')
+
     def _check_directories(self):
         """Verifies local availability of required dataset directories for all
         targets."""
@@ -319,7 +322,7 @@ class EnvironmentValidator:
                          ' and ensure data is split correctly.')
             sys.exit(1)
 
-        logger.info('All required data directories exist.')
+        logger.info('\nAll required data directories exist.')
 
     def _check_checkpoints(self):
         """Verifies local availability of required model weights."""

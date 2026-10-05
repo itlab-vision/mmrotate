@@ -194,6 +194,24 @@ class EnvironmentValidator:
         return None
 
     @staticmethod
+    def _get_model_angle(name):
+        """Determines the bounding box angle representation from the model
+        name."""
+        if not name:
+            return 'unknown'
+
+        name_lower = name.lower()
+
+        if '_le90_' in name_lower or name_lower.endswith('_le90'):
+            return 'le90'
+        elif '_le135_' in name_lower or name_lower.endswith('_le135'):
+            return 'le135'
+        elif '_oc_' in name_lower or name_lower.endswith('_oc'):
+            return 'oc'
+
+        return name.rsplit('_', 1)[-1]
+
+    @staticmethod
     def _extract_collection_name(data, mf_path):
         """Extracts collection name from metafile YAML or falls back to parent
         directory name."""
@@ -241,7 +259,7 @@ class EnvironmentValidator:
                 rotation = 'rr' if '_rr_' in name else 'none'
                 checkpoint_path = os.path.join('checkpoints',
                                                os.path.basename(weights_url))
-                angle = name.rsplit('_', 1)[-1]
+                angle = self._get_model_angle(name)
 
                 self.valid_models.append({
                     'name': name,

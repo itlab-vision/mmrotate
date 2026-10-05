@@ -166,7 +166,9 @@ Use `tools/analysis_tools/evaluate_models.py` to automate multi-model evaluation
 - `--data-split`: Dataset split to evaluate on (`val` or `test`). Default: `val`.
 - `--tasks`: Evaluation tasks to execute (`map`, `benchmark`). Default: `map benchmark`.
 - `--metafiles`: Specific metafile paths to process. Scans the entire configs/ directory if empty.
+- `--metafiles-exclude`: Specific metafile paths to explicitly exclude from processing.
 - `--models`: List of specific model names to evaluate. Evaluates all matching models if empty.
+- `--models-exclude`: List of specific model names to explicitly exclude from evaluation.
 - `--map-samples-per-gpu`: Batch size per GPU for mAP evaluation. Default: `2`.
 - `--map-workers-per-gpu`: Dataloader worker count for mAP evaluation. Default: `2`.
 - `--benchmark-samples-per-gpu`: Batch size per GPU for benchmark FPS calculation. Default: `1`.

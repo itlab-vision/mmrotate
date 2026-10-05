@@ -73,10 +73,20 @@ def parse_args():
         default=[],
         help='Specific model names to evaluate. Runs all models if empty.')
     parser.add_argument(
+        '--models-exclude',
+        nargs='+',
+        default=[],
+        help='Specific model names to exclude from evaluation.')
+    parser.add_argument(
         '--metafiles',
         nargs='+',
         default=[],
         help='Specific metafile paths to process. Scans configs/ if empty.')
+    parser.add_argument(
+        '--metafiles-exclude',
+        nargs='+',
+        default=[],
+        help='Specific metafile paths to exclude.')
 
     return parser.parse_args()
 
@@ -146,9 +156,23 @@ class EnvironmentValidator:
             logger.info(
                 f'Found {len(self.metafiles)} metafiles in configs directory.')
 
+        if self.args.metafiles_exclude:
+            excludes = set(self.args.metafiles_exclude)
+            excluded_mfs = [mf for mf in self.metafiles if mf in excludes]
+
+            if excluded_mfs:
+                logger.info(f'\nExcluded {len(excluded_mfs)} metafile(s):')
+                for m in excluded_mfs:
+                    logger.info(f'  - {m}')
+
+            self.metafiles = [
+                mf for mf in self.metafiles if mf not in excludes
+            ]
+
         if not self.metafiles:
             logger.error(
-                '\nError: No metafiles found or specified to process.')
+                '\nError: No valid metafiles available for processing. '
+                'Please check your paths and exclusion filters.')
             sys.exit(1)
 
     @staticmethod
@@ -168,6 +192,24 @@ class EnvironmentValidator:
             return '1.0'
 
         return None
+
+    @staticmethod
+    def _get_model_angle(name):
+        """Determines the bounding box angle representation from the model
+        name."""
+        if not name:
+            return 'unknown'
+
+        name_lower = name.lower()
+
+        if '_le90_' in name_lower or name_lower.endswith('_le90'):
+            return 'le90'
+        elif '_le135_' in name_lower or name_lower.endswith('_le135'):
+            return 'le135'
+        elif '_oc_' in name_lower or name_lower.endswith('_oc'):
+            return 'oc'
+
+        return name.rsplit('_', 1)[-1]
 
     @staticmethod
     def _extract_collection_name(data, mf_path):
@@ -196,6 +238,11 @@ class EnvironmentValidator:
 
             for model in data['Models']:
                 name = model.get('Name', '')
+
+                if (self.args.models_exclude
+                        and name in self.args.models_exclude):
+                    continue
+
                 if self.args.models and name not in self.args.models:
                     continue
 
@@ -212,7 +259,7 @@ class EnvironmentValidator:
                 rotation = 'rr' if '_rr_' in name else 'none'
                 checkpoint_path = os.path.join('checkpoints',
                                                os.path.basename(weights_url))
-                angle = name.rsplit('_', 1)[-1]
+                angle = self._get_model_angle(name)
 
                 self.valid_models.append({
                     'name': name,
@@ -226,6 +273,9 @@ class EnvironmentValidator:
                     'img_prefix': '',
                     'ann_file': ''
                 })
+
+        logger.info(f'\nExtracted {len(self.valid_models)} '
+                    f'valid model(s) matching the criteria.')
 
     def _check_directories(self):
         """Verifies local availability of required dataset directories for all
@@ -272,7 +322,7 @@ class EnvironmentValidator:
                          ' and ensure data is split correctly.')
             sys.exit(1)
 
-        logger.info('All required data directories exist.')
+        logger.info('\nAll required data directories exist.')
 
     def _check_checkpoints(self):
         """Verifies local availability of required model weights."""

@@ -24,6 +24,7 @@ Models:
         Dataset: DOTAv1.0
         Metrics:
           mAP: 71.94
+          Paper mAP: 75.97
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/orientedreppoints/oriented_reppoints_r50_fpn_1x_dota_le135/oriented_reppoints_r50_fpn_1x_dota_le135-ef072de9.pth
 
   - Name: oriented_reppoints_r50_fpn_40e_dota_ms_le135

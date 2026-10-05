@@ -24,4 +24,5 @@ Models:
         Dataset: DOTAv1.0
         Metrics:
           mAP: 66.45
+          Paper mAP: 74.92
     Weights: https://download.openmmlab.com/mmrotate/v0.1.0/sasm/sasm_reppoints_r50_fpn_1x_dota_oc/sasm_reppoints_r50_fpn_1x_dota_oc-6d9edded.pth

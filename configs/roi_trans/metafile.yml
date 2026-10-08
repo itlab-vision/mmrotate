@@ -76,4 +76,4 @@ Models:
     Config: configs/roi_trans/roi_trans_swin_tiny_fpn_1x_dota_ms_base_le90.py
     Metadata:
       Training Data: DOTAv1.0 multi-scale
-    Weights:
+    Weights:  checkpoint/roi_trans_swin_tiny_fpn_1x_dota_ms_base_le90.pth

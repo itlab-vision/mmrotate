@@ -88,6 +88,7 @@ class FAAFusion(nn.Module):
         Bn, _, m, _ = x_local.shape
         device = x_local.device
 
+        # Estimate dominant orientation via 2D FFT and radial energy
         x_fft = torch.fft.fft2(x_local.squeeze(1), norm='ortho')
         x_fft_shifted = torch.fft.fftshift(x_fft, dim=(-2, -1))
         mag = x_fft_shifted.abs() + self.eps
@@ -97,7 +98,7 @@ class FAAFusion(nn.Module):
         rho_valid = self.valid_rhos.to(device)
 
         weighted_energy = mag_valid * rho_valid.unsqueeze(0)
-        max_idx = torch.argmax(weighted_energy, dim=1)
+        max_idx = torch.argmax(weighted_energy, dim=1)  # [2]
         theta_e = self.valid_thetas.to(device)[max_idx]
         return theta_e
 
@@ -144,7 +145,7 @@ class FAAFusion(nn.Module):
         else:
             x_high_up = x_high
 
-        # Step 2: Project to c_mid
+        # Step 2: Project channels to c_mid
         xl_proj = self.proj_low(x_low)  # [B, c_mid, H_l, W_l]
         xh_proj = self.proj_high(x_high_up)  # [B, c_mid, H_l, W_l]
 

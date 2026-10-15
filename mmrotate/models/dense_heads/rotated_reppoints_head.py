@@ -181,17 +181,20 @@ class RotatedRepPointsHead(BaseDenseHead):
                     norm_cfg=self.norm_cfg,
                     bias=self.conv_bias))
         pts_out_dim = 2 * self.num_points
+
+        self.reppoints_pts_init_conv = nn.Conv2d(self.feat_channels,
+                                                 self.point_feat_channels, 3,
+                                                 1, 1)
+        self.reppoints_pts_init_out = nn.Conv2d(self.point_feat_channels,
+                                                pts_out_dim, 1, 1, 0)
+
         self.reppoints_cls_conv = DeformConv2d(self.feat_channels,
                                                self.point_feat_channels,
                                                self.dcn_kernel, 1,
                                                self.dcn_pad)
         self.reppoints_cls_out = nn.Conv2d(self.point_feat_channels,
                                            self.cls_out_channels, 1, 1, 0)
-        self.reppoints_pts_init_conv = nn.Conv2d(self.feat_channels,
-                                                 self.point_feat_channels, 3,
-                                                 1, 1)
-        self.reppoints_pts_init_out = nn.Conv2d(self.point_feat_channels,
-                                                pts_out_dim, 1, 1, 0)
+
         self.reppoints_pts_refine_conv = DeformConv2d(self.feat_channels,
                                                       self.point_feat_channels,
                                                       self.dcn_kernel, 1,
@@ -223,20 +226,27 @@ class RotatedRepPointsHead(BaseDenseHead):
         points_init = 0
         cls_feat = x
         pts_feat = x
+        # Step 1: Feature processing in cls and reg branches
         for cls_conv in self.cls_convs:
             cls_feat = cls_conv(cls_feat)
         for reg_conv in self.reg_convs:
             pts_feat = reg_conv(pts_feat)
-        # initialize reppoints
+
+        # Step 2: Initialize 9 point offsets (18 channels dx, dy)
         pts_out_init = self.reppoints_pts_init_out(
             self.relu(self.reppoints_pts_init_conv(pts_feat)))
         pts_out_init = pts_out_init + points_init
-        # refine and classify reppoints
+
+        # Step 3: Gradient scaling (gradient_mul=0.3) and DCN offset
         pts_out_init_grad_mul = (1 - self.gradient_mul) * pts_out_init.detach(
         ) + self.gradient_mul * pts_out_init
         dcn_offset = pts_out_init_grad_mul - dcn_base_offset
+
+        # Step 4: Deformable feature aggregation and classification
         cls_out = self.reppoints_cls_out(
             self.relu(self.reppoints_cls_conv(cls_feat, dcn_offset)))
+
+        # Step 5: Refine 9 point offsets
         pts_out_refine = self.reppoints_pts_refine_out(
             self.relu(self.reppoints_pts_refine_conv(pts_feat, dcn_offset)))
         pts_out_refine = pts_out_refine + pts_out_init.detach()
@@ -615,7 +625,7 @@ class RotatedRepPointsHead(BaseDenseHead):
         label_channels = self.cls_out_channels if self.use_sigmoid_cls else 1
         device = cls_scores[0].device
 
-        # target for initial stage
+        # Stage 1 targets (Initialization)
         center_list, valid_flag_list = self.get_points(
             featmap_sizes, img_metas, device=device)
         pts_coordinate_preds_init = self.offset_to_pts(center_list,
@@ -640,7 +650,8 @@ class RotatedRepPointsHead(BaseDenseHead):
             label_channels=label_channels)
         (*_, rbbox_gt_list_init, candidate_list_init, convex_weights_list_init,
          num_total_pos_init, num_total_neg_init, _) = cls_reg_targets_init
-        # target for refinement stage
+
+        # Stage 2 targets (Refinement and CFA reassign)
         center_list, valid_flag_list = self.get_points(
             featmap_sizes, img_metas, device=device)
         pts_coordinate_preds_refine = self.offset_to_pts(
@@ -661,6 +672,7 @@ class RotatedRepPointsHead(BaseDenseHead):
                     points_shift[i_img].reshape(-1, 2 * self.num_points))
             points_list.append(points)
         if self.use_reassign:
+            # Collect candidate pool via MaxConvexIoUAssigner (IoU >= 0.1)
             cls_reg_targets_refine = self.get_cfa_targets(
                 points_list,
                 valid_flag_list,
@@ -690,11 +702,13 @@ class RotatedRepPointsHead(BaseDenseHead):
                 for item in pts_coordinate_preds_refine
             ]
             with torch.no_grad():
+                # Compute loss for candidate pool
                 pos_losses_list, = multi_apply(
                     self.get_pos_loss, cls_scores,
                     pts_coordinate_preds_init_cfa, labels_list,
                     rbbox_gt_list_refine, label_weights_list,
                     convex_weights_list_refine, pos_inds_list_refine)
+                # Dynamic set splitting and anti-aliasing reassign
                 labels_list, label_weights_list, convex_weights_list_refine, \
                     num_pos, pos_normalize_term = multi_apply(
                         self.reassign,
@@ -916,6 +930,8 @@ class RotatedRepPointsHead(BaseDenseHead):
             pos_loss_cfa = []
             pos_overlaps_init_cfa = []
             gt_mask = pos_gt_inds == gt_ind
+
+            # Step 1: Select top-k candidate proposals per FPN level
             for level in range(num_level):
                 level_mask = pos_level_mask[level]
                 level_gt_mask = level_mask & gt_mask
@@ -942,6 +958,7 @@ class RotatedRepPointsHead(BaseDenseHead):
                 loss_mean = pos_loss_cfa.mean()
                 loss_var = pos_loss_cfa.var()
 
+                # Step 2: Model candidate loss distribution with Gaussian
                 gauss_prob_density = \
                     (-(pos_loss_cfa - loss_mean) ** 2 / loss_var) \
                     .exp() / loss_var.sqrt()
@@ -953,11 +970,12 @@ class RotatedRepPointsHead(BaseDenseHead):
                 gauss_prob_norm = (gauss_prob - gauss_prob.min()) / \
                                   (gauss_prob.max() - gauss_prob.min())
 
-                # splitting by gradient consistency
+                # Step 3: Gradient consistency splitting
                 loss_curve = gauss_prob_norm * pos_loss_cfa
                 _, max_thr = loss_curve.topk(1)
                 reweights = gauss_prob_norm[:max_thr + 1]
-                # feature anti-aliasing coefficient
+
+                # Step 4: Anti-aliasing feature suppression and reweighting
                 pos_overlaps_init_cfa = pos_overlaps_init_cfa[:, :max_thr + 1]
                 overlaps_level = pos_overlaps_init_cfa[gt_ind] / (
                     pos_overlaps_init_cfa.sum(0) + 1e-6)
@@ -1145,9 +1163,12 @@ class RotatedRepPointsHead(BaseDenseHead):
                 points_pred = points_pred[topk_inds, :]
                 scores = scores[topk_inds, :]
 
+            # Step 1: Convex hull and minimum bounding polygon
             poly_pred = self.points2rotrect(points_pred, y_first=True)
+            # Step 2: Scale polygon to FPN stride and shift to anchor center
             bbox_pos_center = points[:, :2].repeat(1, 4)
             polys = poly_pred * self.point_strides[level_idx] + bbox_pos_center
+            # Step 3: Convert 8 polygon coordinates to OBB format
             bboxes = poly2obb(polys, self.version)
 
             mlvl_bboxes.append(bboxes)

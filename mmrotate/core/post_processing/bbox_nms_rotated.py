@@ -77,6 +77,7 @@ def multiclass_nms_rotated(multi_bboxes,
         bboxes_for_nms[:, :2] = bboxes_for_nms[:, :2] + offsets[:, None]
     else:
         bboxes_for_nms = bboxes + offsets[:, None]
+
     _, keep = nms_rotated(bboxes_for_nms, scores, nms.iou_thr)
 
     if max_num > 0:

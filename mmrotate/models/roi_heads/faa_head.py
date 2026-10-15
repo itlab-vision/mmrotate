@@ -184,7 +184,7 @@ class FAAHead(RotatedShared2FCBBoxHead):
 
         N, C, H, W = x.shape
 
-        # 对 256 个通道分别做 FAM
+        # Step 1: Per-channel FAA alignment across 256 channels
         fam_Ere_list = []
         fam_theta_e_list = []
         for i in range(256):
@@ -203,12 +203,15 @@ class FAAHead(RotatedShared2FCBBoxHead):
         #  x = torch.cat([spatial_feat, fam_Ere], dim=1)  # [N, 12800]
         #  x_reg = spatial_feat
         #  x_cls = fam_Ere
+
+        # Step 2: Residual fusion of spatial and rotation-invariant features
         x = spatial_feat + self.gamma * fam_Ere
 
-        # FC
+        # Step 3: Forward through shared FC layers (1280 -> 1024)
         for fc in self.shared_fcs:
             x = self.relu(fc(x))
 
+        # Step 4: Classification and regression output heads
         cls_score = self.fc_cls(x) if self.with_cls else None
         bbox_pred = self.fc_reg(x) if self.with_reg else None
 

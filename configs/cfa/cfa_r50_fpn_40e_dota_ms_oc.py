@@ -1,5 +1,6 @@
 _base_ = ['./cfa_r50_fpn_40e_dota_oc.py']
 
+# TOP-1 DOTA v1.0 model
 dataset_type = 'DOTADataset'
 data_root = 'data/split_ms-cfa_dota_1_0/'
 data = dict(

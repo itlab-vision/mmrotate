@@ -13,7 +13,7 @@ Target configuration: [`configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py`](../../con
 ```bash
 python tools/analysis_tools/dump_model_structure.py \
     configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py \
-    --out-dir model_structure_analysis/lsk_s_fpn_1x_dota_rr_le90_faa \
+    --out-dir model_structure/lsk_s_fpn_1x_dota_rr_le90_faa \
     --shape 1024 1024
 ```
 

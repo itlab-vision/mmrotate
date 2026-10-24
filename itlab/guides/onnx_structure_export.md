@@ -39,7 +39,7 @@ python tools/analysis_tools/dump_model_structure.py \
 ```bash
 python tools/analysis_tools/dump_model_structure.py \
     configs/cfa/cfa_r50_fpn_40e_dota_oc.py \
-    --out-dir model_structure_analysis/cfa_r50_fpn_40e_dota_oc \
+    --out-dir model_structure/cfa_r50_fpn_40e_dota_oc \
     --shape 1024 1024
 ```
 

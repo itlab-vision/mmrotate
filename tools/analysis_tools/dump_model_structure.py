@@ -8,7 +8,6 @@ from contextlib import contextmanager
 import torch
 import torch.nn as nn
 from mmcv import Config, DictAction
-from mmcv.runner import load_checkpoint
 
 from mmrotate.models import build_detector
 
@@ -388,8 +387,6 @@ def parse_args():
     parser.add_argument(
         'config', help='Path to model configuration file (.py)')
     parser.add_argument(
-        '--checkpoint', default=None, help='Path to checkpoint file (.pth)')
-    parser.add_argument(
         '--out-dir',
         default='onnx_models',
         help='Directory to save exported ONNX models')
@@ -423,10 +420,6 @@ def main():
         cfg.model,
         train_cfg=cfg.get('train_cfg'),
         test_cfg=cfg.get('test_cfg'))
-
-    if args.checkpoint:
-        logger.info(f'Loading checkpoint: {args.checkpoint}')
-        load_checkpoint(model, args.checkpoint, map_location='cpu')
 
     model.eval()
 

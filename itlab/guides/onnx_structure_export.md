@@ -22,7 +22,6 @@ Run the export script using Python:
 ```bash
 python tools/analysis_tools/dump_model_structure.py \
     <CONFIG_PATH> \
-    [--checkpoint <CHECKPOINT_PATH>] \
     [--out-dir <OUTPUT_DIRECTORY>] \
     [--shape <HEIGHT> <WIDTH>] \
     [--cfg-options <KEY=VALUE>]
@@ -31,7 +30,6 @@ python tools/analysis_tools/dump_model_structure.py \
 ### Script Arguments
 
 - `config`: Path to the model configuration file (e.g., `configs/cfa/cfa_r50_fpn_40e_dota_oc.py`).
-- `--checkpoint`: (Optional) Path to a trained model checkpoint (`.pth`). If omitted, the model structure is exported with initialized weights.
 - `--out-dir`: Destination folder for generated `.onnx` files (default: `onnx_models`).
 - `--shape`: Input image dimensions `H W` (default: `1024 1024`).
 - `--cfg-options`: Override configuration settings at runtime in `key=value` format.

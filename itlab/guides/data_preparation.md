@@ -122,5 +122,5 @@ python tools/data/dota/run_dota_split.py --nproc 12 --dota-version 1.5
 Process trainval split / roi-scales for DOTA 1.0 and DOTA 1.5:
 
 ```bash
-python tools/data/dota/run_dota_split.py --data-split trainval --scale s-roi-test ms-roi-test ms-roi-train --dota-version 1.0 1.5
+python tools/data/dota/run_dota_split.py --data-split trainval --scale ss-roi-test ms-roi-test ms-roi-train --dota-version 1.0 1.5
 ```

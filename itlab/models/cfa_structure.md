@@ -158,60 +158,17 @@ ______________________________________________________________________
 
 ## 4. ResNet-50 Backbone Breakdown
 
-In OpenMMLab, the **ResNet** backbone is built dynamically at runtime by `build_backbone(cfg)` according to the parameters specified in `model.backbone`:
-
-- **`depth=50`**: Selects the block type and stage depth from `arch_settings` $\to$ `(Bottleneck, (3, 4, 6, 3))`.
-- **`num_stages=4`**: Constructs 4 sequential stages (`layer1` through `layer4`) via `make_res_layer()`.
-- **`out_indices=(0, 1, 2, 3)`**: Extracts feature maps after each stage to output pyramid levels $(C_2, C_3, C_4, C_5)$.
-- **`frozen_stages=1`**: Freezes gradients and sets evaluation mode for the stem (`conv1`, `bn1`) and Stage 1 (`layer1`).
-- **`norm_cfg=dict(type=norm_type, requires_grad=True)`**: Dynamically constructs normalization layers (`BN` or `SyncBN`).
-- **`style='pytorch'`**: Employs stride=2 in the $3 \times 3$ convolution of downsampling blocks (standard PyTorch style).
-
-```mermaid
-flowchart TD
-    In["Input Image: (1, 3, 1024, 1024)"] --> Stem
-
-    subgraph Stem ["Stem (Stage 0)"]
-        conv1["conv1: Conv2d(3 -> 64, kernel=7, stride=2, pad=3)"]
-        bn1["bn1: BatchNorm2d(64) + ReLU"]
-        pool["maxpool: MaxPool2d(kernel=3, stride=2, pad=1)"]
-        conv1 --> bn1 --> pool
-    end
-
-    Stem --> L1
-
-    subgraph L1 ["Stage 1 (layer1) - 3 Bottleneck Blocks"]
-        b1["3 blocks: 1x1 (64->64) -> 3x3 (64->64) -> 1x1 (64->256)"]
-    end
-
-    L1 -->|c2_out: 1x256x256x256| L2
-
-    subgraph L2 ["Stage 2 (layer2) - 4 Bottleneck Blocks (stride 2)"]
-        b2["4 blocks: 1x1 (256->128) -> 3x3 (128->128) -> 1x1 (128->512)"]
-    end
-
-    L2 -->|c3_out: 1x512x128x128| L3
-
-    subgraph L3 ["Stage 3 (layer3) - 6 Bottleneck Blocks (stride 2)"]
-        b3["6 blocks: 1x1 (512->256) -> 3x3 (256->256) -> 1x1 (256->1024)"]
-    end
-
-    L3 -->|c4_out: 1x1024x64x64| L4
-
-    subgraph L4 ["Stage 4 (layer4) - 3 Bottleneck Blocks (stride 2)"]
-        b4["3 blocks: 1x1 (1024->512) -> 3x3 (512->512) -> 1x1 (512->2048)"]
-    end
-
-    L4 -->|c5_out: 1x2048x32x32| Out["Feature Maps C2, C3, C4, C5"]
-```
+For the detailed configuration parameters of the backbone (`depth=50`, `frozen_stages=1`, `out_indices`, etc.), see [Section 2.1](#21-backbone-resnet-50).
 
 ### Layer and Parameter Specifications
 
-| Stage | Name | Input Resolution | Output Channels | Stride | Structure | Parameters |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Stem** | `conv1`, `bn1` | $1024 \times 1024$ | 64 | 4 | $7 \times 7$ Conv, MaxPool | ~9.5K (9,536) |
-| **Stage 1** | `layer1` | $256 \times 256$ | 256 ($C_2$) | 4 | 3 Bottleneck blocks $[64, 64, 256]$ | ~0.22M (215,808) |
-| **Stage 2** | `layer2` | $128 \times 128$ | 512 ($C_3$) | 8 | 4 Bottleneck blocks $[128, 128, 512]$ | ~1.22M (1,219,584) |
-| **Stage 3** | `layer3` | $64 \times 64$ | 1024 ($C_4$) | 16 | 6 Bottleneck blocks $[256, 256, 1024]$ | ~7.10M (7,098,368) |
-| **Stage 4** | `layer4` | $32 \times 32$ | 2048 ($C_5$) | 32 | 3 Bottleneck blocks $[512, 512, 2048]$ | ~14.96M (14,964,736) |
-| **Total** | | | | | **50 Conv layers** | **23,508,032 (~23.51M)** |
+| Stage | Name | Input Resolution | Output Channels | Stride | Forwarded to Neck | Structure | Parameters |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Stem** | `conv1`, `bn1` | $1024 \times 1024$ | 64 | 4 | — | $7 \times 7$ Conv, MaxPool | ~9.5K (9,536) |
+| **Stage 1** | `layer1` | $256 \times 256$ | 256 | 4 | **$C_2$** ($256 \times 256$) | 3 Bottleneck blocks $[64, 64, 256]$ | ~0.22M (215,808) |
+| **Stage 2** | `layer2` | $128 \times 128$ | 512 | 8 | **$C_3$** ($128 \times 128$) | 4 Bottleneck blocks $[128, 128, 512]$ | ~1.22M (1,219,584) |
+| **Stage 3** | `layer3` | $64 \times 64$ | 1024 | 16 | **$C_4$** ($64 \times 64$) | 6 Bottleneck blocks $[256, 256, 1024]$ | ~7.10M (7,098,368) |
+| **Stage 4** | `layer4` | $32 \times 32$ | 2048 | 32 | **$C_5$** ($32 \times 32$) | 3 Bottleneck blocks $[512, 512, 2048]$ | ~14.96M (14,964,736) |
+| **Total** | | | | | **4 feature maps** | **50 Conv layers** | **23,508,032 (~23.51M)** |
+
+The 4 feature maps $(C_2, C_3, C_4, C_5)$ produced by `layer1`–`layer4` (`out_indices=(0, 1, 2, 3)`) are forwarded directly to the FPN neck (`in_channels=[256, 512, 1024, 2048]`).

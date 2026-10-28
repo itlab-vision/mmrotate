@@ -125,21 +125,34 @@ ______________________________________________________________________
 
 ## 3. Code Components
 
-| Component Name | What is used here | Code Link |
+### 3.1. Backbone (`ResNet-50`)
+
+| Component Name | Role & Implementation | Code Link |
 | :--- | :--- | :--- |
-| **Detector** | `RotatedRepPoints`: Single-stage detector wrapper handling end-to-end model execution. | [rotated_reppoints.py: L7-L18](../../mmrotate/models/detectors/rotated_reppoints.py#L7-L18) |
-| **Base Detector** | `RotatedSingleStageDetector`: Base class implementing feature extraction (`extract_feat: L39-L44`), training (`forward_train: L55-L83`), and test (`simple_test: L85-L108`). | [single_stage.py](../../mmrotate/models/detectors/single_stage.py) |
-| **Backbone Builder** | `build_backbone`: Instantiates 4-stage `ResNet-50` returning feature maps $C_2..C_5$ (invoked by detector at `single_stage.py: L30`). | [builder.py: L15-L17](../../mmrotate/models/builder.py#L15-L17) |
-| **Neck Builder** | `build_neck`: Instantiates `FPN` using lateral 1×1 convs and top-down additions (invoked by detector at `single_stage.py: L32`). | [builder.py: L20-L22](../../mmrotate/models/builder.py#L20-L22) |
-| **Dense Head** | `RotatedRepPointsHead`: Anchor-free dense head predicting non-rigid points, class scores, and oriented boxes. | [rotated_reppoints_head.py: L20-L1194](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L20-L1194) |
-| **Initial Points Offset** | `reppoints_pts_init_conv` + `reppoints_pts_init_out`: Defines initial 9-point regression layers (executed in `forward_single: L236-L239`). | [rotated_reppoints_head.py: L185-L189](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L185-L189) |
-| **Deformable Feature Adaptation (Cls)** | `reppoints_cls_conv` + `reppoints_cls_out`: `DeformConv2d` layer sampling features at predicted points for orientation-aware classification (executed in `forward_single: L246-L248`). | [rotated_reppoints_head.py: L191-L196](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L191-L196) |
-| **Deformable Feature Adaptation (Pts)** | `reppoints_pts_refine_conv` + `reppoints_pts_refine_out`: `DeformConv2d` layer refining point locations using deformable receptive fields (executed in `forward_single: L250-L253`). | [rotated_reppoints_head.py: L198-L203](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L198-L203) |
-| **Points to Rotated BBox** | `points2rotrect`: Converts 9 point coordinates to minimum area bounding rectangles via `min_area_polygons()`. | [rotated_reppoints_head.py: L205-L217](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L205-L217) |
-| **CFA Reassignment Algorithm** | `reassign`: Convex-hull set adaptation, dynamic top-k candidate pool selection, and gradient consistency splitting. | [rotated_reppoints_head.py: L864-L1027](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L864-L1027) |
-| **Convex IoU Assigner** | `MaxConvexIoUAssigner`: Assigns ground truth boxes to convex hull point sets based on Convex-IoU metric (`assign: L54-L202`). | [max_convex_iou_assigner.py: L11-L219](../../mmrotate/core/bbox/assigners/max_convex_iou_assigner.py#L11-L219) |
-| **Convex-GIoU Loss** | `ConvexGIoULoss`: Continuous differentiable convex-hull intersection over union loss function (`forward: L88-L115`). | [convex_giou_loss.py: L68-L115](../../mmrotate/models/losses/convex_giou_loss.py#L68-L115) |
-| **Rotated NMS** | `multiclass_nms_rotated`: Filters overlapping rotated bounding boxes across pyramid levels (invoked in dense head at `rotated_reppoints_head.py: L1188-L1191`). | [bbox_nms_rotated.py: L6-L94](../../mmrotate/core/post_processing/bbox_nms_rotated.py#L6-L94) |
+| **Backbone** | `ResNet-50`: 4-stage residual backbone (imported from `mmdet`). | [mmdet.models.backbones.ResNet](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/backbones/resnet.py) |
+| **Backbone Builder** | `build_backbone`: Instantiates ResNet-50 via `ROTATED_BACKBONES` registry. | [builder.py: L15-L17](../../mmrotate/models/builder.py#L15-L17) (invoked at [single_stage.py: L30](../../mmrotate/models/detectors/single_stage.py#L30)) |
+
+### 3.2. Neck (`FPN`)
+
+| Component Name | Role & Implementation | Code Link |
+| :--- | :--- | :--- |
+| **Neck (FPN)** | `FPN`: Feature Pyramid Network for multi-scale feature fusion (imported from `mmdet`). | [mmdet.models.necks.FPN](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/necks/fpn.py) |
+| **Neck Builder** | `build_neck`: Instantiates FPN via `ROTATED_NECKS` registry. | [builder.py: L20-L22](../../mmrotate/models/builder.py#L20-L22) (invoked at [single_stage.py: L32](../../mmrotate/models/detectors/single_stage.py#L32)) |
+
+### 3.3. Head / Detector (`RotatedRepPoints` & `RotatedRepPointsHead`)
+
+| Component Name | Role & Implementation | Code Link |
+| :--- | :--- | :--- |
+| **Detector** | `RotatedRepPoints`: Top-level single-stage detector wrapper handling model setup. | [rotated_reppoints.py](../../mmrotate/models/detectors/rotated_reppoints.py) |
+| **Base Detector** | `RotatedSingleStageDetector`: Base class managing feature extraction, training, and testing loops. | [single_stage.py](../../mmrotate/models/detectors/single_stage.py) |
+| **Dense Head** | `RotatedRepPointsHead`: Anchor-free head predicting non-rigid point sets, class scores, and oriented boxes. | [rotated_reppoints_head.py](../../mmrotate/models/dense_heads/rotated_reppoints_head.py) |
+| **Stage 1 (Point Init)** | `reppoints_pts_init_*`: Predicts initial 9-point spatial offsets ($\Delta x^k, \Delta y^k$) around each feature point. | [rotated_reppoints_head.py: L185-L189](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L185-L189) |
+| **Stage 2 (DCN Adaptation)** | `reppoints_cls_*`, `reppoints_pts_refine_*`: `DeformConv2d` sampling features at 9 predicted points for classification and refinement. | [rotated_reppoints_head.py: L191-L203](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L191-L203) |
+| **CFA Reassignment** | `reassign`: Dynamically selects candidate pools $S_j$, splits by gradient consistency, and computes anti-aliasing. | [rotated_reppoints_head.py: L864-L1027](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L864-L1027) |
+| **Convex Assigner** | `MaxConvexIoUAssigner`: Assigns ground-truth boxes to candidate convex hulls via Convex-IoU metric. | [max_convex_iou_assigner.py](../../mmrotate/core/bbox/assigners/max_convex_iou_assigner.py) |
+| **Convex Loss** | `ConvexGIoULoss`: Continuous differentiable convex-hull GIoU loss for initial and refined point sets. | [convex_giou_loss.py](../../mmrotate/models/losses/convex_giou_loss.py) |
+| **Points to OBB** | `points2rotrect`: Converts 9 predicted points to minimum area bounding rectangles via Jarvis march algorithm. | [rotated_reppoints_head.py: L205-L217](../../mmrotate/models/dense_heads/rotated_reppoints_head.py#L205-L217) |
+| **Rotated NMS** | `multiclass_nms_rotated`: Suppresses overlapping rotated bounding boxes across pyramid levels (test-only). | [bbox_nms_rotated.py](../../mmrotate/core/post_processing/bbox_nms_rotated.py) |
 
 ______________________________________________________________________
 

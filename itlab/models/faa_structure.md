@@ -44,10 +44,10 @@ Configuration parameters in [`configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py` (lin
 ```
 
 The backbone generates 4 multi-scale feature maps:
-* $C_2$: stride 4, 64 channels ($H/4 \times W/4$, resolution $256 \times 256$ for $1024 \times 1024$ input);
-* $C_3$: stride 8, 128 channels ($H/8 \times W/8$, resolution $128 \times 128$);
-* $C_4$: stride 16, 320 channels ($H/16 \times W/16$, resolution $64 \times 64$);
-* $C_5$: stride 32, 512 channels ($H/32 \times W/32$, resolution $32 \times 32$).
+* $C_2$: stride 4, 64 channels ($H/4$ × $W/4$, resolution 256 × 256 for 1024 × 1024 input);
+* $C_3$: stride 8, 128 channels ($H/8$ × $W/8$, resolution 128 × 128);
+* $C_4$: stride 16, 320 channels ($H/16$ × $W/16$, resolution 64 × 64);
+* $C_5$: stride 32, 512 channels ($H/32$ × $W/32$, resolution 32 × 32).
 
 ### 2.2. Neck (`FAAFusionFPN`)
 
@@ -68,11 +68,11 @@ Configuration parameters in [`configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py` (lin
 ```
 
 The neck builds 5 output feature levels:
-* $P_2$: stride 4, 256 channels ($256 \times 256$), top-down fused with $P_3$ using Fourier Angle Alignment (`'faa'`);
-* $P_3$: stride 8, 256 channels ($128 \times 128$), top-down fused with $P_4$ via element-wise addition (`'add'`);
-* $P_4$: stride 16, 256 channels ($64 \times 64$), top-down fused with $P_5$ via element-wise addition (`'add'`);
-* $P_5$: stride 32, 256 channels ($32 \times 32$), lateral projection from $C_5$;
-* $P_6$: stride 64, 256 channels ($16 \times 16$), downsampled from $C_5$ via $3 \times 3$ conv (stride 2, `add_extra_convs='on_input'`).
+* $P_2$: stride 4, 256 channels (256 × 256), top-down fused with $P_3$ using Fourier Angle Alignment (`'faa'`);
+* $P_3$: stride 8, 256 channels (128 × 128), top-down fused with $P_4$ via element-wise addition (`'add'`);
+* $P_4$: stride 16, 256 channels (64 × 64), top-down fused with $P_5$ via element-wise addition (`'add'`);
+* $P_5$: stride 32, 256 channels (32 × 32), lateral projection from $C_5$;
+* $P_6$: stride 64, 256 channels (16 × 16), downsampled from $C_5$ via 3 × 3 conv (stride 2, `add_extra_convs='on_input'`).
 
 ### 2.3. RPN & RoI Head / Detector (`OrientedRCNN`, `OrientedRPNHead` & `FAAHead`)
 
@@ -160,7 +160,7 @@ ______________________________________________________________________
 | **Midpoint BBox Coder** | `MidpointOffsetCoder`: Encodes and decodes rotated bounding boxes using midpoint offsets. | [delta_midpointoffset_rbbox_coder.py](../../mmrotate/core/bbox/coder/delta_midpointoffset_rbbox_coder.py) |
 | **RoI Head** | `OrientedStandardRoIHead`: Two-stage decision head managing box extractors and classification/regression branches. | [oriented_standard_roi_head.py](../../mmrotate/models/roi_heads/oriented_standard_roi_head.py) |
 | **RoI Head Builder** | `build_head`: Instantiates OrientedStandardRoIHead via `ROTATED_HEADS` registry. | [builder.py: L35-L37](../../mmrotate/models/builder.py#L35-L37) (invoked at [two_stage.py: L50](../../mmrotate/models/detectors/two_stage.py#L50)) |
-| **RoI Feature Extractor** | `RotatedSingleRoIExtractor`: Resamples rotated regions of interest into fixed $7 \times 7$ patches via `RoIAlignRotated`. | [rotate_single_level_roi_extractor.py](../../mmrotate/models/roi_heads/roi_extractors/rotate_single_level_roi_extractor.py) |
+| **RoI Feature Extractor** | `RotatedSingleRoIExtractor`: Resamples rotated regions of interest into fixed 7 × 7 patches via `RoIAlignRotated`. | [rotate_single_level_roi_extractor.py](../../mmrotate/models/roi_heads/roi_extractors/rotate_single_level_roi_extractor.py) |
 | **Bounding Box Head** | `FAAHead`: Two-layer MLP with residual angle alignment for classification and regression. | [faa_head.py: L144-L218](../../mmrotate/models/roi_heads/faa_head.py#L144-L218) |
 | **RoI Alignment Block** | `class FAA`: Rotates RoI feature channels to horizontal $0^\circ$ canonical orientation. | [faa_head.py: L14-L140](../../mmrotate/models/roi_heads/faa_head.py#L14-L140) (instantiated at [faa_head.py: L151](../../mmrotate/models/roi_heads/faa_head.py#L151)) |
 | **Rotated NMS** | `multiclass_nms_rotated`: Suppresses redundant overlapping rotated bounding boxes during inference. | [bbox_nms_rotated.py](../../mmrotate/core/post_processing/bbox_nms_rotated.py) |
@@ -175,10 +175,10 @@ For the detailed configuration parameters of the backbone (`embed_dims`, `depths
 
 | Stage | Sub-modules | Input Resolution | Output Channels | Stride | Forwarded to Neck | Depth (Blocks) | Parameters |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Stage 1** | `patch_embed1`, `block1` | $1024 \times 1024$ | 64 | 4 | **$C_2$** ($256 \times 256$) | 2 blocks | ~0.19M (192,268) |
-| **Stage 2** | `patch_embed2`, `block2` | $256 \times 256$ | 128 | 8 | **$C_3$** ($128 \times 128$) | 2 blocks | ~0.76M (758,540) |
-| **Stage 3** | `patch_embed3`, `block3` | $128 \times 128$ | 320 | 16 | **$C_4$** ($64 \times 64$) | 4 blocks | ~5.25M (5,249,112) |
-| **Stage 4** | `patch_embed4`, `block4` | $64 \times 64$ | 512 | 32 | **$C_5$** ($32 \times 32$) | 2 blocks | ~7.64M (7,640,972) |
+| **Stage 1** | `patch_embed1`, `block1` | 1024 × 1024 | 64 | 4 | **$C_2$** (256 × 256) | 2 blocks | ~0.19M (192,268) |
+| **Stage 2** | `patch_embed2`, `block2` | 256 × 256 | 128 | 8 | **$C_3$** (128 × 128) | 2 blocks | ~0.76M (758,540) |
+| **Stage 3** | `patch_embed3`, `block3` | 128 × 128 | 320 | 16 | **$C_4$** (64 × 64) | 4 blocks | ~5.25M (5,249,112) |
+| **Stage 4** | `patch_embed4`, `block4` | 64 × 64 | 512 | 32 | **$C_5$** (32 × 32) | 2 blocks | ~7.64M (7,640,972) |
 | **Total** | | | | | **4 feature maps** | **10 LSK Blocks** | **13,840,892 (~13.84M)** |
 
 The 4 feature maps $(C_2, C_3, C_4, C_5)$ produced by `patch_embed1`–`block4` are forwarded directly to the FAAFusionFPN neck (`in_channels=[64, 128, 320, 512]`).
@@ -193,7 +193,7 @@ ______________________________________________________________________
 | :--- | :--- | :--- |
 | **FAE Angle Estimation** | `_estimate_main_direction`: computes $\theta_{low}$ and $\theta_{high}$ on unfolded patches (Eq. 10–14). | [faafusion.py: L82-L103](../../mmrotate/models/necks/faafusion.py#L82-L103) (invoked at [L180-L181](../../mmrotate/models/necks/faafusion.py#L180-L181)) |
 | **FAA Spatial Alignment** | `_rotate_spatial_patch`: rotates high-level patches by $\Delta\theta$ via bilinear `grid_sample` (Eq. 15). | [faafusion.py: L105-L131](../../mmrotate/models/necks/faafusion.py#L105-L131) (invoked at [L188-L189](../../mmrotate/models/necks/faafusion.py#L188-L189)) |
-| **Fusion Block** | `FAAFusion`: unfolds $7 \times 7$ patches, aligns local orientations, folds, and applies LayerScale. | [faafusion.py: L15-L223](../../mmrotate/models/necks/faafusion.py#L15-L223) |
+| **Fusion Block** | `FAAFusion`: unfolds 7 × 7 patches, aligns local orientations, folds, and applies LayerScale. | [faafusion.py: L15-L223](../../mmrotate/models/necks/faafusion.py#L15-L223) |
 
 ### 5.2. RoI Head (`FAA` / `FAAHead` in `faa_head.py`)
 

@@ -46,10 +46,10 @@ Configuration parameters in [`configs/rotated_reppoints/rotated_reppoints_r50_fp
 ```
 
 The backbone generates 4 multi-scale feature maps (`out_indices=(0, 1, 2, 3)`):
-* $C_2$: stride 4, 256 channels ($H/4 \times W/4$, resolution $256 \times 256$ for $1024 \times 1024$ input);
-* $C_3$: stride 8, 512 channels ($H/8 \times W/8$, resolution $128 \times 128$);
-* $C_4$: stride 16, 1024 channels ($H/16 \times W/16$, resolution $64 \times 64$);
-* $C_5$: stride 32, 2048 channels ($H/32 \times W/32$, resolution $32 \times 32$).
+* $C_2$: stride 4, 256 channels ($H/4$ × $W/4$, resolution 256 × 256 for 1024 × 1024 input);
+* $C_3$: stride 8, 512 channels ($H/8$ × $W/8$, resolution 128 × 128);
+* $C_4$: stride 16, 1024 channels ($H/16$ × $W/16$, resolution 64 × 64);
+* $C_5$: stride 32, 2048 channels ($H/32$ × $W/32$, resolution 32 × 32).
 
 ### 2.2. Neck (`FPN`)
 
@@ -67,11 +67,11 @@ Configuration parameters in [`configs/rotated_reppoints/rotated_reppoints_r50_fp
 ```
 
 The FPN constructs 5 multi-scale feature pyramid levels (`num_outs=5`, starting from $C_3$ via `start_level=1`):
-* $P_3$ (from $C_3$): stride 8, 256 channels ($128 \times 128$, small objects, e.g. small vehicles);
-* $P_4$ (from $C_4$): stride 16, 256 channels ($64 \times 64$, medium objects, e.g. ships, swimming pools);
-* $P_5$ (from $C_5$): stride 32, 256 channels ($32 \times 32$, large objects, e.g. airplanes, bridges);
-* $P_6$ (extra stride-2 conv over $C_5$): stride 64, 256 channels ($16 \times 16$, extra-large objects);
-* $P_7$ (extra stride-2 conv over $P_6$): stride 128, 256 channels ($8 \times 8$, giant objects / hangars / fields).
+* $P_3$ (from $C_3$): stride 8, 256 channels (128 × 128, small objects, e.g. small vehicles);
+* $P_4$ (from $C_4$): stride 16, 256 channels (64 × 64, medium objects, e.g. ships, swimming pools);
+* $P_5$ (from $C_5$): stride 32, 256 channels (32 × 32, large objects, e.g. airplanes, bridges);
+* $P_6$ (extra stride-2 conv over $C_5$): stride 64, 256 channels (16 × 16, extra-large objects);
+* $P_7$ (extra stride-2 conv over $P_6$): stride 128, 256 channels (8 × 8, giant objects / hangars / fields).
 
 ### 2.3. Head / Detector (`RotatedRepPoints` & `RotatedRepPointsHead`)
 
@@ -164,11 +164,11 @@ For the detailed configuration parameters of the backbone (`depth=50`, `frozen_s
 
 | Stage | Name | Input Resolution | Output Channels | Stride | Forwarded to Neck | Structure | Parameters |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Stem** | `conv1`, `bn1` | $1024 \times 1024$ | 64 | 4 | — | $7 \times 7$ Conv, MaxPool | ~9.5K (9,536) |
-| **Stage 1** | `layer1` | $256 \times 256$ | 256 | 4 | **$C_2$** ($256 \times 256$) | 3 Bottleneck blocks $[64, 64, 256]$ | ~0.22M (215,808) |
-| **Stage 2** | `layer2` | $128 \times 128$ | 512 | 8 | **$C_3$** ($128 \times 128$) | 4 Bottleneck blocks $[128, 128, 512]$ | ~1.22M (1,219,584) |
-| **Stage 3** | `layer3` | $64 \times 64$ | 1024 | 16 | **$C_4$** ($64 \times 64$) | 6 Bottleneck blocks $[256, 256, 1024]$ | ~7.10M (7,098,368) |
-| **Stage 4** | `layer4` | $32 \times 32$ | 2048 | 32 | **$C_5$** ($32 \times 32$) | 3 Bottleneck blocks $[512, 512, 2048]$ | ~14.96M (14,964,736) |
+| **Stem** | `conv1`, `bn1` | 1024 × 1024 | 64 | 4 | — | 7 × 7 Conv, MaxPool | ~9.5K (9,536) |
+| **Stage 1** | `layer1` | 256 × 256 | 256 | 4 | **$C_2$** (256 × 256) | 3 Bottleneck blocks $[64, 64, 256]$ | ~0.22M (215,808) |
+| **Stage 2** | `layer2` | 128 × 128 | 512 | 8 | **$C_3$** (128 × 128) | 4 Bottleneck blocks $[128, 128, 512]$ | ~1.22M (1,219,584) |
+| **Stage 3** | `layer3` | 64 × 64 | 1024 | 16 | **$C_4$** (64 × 64) | 6 Bottleneck blocks $[256, 256, 1024]$ | ~7.10M (7,098,368) |
+| **Stage 4** | `layer4` | 32 × 32 | 2048 | 32 | **$C_5$** (32 × 32) | 3 Bottleneck blocks $[512, 512, 2048]$ | ~14.96M (14,964,736) |
 | **Total** | | | | | **4 feature maps** | **50 Conv layers** | **23,508,032 (~23.51M)** |
 
 The 4 feature maps $(C_2, C_3, C_4, C_5)$ produced by `layer1`–`layer4` (`out_indices=(0, 1, 2, 3)`) are forwarded directly to the FPN neck (`in_channels=[256, 512, 1024, 2048]`).

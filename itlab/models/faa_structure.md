@@ -1,12 +1,14 @@
 # FAA Model Structure
 
-Target configuration: [`configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py`](../../configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py).
+This document details the internal architecture, configuration parameters, and code components for the FAA (Fourier Angle Alignment) model.
 
-This document details the internal architecture, code components, backbone parameters, and Fourier Angle Estimation (FAE) module for the FAA (Fourier Angle Alignment) model.
+The structure and parameters are analyzed based on the target configuration [`configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py`](../../configs/faa/lsk_s_fpn_1x_dota_rr_le90_faa.py).
 
 ______________________________________________________________________
 
 ## 1. ONNX Model Export
+
+### ONNX Generation Command
 
 ```bash
 python tools/analysis_tools/dump_model_structure.py \

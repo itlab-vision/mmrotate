@@ -2,7 +2,7 @@
 
 This document details the internal architecture, configuration parameters, and code components for the CFA (Convex-hull Feature Adaptation) model.
 
-The structure and parameters are analyzed based on the target configuration [`configs/cfa/cfa_r50_fpn_40e_dota_oc.py`](../../configs/cfa/cfa_r50_fpn_40e_dota_oc.py) (which inherits base architecture settings from [`configs/rotated_reppoints/rotated_reppoints_r50_fpn_1x_dota_oc.py`](../../configs/rotated_reppoints/rotated_reppoints_r50_fpn_1x_dota_oc.py)).
+The structure and parameters are analyzed based on the target configuration [`configs/cfa/cfa_r50_fpn_40e_dota_oc.py`](../../configs/cfa/cfa_r50_fpn_40e_dota_oc.py).
 
 ______________________________________________________________________
 
@@ -70,11 +70,11 @@ Configuration parameters in [`configs/rotated_reppoints/rotated_reppoints_r50_fp
 
 The FPN constructs 5 multi-scale feature pyramid levels (`num_outs=5`, starting from C3 via `start_level=1`):
 
-- **P3 (from C3):** stride 8, 256 channels (128 × 128, small objects, e.g. small vehicles);
-- **P4 (from C4):** stride 16, 256 channels (64 × 64, medium objects, e.g. ships, swimming pools);
-- **P5 (from C5):** stride 32, 256 channels (32 × 32, large objects, e.g. airplanes, bridges);
-- **P6 (extra stride-2 conv over C5):** stride 64, 256 channels (16 × 16, extra-large objects);
-- **P7 (extra stride-2 conv over P6):** stride 128, 256 channels (8 × 8, giant objects / hangars / fields).
+- **P3 (from C3):** stride 8, 256 channels (128 × 128);
+- **P4 (from C4):** stride 16, 256 channels (64 × 64);
+- **P5 (from C5):** stride 32, 256 channels (32 × 32);
+- **P6 (extra stride-2 conv over C5):** stride 64, 256 channels (16 × 16);
+- **P7 (extra stride-2 conv over P6):** stride 128, 256 channels (8 × 8).
 
 ### 2.3. Head / Detector (`RotatedRepPoints` & `RotatedRepPointsHead`)
 

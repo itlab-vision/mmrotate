@@ -3,11 +3,13 @@ import argparse
 import logging
 import os
 import sys
+import warnings
 from contextlib import contextmanager
 
 import torch
 import torch.nn as nn
 from mmcv import Config, DictAction
+from mmcv.onnx import register_extra_symbolics
 
 from mmrotate.models import build_detector
 
@@ -49,10 +51,12 @@ class ModelStructureExporter:
     def __init__(self,
                  model: nn.Module,
                  out_dir: str,
-                 input_shape: tuple = (1024, 1024)):
+                 input_shape: tuple = (1024, 1024),
+                 opset_version: int = 11):
         self.model = model
         self.out_dir = out_dir
         self.h, self.w = input_shape
+        self.opset_version = opset_version
         self.model.eval()
 
     @contextmanager
@@ -109,7 +113,7 @@ class ModelStructureExporter:
                 dummy_input,
                 bb_path,
                 export_params=True,
-                opset_version=11,
+                opset_version=self.opset_version,
                 do_constant_folding=True,
                 input_names=['input_image'],
                 output_names=output_names)
@@ -155,7 +159,7 @@ class ModelStructureExporter:
                     dummy_inputs,
                     onnx_path,
                     export_params=True,
-                    opset_version=11,
+                    opset_version=self.opset_version,
                     do_constant_folding=True,
                     input_names=input_names,
                     output_names=out_names)
@@ -200,7 +204,7 @@ class ModelStructureExporter:
                     dummy_input,
                     onnx_path,
                     export_params=True,
-                    opset_version=11,
+                    opset_version=self.opset_version,
                     do_constant_folding=True,
                     input_names=['input_image'],
                     output_names=out_names,
@@ -256,7 +260,7 @@ class ModelStructureExporter:
                 dummy_roi,
                 onnx_path,
                 export_params=True,
-                opset_version=11,
+                opset_version=self.opset_version,
                 do_constant_folding=True,
                 input_names=['roi_pooled_features_7x7'],
                 output_names=['final_detections'],
@@ -332,7 +336,7 @@ class ModelStructureExporter:
                 dummy_feats,
                 onnx_path,
                 export_params=True,
-                opset_version=11,
+                opset_version=self.opset_version,
                 do_constant_folding=True,
                 input_names=input_names,
                 output_names=['final_detections'])
@@ -401,12 +405,25 @@ def parse_args():
         nargs='+',
         action=DictAction,
         help='Override config options in key=value format')
+    parser.add_argument(
+        '--opset',
+        type=int,
+        default=11,
+        help='ONNX opset version (default: 11)')
     return parser.parse_args()
 
 
 def main():
     init_logger()
     args = parse_args()
+
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', category=UserWarning, message='.*MMDeploy.*')
+            register_extra_symbolics(opset=args.opset)
+    except Exception as e:
+        logger.warning(f'Failed to register MMCV extra symbolics: {e}')
 
     logger.info(f'Loading config: {args.config}')
     cfg = Config.fromfile(args.config)
@@ -425,7 +442,8 @@ def main():
 
     h, w = args.shape if len(args.shape) == 2 else (args.shape[0],
                                                     args.shape[0])
-    exporter = ModelStructureExporter(model, args.out_dir, input_shape=(h, w))
+    exporter = ModelStructureExporter(
+        model, args.out_dir, input_shape=(h, w), opset_version=args.opset)
     exporter.export_all()
 
 

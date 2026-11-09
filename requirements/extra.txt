@@ -1,5 +1,8 @@
 gdown
 mmcls
+pylatexenc
 python-dotenv
+qiskit
+qiskit-machine-learning
 shapely
 timm==0.6.13

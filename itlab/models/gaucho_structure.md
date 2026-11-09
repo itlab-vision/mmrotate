@@ -250,3 +250,83 @@ For the detailed configuration parameters of the backbone (`depth=101`, `frozen_
 | **Total**   |                |                  |                 |        | **4 feature maps** | **101 Conv layers (33 blocks)**       | **42,500,160 (~42.50M)** |
 
 The 4 feature maps (C2, C3, C4, C5) produced by `layer1`–`layer4` (`out_indices=(0, 1, 2, 3)`) are forwarded directly to the FPN neck (`in_channels=[256, 512, 1024, 2048]`).
+
+______________________________________________________________________
+
+## 5. Quantum Layer Integration
+
+### 5.1. Overview
+
+In GauCho, geometric box representations and Cholesky transformation parameters are compact 5-dimensional vectors (`[x, y, w, h, a]` and `[dx, dy, dα, dβ, dγ]`). GauCho integrates the hybrid [`QuantumLayer`](../../mmrotate/models/utils/quantum_layer.py#L69) module to refine these 5D vectors by learning joint correlations across all parameters simultaneously.
+
+> For full details on module architecture, circuit design, and parameters, see the [Quantum Layer Module Guide](../guides/quantum_layer.md).
+
+### 5.2. Integration Points
+
+| Integration Point              | Code Location                                                                                                            | Input Data                                    |
+| :----------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- |
+| **RoI Geometry Refinement**    | [`GauchoAnchorOBBDecoder.decode` (L123-L124)](../../mmrotate/core/bbox/coder/gaucho_anchor_coder.py#L123-L124)           | Proposal bboxes: `[x, y, w, h, a]` (5D)       |
+| **Cholesky Delta Refinement**  | [`GauchoAnchorOBBDecoder.decode` (L125-L126)](../../mmrotate/core/bbox/coder/gaucho_anchor_coder.py#L125-L126)           | Predicted deltas: `[dx, dy, dα, dβ, dγ]` (5D) |
+| **Regression Head Refinement** | [`RotatedConvFCBBoxHead.forward` (L206-L207)](../../mmrotate/models/roi_heads/bbox_heads/convfc_rbbox_head.py#L206-L207) | Network output: `bbox_pred` (5D)              |
+| **Target Delta Modulation**    | [`GauchoAnchorOBBDecoder.encode` (L85-L86)](../../mmrotate/core/bbox/coder/gaucho_anchor_coder.py#L85-L86)               | Target deltas: `[dx, dy, dw, dh, da]` (5D)    |
+
+### 5.3. Configuration Usage
+
+Quantum layers are configured via `quantum_cfg` in experiment configuration files (e.g., [`configs/gaucho/dotav1/SOTA/roi_transformer_r101_fpn_gaucho_probiou_quantum_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA/roi_transformer_r101_fpn_gaucho_probiou_quantum_1x_dota_ms_rr_le90.py)):
+
+#### Example: Decoder Integration (RoIs, Deltas, and Encode)
+
+```python
+bbox_coder=dict(
+    type='GauchoAnchorOBBDecoder',
+    angle_range='le90',
+    norm_factor=None,
+    edge_swap=True,
+    proj_xy=True,
+    target_means=[0., 0., 0., 0., 0.],
+    target_stds=[0.05, 0.05, 0.1, 0.1, 0.05],
+    quantum_cfg=dict(
+        # 1. Quantum refinement on RoI proposals
+        rois=dict(
+            type='QuantumLayer',
+            num_qubits=5,
+            reps=2,
+            residual=True,
+            scale_input=True,
+            chunk_size=128),
+        # 2. Quantum refinement on Cholesky deltas
+        deltas=dict(
+            type='QuantumLayer',
+            num_qubits=5,
+            reps=2,
+            residual=True,
+            scale_input=True,
+            chunk_size=128),
+        # 3. Optional quantum modulation on target deltas during training
+        encode=dict(
+            type='QuantumLayer',
+            num_qubits=5,
+            reps=2,
+            residual=True,
+            scale_input=True,
+            chunk_size=128)))
+```
+
+#### Example: Regression Head Integration
+
+```python
+dict(
+    type='RotatedShared2FCBBoxHead',
+    in_channels=256,
+    fc_out_channels=1024,
+    roi_feat_size=7,
+    num_classes=num_classes,
+    reg_class_agnostic=True,
+    # Quantum refinement on regression output
+    quantum_cfg=dict(
+        type='QuantumLayer',
+        num_qubits=5,
+        reps=2,
+        residual=True,
+        scale_input=True))
+```

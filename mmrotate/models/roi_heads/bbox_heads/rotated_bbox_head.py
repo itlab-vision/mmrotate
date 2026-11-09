@@ -10,6 +10,7 @@ from mmdet.models.utils import build_linear_layer
 
 from mmrotate.core import build_bbox_coder, multiclass_nms_rotated
 from ...builder import ROTATED_HEADS, build_loss
+from ...utils import build_quantum_layer
 
 
 @ROTATED_HEADS.register_module()
@@ -62,6 +63,7 @@ class RotatedBBoxHead(BaseModule):
                      loss_weight=1.0),
                  loss_bbox=dict(
                      type='SmoothL1Loss', beta=1.0, loss_weight=1.0),
+                 quantum_cfg=None,
                  init_cfg=None):
         super(RotatedBBoxHead, self).__init__(init_cfg)
         assert with_cls or with_reg
@@ -86,6 +88,8 @@ class RotatedBBoxHead(BaseModule):
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_cls = build_loss(loss_cls)
         self.loss_bbox = build_loss(loss_bbox)
+        self.quantum_cfg = quantum_cfg
+        self.quantum_layer = build_quantum_layer(quantum_cfg)
 
         import inspect
         # Check if the regression loss function expects decoded bounding boxes
@@ -152,6 +156,8 @@ class RotatedBBoxHead(BaseModule):
         x = x.view(x.size(0), -1)
         cls_score = self.fc_cls(x) if self.with_cls else None
         bbox_pred = self.fc_reg(x) if self.with_reg else None
+        if bbox_pred is not None and self.quantum_layer is not None:
+            bbox_pred = self.quantum_layer(bbox_pred)
         return cls_score, bbox_pred
 
     def _get_target_single(self, pos_bboxes, neg_bboxes, pos_gt_bboxes,

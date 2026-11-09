@@ -203,6 +203,8 @@ class RotatedConvFCBBoxHead(RotatedBBoxHead):
 
         cls_score = self.fc_cls(x_cls) if self.with_cls else None
         bbox_pred = self.fc_reg(x_reg) if self.with_reg else None
+        if bbox_pred is not None and self.quantum_layer is not None:
+            bbox_pred = self.quantum_layer(bbox_pred)
         return cls_score, bbox_pred
 
 

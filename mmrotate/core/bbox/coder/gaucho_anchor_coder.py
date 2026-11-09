@@ -2,6 +2,7 @@
 import mmcv
 import numpy as np
 import torch
+import torch.nn as nn
 from mmdet.core.bbox.coder.base_bbox_coder import BaseBBoxCoder
 
 from mmrotate.core.bbox.transforms import hbb2obb
@@ -10,7 +11,7 @@ from ..transforms import norm_angle
 
 
 @ROTATED_BBOX_CODERS.register_module()
-class GauchoAnchorOBBDecoder(BaseBBoxCoder):
+class GauchoAnchorOBBDecoder(BaseBBoxCoder, nn.Module):
     """Gaussian-Cholesky Oriented Bounding Box coder.
 
     Decodes gaussian anchor deltas (dx, dy, da, db, dc) into (mux, muy, a, b,
@@ -27,8 +28,10 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
                  proj_xy=False,
                  add_ctr_clamp=False,
                  ctr_clamp=32,
-                 horizontal=False):
-        super(BaseBBoxCoder, self).__init__()
+                 horizontal=False,
+                 quantum_cfg=None):
+        BaseBBoxCoder.__init__(self)
+        nn.Module.__init__(self)
         self.means = target_means
         self.stds = target_stds
         self.add_ctr_clamp = add_ctr_clamp
@@ -38,6 +41,19 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
         self.edge_swap = edge_swap
         self.proj_xy = proj_xy
         self.horizontal = horizontal
+
+        self.quantum_rois_layer = None
+        self.quantum_deltas_layer = None
+        self.quantum_encode_layer = None
+
+        if quantum_cfg is not None:
+            from mmrotate.models.utils import build_quantum_layer
+            self.quantum_rois_layer = build_quantum_layer(
+                quantum_cfg.get('rois'))
+            self.quantum_deltas_layer = build_quantum_layer(
+                quantum_cfg.get('deltas'))
+            self.quantum_encode_layer = build_quantum_layer(
+                quantum_cfg.get('encode'))
 
     def encode(self, bboxes, gt_bboxes):
         """Get box regression transformation deltas that can be used to
@@ -63,9 +79,12 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
         assert bboxes.size(-1) == 5
         assert gt_bboxes.size(-1) == 5
         if self.angle_range in ['oc', 'le135', 'le90']:
-            return bbox2delta(bboxes, gt_bboxes, self.means, self.stds,
-                              self.angle_range, self.norm_factor,
-                              self.edge_swap, self.proj_xy)
+            deltas = bbox2delta(bboxes, gt_bboxes, self.means, self.stds,
+                                self.angle_range, self.norm_factor,
+                                self.edge_swap, self.proj_xy)
+            if self.quantum_encode_layer is not None:
+                deltas = self.quantum_encode_layer(deltas)
+            return deltas
         else:
             raise NotImplementedError
 
@@ -100,6 +119,11 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder):
 
         if bboxes.size(-1) == 4:
             bboxes = hbb2obb(bboxes, self.angle_range)
+
+        if self.quantum_rois_layer is not None:
+            bboxes = self.quantum_rois_layer(bboxes)
+        if self.quantum_deltas_layer is not None:
+            pred_bboxes = self.quantum_deltas_layer(pred_bboxes)
 
         if self.angle_range not in ['oc', 'le135', 'le90']:
             raise NotImplementedError

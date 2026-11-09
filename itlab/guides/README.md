@@ -15,3 +15,4 @@ ______________________________________________________________________
 - **[model_training.md](model_training.md)**: Model training workflow, dataset download (`train`/`val`), `trainval` patch splitting, interactive training (`tools/train.py`), Slurm training (`train_model.slurm`), and batch training generation (`batch_train.sh`).
 - **[config_system.md](config_system.md)**: Config inheritance resolution (`_base_`), dictionary and list merging rules, legacy vs modern dataloader configuration, and internal worker thread behavior.
 - **[onnx_structure_export.md](onnx_structure_export.md)**: Exporting modular ONNX graphs (`tools/analysis_tools/dump_model_structure.py`) for interactive architectural inspection in Netron.
+- **[quantum_layer.md](quantum_layer.md)**: Hybrid quantum-classical module (`QuantumLayer`) design and circuit configuration parameters.

@@ -16,11 +16,10 @@ except ImportError:
     HAS_QISKIT = False
 
 
-def create_encoding_circuit(num_features, num_qubits):
+def create_encoding_circuit(num_qubits):
     """Create angle encoding quantum circuit.
 
     Args:
-        num_features (int): Dimension of input features.
         num_qubits (int): Number of qubits.
 
     Returns:
@@ -28,17 +27,16 @@ def create_encoding_circuit(num_features, num_qubits):
             parameters.
     """
     qc = QuantumCircuit(num_qubits)
-    input_params = ParameterVector('x', length=num_features)
-    for i in range(min(num_features, num_qubits)):
+    input_params = ParameterVector('x', length=num_qubits)
+    for i in range(num_qubits):
         qc.ry(input_params[i], i)
     return qc, input_params
 
 
-def create_variational_circuit(num_features, num_qubits, reps=2):
+def create_variational_circuit(num_qubits, reps=2):
     """Create parameterized variational quantum circuit with angle encoding.
 
     Args:
-        num_features (int): Dimension of input features.
         num_qubits (int): Number of qubits.
         reps (int): Number of variational layer repetitions. Defaults to 2.
 
@@ -46,7 +44,7 @@ def create_variational_circuit(num_features, num_qubits, reps=2):
         tuple[QuantumCircuit, ParameterVector, list]: Complete circuit, input
             parameters, and weight parameters.
     """
-    qc, input_params = create_encoding_circuit(num_features, num_qubits)
+    qc, input_params = create_encoding_circuit(num_qubits)
     ansatz = QuantumCircuit(num_qubits)
     params = ParameterVector('Ψ', num_qubits * reps)
 
@@ -69,17 +67,16 @@ def create_variational_circuit(num_features, num_qubits, reps=2):
 class QuantumLayer(BaseModule):
     """Hybrid Quantum-Classical Neural Network Layer.
 
-    Applies angle encoding on qubits, followed by parameterized variational
-    rotations and entanglement, measured by a Statevector Sampler, and mapped
-    back via a linear projection.
+    Applies a classical input projection, angle encoding on qubits,
+    parameterized variational rotations and entanglement, followed by
+    measurement and a classical output projection.
 
     Args:
         input_dim (int): Input feature dimension. Defaults to 5.
         output_dim (int): Output feature dimension. Defaults to 5.
-        num_qubits (int): Number of qubits in the circuit. Defaults to 5.
+        num_qubits (int): Number of qubits. Defaults to 5.
         reps (int): Repetitions of variational layers. Defaults to 2.
-        residual (bool): Whether to use residual connection (out = x + q_out).
-            Defaults to True.
+        residual (bool): Whether to use residual connection. Defaults to True.
         scale_input (bool): Whether to apply tanh(x) * (pi / 2) to scale inputs
             into [-pi/2, pi/2] rotation range. Defaults to True.
         chunk_size (int): Max chunk size to evaluate in SamplerQNN to avoid
@@ -100,8 +97,7 @@ class QuantumLayer(BaseModule):
         if not HAS_QISKIT:
             raise ImportError(
                 'Qiskit and Qiskit-Machine-Learning are required to use '
-                'QuantumLayer. Please install them via: '
-                'pip install qiskit qiskit-machine-learning')
+                'QuantumLayer.')
 
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -111,9 +107,30 @@ class QuantumLayer(BaseModule):
         self.scale_input = scale_input
         self.chunk_size = chunk_size
 
-        # Create parameterized quantum circuit
+        # Project input features to the number of qubits
+        self.input_layer = nn.Linear(input_dim, num_qubits)
+
+        # Create quantum module
+        self._build_quantum_module()
+
+        # Post-processing linear layer: maps 2^num_qubits -> output_dim
+        self.out = nn.Linear(2**num_qubits, output_dim)
+
+        # Residual connection
+        if self.residual:
+            if input_dim == output_dim:
+                self.residual_layer = nn.Identity()
+            else:
+                self.residual_layer = nn.Linear(input_dim, output_dim)
+
+            # Initialize output layer near zero to preserve stability
+            nn.init.normal_(self.out.weight, mean=0.0, std=1e-3)
+            nn.init.zeros_(self.out.bias)
+
+    def _build_quantum_module(self):
+        """Build quantum circuit and initialize PyTorch connector."""
         qc, in_params, w_params = create_variational_circuit(
-            num_features=input_dim, num_qubits=num_qubits, reps=reps)
+            num_qubits=self.num_qubits, reps=self.reps)
 
         # Use V1 Sampler compatible with SamplerQNN
         sampler = Sampler()
@@ -126,14 +143,21 @@ class QuantumLayer(BaseModule):
         # PyTorch connector
         self.quantum_connector = TorchConnector(sampler_qnn)
 
-        # Post-processing linear layer: maps 2^num_qubits -> output_dim
-        self.out = nn.Linear(2**num_qubits, output_dim)
+    def _run_quantum(self, x):
+        """Evaluate quantum layer, splitting the batch into chunks if needed.
 
-        # Initialize linear layer near zero if residual=True to preserve
-        # stability
-        if self.residual and input_dim == output_dim:
-            nn.init.normal_(self.out.weight, mean=0.0, std=1e-3)
-            nn.init.zeros_(self.out.bias)
+        Args:
+            x (torch.Tensor): Input tensor with shape (batch, num_qubits).
+
+        Returns:
+            torch.Tensor: Quantum layer output.
+        """
+        if self.chunk_size and x.size(0) > self.chunk_size:
+            chunks = torch.split(x, self.chunk_size)
+            q_outs = [self.quantum_connector(chunk) for chunk in chunks]
+            return torch.cat(q_outs, dim=0)
+
+        return self.quantum_connector(x)
 
     def forward(self, x):
         """Forward pass for QuantumLayer.
@@ -144,29 +168,36 @@ class QuantumLayer(BaseModule):
         Returns:
             torch.Tensor: Transformed tensor with shape (..., output_dim).
         """
+        if x.ndim < 1:
+            raise ValueError('Input tensor must have at least one dimension.')
+        if x.size(-1) != self.input_dim:
+            raise ValueError(f'Expected input dimension {self.input_dim}, '
+                             f'but got {x.size(-1)}.')
+
         if x.numel() == 0:
             return x.new_empty(*x.shape[:-1], self.output_dim)
 
         orig_shape = x.shape
+
+        # Flatten leading dimensions to process each feature vector
+        # independently in the quantum circuit
         x_2d = x.reshape(-1, self.input_dim)
+
+        # Project input features to the number of qubits
+        x_in = self.input_layer(x_2d)
 
         pi = getattr(torch, 'pi', math.pi)
         if self.scale_input:
-            x_in = torch.mul(torch.tanh(x_2d), pi / 2)
-        else:
-            x_in = x_2d
+            x_in = torch.mul(torch.tanh(x_in), pi / 2)
 
         # Evaluate quantum layer (chunked if batch size is large)
-        if self.chunk_size and x_in.size(0) > self.chunk_size:
-            chunks = torch.split(x_in, self.chunk_size)
-            q_outs = [self.quantum_connector(chunk) for chunk in chunks]
-            q_out = torch.cat(q_outs, dim=0)
-        else:
-            q_out = self.quantum_connector(x_in)
+        q_out = self._run_quantum(x_in)
 
+        # Project quantum output to the required output dimension
         out_2d = self.out(q_out)
-        if self.residual and self.input_dim == self.output_dim:
-            out_2d = x_2d + out_2d
+
+        if self.residual:
+            out_2d = self.residual_layer(x_2d) + out_2d
 
         return out_2d.reshape(*orig_shape[:-1], self.output_dim)
 
@@ -176,7 +207,7 @@ def build_quantum_layer(cfg):
 
     Args:
         cfg (dict, optional): Config dictionary with layer parameters.
-            Must contain 'type' specifying the layer class to instantiate.
+            Must contain 'type' specifying the class name to instantiate.
 
     Returns:
         QuantumLayer or None: Instantiated quantum layer module, or None.

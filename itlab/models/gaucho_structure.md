@@ -289,6 +289,8 @@ bbox_coder=dict(
         # 1. Quantum refinement on RoI proposals
         rois=dict(
             type='QuantumLayer',
+            input_dim=5,
+            output_dim=5,
             num_qubits=5,
             reps=2,
             residual=True,
@@ -297,6 +299,8 @@ bbox_coder=dict(
         # 2. Quantum refinement on Cholesky deltas
         deltas=dict(
             type='QuantumLayer',
+            input_dim=5,
+            output_dim=5,
             num_qubits=5,
             reps=2,
             residual=True,
@@ -305,6 +309,8 @@ bbox_coder=dict(
         # 3. Optional quantum modulation on target deltas during training
         encode=dict(
             type='QuantumLayer',
+            input_dim=5,
+            output_dim=5,
             num_qubits=5,
             reps=2,
             residual=True,
@@ -325,6 +331,8 @@ dict(
     # Quantum refinement on regression output
     quantum_cfg=dict(
         type='QuantumLayer',
+        input_dim=5,
+        output_dim=5,
         num_qubits=5,
         reps=2,
         residual=True,

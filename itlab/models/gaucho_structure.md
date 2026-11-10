@@ -272,7 +272,12 @@ In GauCho, geometric box representations and Cholesky transformation parameters 
 
 ### 5.3. Configuration Usage
 
-Quantum layers are configured via `quantum_cfg` in experiment configuration files (e.g., [`configs/gaucho/dotav1/SOTA/roi_transformer_r101_fpn_gaucho_probiou_quantum_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA/roi_transformer_r101_fpn_gaucho_probiou_quantum_1x_dota_ms_rr_le90.py)):
+Quantum layers are configured via `quantum_cfg` in experiment configuration files located in [`configs/gaucho/dotav1/SOTA-quantum/`](../../configs/gaucho/dotav1/SOTA-quantum/):
+
+- [`roi_transformer_r101_fpn_gaucho_probiou_quantum_rois_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_rois_1x_dota_ms_rr_le90.py) — Refinement on RoI proposals in decoder.
+- [`roi_transformer_r101_fpn_gaucho_probiou_quantum_deltas_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_deltas_1x_dota_ms_rr_le90.py) — Refinement on predicted regression deltas in decoder.
+- [`roi_transformer_r101_fpn_gaucho_probiou_quantum_head_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_head_1x_dota_ms_rr_le90.py) — Refinement on classical regression head output.
+- [`roi_transformer_r101_fpn_gaucho_probiou_quantum_encode_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_encode_1x_dota_ms_rr_le90.py) — Modulation on target training deltas in decoder.
 
 #### Example: Decoder Integration (RoIs, Deltas, and Encode)
 

@@ -10,7 +10,7 @@ The `QuantumLayer` is a hybrid neural network module built with Qiskit and `qisk
 
 The module consists of three main processing stages:
 
-1. **Classical input projection:** A linear layer transforms the input features from `input_dim` to `num_qubits`.
+1. **Input projection:** If `input_dim == num_qubits`, the input is passed directly (`nn.Identity()`). Otherwise, a linear layer transforms the features from `input_dim` to `num_qubits`.
 2. **Quantum processing:** The projected features are encoded into qubits using angle encoding, processed by a parameterized variational quantum circuit, and measured.
 3. **Classical output projection:** A linear layer maps the quantum measurement output of size `2^num_qubits` to the requested `output_dim`.
 

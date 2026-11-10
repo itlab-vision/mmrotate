@@ -108,7 +108,10 @@ class QuantumLayer(BaseModule):
         self.chunk_size = chunk_size
 
         # Project input features to the number of qubits
-        self.input_layer = nn.Linear(input_dim, num_qubits)
+        if input_dim == num_qubits:
+            self.input_layer = nn.Identity()
+        else:
+            self.input_layer = nn.Linear(input_dim, num_qubits)
 
         # Create quantum module
         self._build_quantum_module()

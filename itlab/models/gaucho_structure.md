@@ -268,7 +268,16 @@ In GauCho, geometric box representations and Cholesky transformation parameters 
 | **RoI Geometry Refinement**    | [`GauchoAnchorOBBDecoder.decode` (L123-L124)](../../mmrotate/core/bbox/coder/gaucho_anchor_coder.py#L123-L124)           | Proposal bboxes: `[x, y, w, h, a]` (5D)       |
 | **Cholesky Delta Refinement**  | [`GauchoAnchorOBBDecoder.decode` (L125-L126)](../../mmrotate/core/bbox/coder/gaucho_anchor_coder.py#L125-L126)           | Predicted deltas: `[dx, dy, dα, dβ, dγ]` (5D) |
 | **Regression Head Refinement** | [`RotatedConvFCBBoxHead.forward` (L206-L207)](../../mmrotate/models/roi_heads/bbox_heads/convfc_rbbox_head.py#L206-L207) | Network output: `bbox_pred` (5D)              |
-| **Target Delta Modulation**    | [`GauchoAnchorOBBDecoder.encode` (L85-L86)](../../mmrotate/core/bbox/coder/gaucho_anchor_coder.py#L85-L86)               | Target deltas: `[dx, dy, dw, dh, da]` (5D)    |
+
+#### Limitations on Target Delta Modulation (`encode`)
+
+Theoretically, one could consider applying a quantum layer during target delta encoding ([`GauchoAnchorOBBDecoder.encode`](../../mmrotate/core/bbox/coder/gaucho_anchor_coder.py#L85)). However, in GauCho models this integration is not feasible:
+
+1. **Bypassed during training:** In GauCho SOTA, the regression loss (ProbIoU) is calculated directly on decoded bounding boxes via `reg_decoded_bbox=True`. In [`RotatedBBoxHead._get_target_single` (L213–L221)](../../mmrotate/models/roi_heads/bbox_heads/rotated_bbox_head.py#L213-L221), when `reg_decoded_bbox=True`, targets are assigned directly from ground-truth boxes, completely bypassing `self.bbox_coder.encode(...)`.
+2. **Distributed training failure:** Because `encode` is never invoked, any quantum layer instantiated there never executes, its parameters do not participate in producing the loss, and PyTorch DistributedDataParallel (DDP) raises a `RuntimeError` regarding unused parameters.
+3. **Non-differentiable targets:** Ground-truth targets are constants for loss calculation rather than network outputs, meaning trainable parameters in `encode` would not receive optimization gradients even if called.
+
+Consequently, quantum layer integration into `encode` is not supported in GauCho.
 
 ### 5.3. Configuration Usage
 
@@ -277,9 +286,8 @@ Quantum layers are configured via `quantum_cfg` in experiment configuration file
 - [`roi_transformer_r101_fpn_gaucho_probiou_quantum_rois_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_rois_1x_dota_ms_rr_le90.py) — Refinement on RoI proposals in decoder.
 - [`roi_transformer_r101_fpn_gaucho_probiou_quantum_deltas_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_deltas_1x_dota_ms_rr_le90.py) — Refinement on predicted regression deltas in decoder.
 - [`roi_transformer_r101_fpn_gaucho_probiou_quantum_head_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_head_1x_dota_ms_rr_le90.py) — Refinement on classical regression head output.
-- [`roi_transformer_r101_fpn_gaucho_probiou_quantum_encode_1x_dota_ms_rr_le90.py`](../../configs/gaucho/dotav1/SOTA-quantum/roi_transformer_r101_fpn_gaucho_probiou_quantum_encode_1x_dota_ms_rr_le90.py) — Modulation on target training deltas in decoder.
 
-#### Example: Decoder Integration (RoIs, Deltas, and Encode)
+#### Example: Decoder Integration (RoIs and Deltas)
 
 ```python
 bbox_coder=dict(
@@ -303,16 +311,6 @@ bbox_coder=dict(
             chunk_size=128),
         # 2. Quantum refinement on Cholesky deltas
         deltas=dict(
-            type='QuantumLayer',
-            input_dim=5,
-            output_dim=5,
-            num_qubits=5,
-            reps=2,
-            residual=True,
-            scale_input=True,
-            chunk_size=128),
-        # 3. Optional quantum modulation on target deltas during training
-        encode=dict(
             type='QuantumLayer',
             input_dim=5,
             output_dim=5,

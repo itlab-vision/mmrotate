@@ -52,8 +52,8 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder, nn.Module):
                 quantum_cfg.get('rois'))
             self.quantum_deltas_layer = build_quantum_layer(
                 quantum_cfg.get('deltas'))
-            self.quantum_encode_layer = build_quantum_layer(
-                quantum_cfg.get('encode'))
+            # self.quantum_encode_layer = build_quantum_layer(
+            #     quantum_cfg.get('encode'))
 
     def encode(self, bboxes, gt_bboxes):
         """Get box regression transformation deltas that can be used to
@@ -82,8 +82,8 @@ class GauchoAnchorOBBDecoder(BaseBBoxCoder, nn.Module):
             deltas = bbox2delta(bboxes, gt_bboxes, self.means, self.stds,
                                 self.angle_range, self.norm_factor,
                                 self.edge_swap, self.proj_xy)
-            if self.quantum_encode_layer is not None:
-                deltas = self.quantum_encode_layer(deltas)
+            # if self.quantum_encode_layer is not None:
+            #     deltas = self.quantum_encode_layer(deltas)
             return deltas
         else:
             raise NotImplementedError

@@ -1,5 +1,6 @@
 gdown
 mmcls
+pennylane
 pylatexenc
 python-dotenv
 qiskit

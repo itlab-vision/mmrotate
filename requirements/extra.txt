@@ -1,6 +1,6 @@
 gdown
 mmcls
-pennylane
+pennylane==0.32.0
 pylatexenc
 python-dotenv
 qiskit

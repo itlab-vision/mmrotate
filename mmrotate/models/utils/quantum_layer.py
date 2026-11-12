@@ -47,7 +47,9 @@ class QuantumLayer(BaseModule):
         else:
             self.input_layer = nn.Linear(input_dim, num_qubits)
 
-        # Variational quantum circuit
+        # Variational quantum circuit weights
+        self.weights = nn.Parameter(
+            torch.empty(num_qubits * reps).uniform_(0, 2 * math.pi))
         self.quantum_circuit = self._build_quantum_circuit()
 
         # Post-processing linear layer: maps 2^num_qubits -> output_dim
@@ -72,7 +74,7 @@ class QuantumLayer(BaseModule):
         measured in the computational basis.
 
         Returns:
-            qml.qnn.TorchLayer: PyTorch-compatible quantum layer.
+            qml.QNode: Quantum circuit node.
         """
         num_qubits = self.num_qubits
         reps = self.reps
@@ -100,8 +102,7 @@ class QuantumLayer(BaseModule):
 
             return qml.probs(wires=range(num_qubits))
 
-        return qml.qnn.TorchLayer(
-            circuit, weight_shapes={'weights': (num_qubits * reps, )})
+        return circuit
 
     def forward(self, x):
         """Forward pass for QuantumLayer.
@@ -135,7 +136,7 @@ class QuantumLayer(BaseModule):
             x_in = torch.mul(torch.tanh(x_in), pi / 2)
 
         # Evaluate quantum circuit
-        q_out = self.quantum_circuit(x_in)
+        q_out = self.quantum_circuit(x_in, self.weights).type_as(x_in)
 
         # Project quantum output to the required output dimension
         out_2d = self.out(q_out)

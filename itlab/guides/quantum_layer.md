@@ -35,7 +35,7 @@ ______________________________________________________________________
 
 ## 2. Builder and Configuration
 
-Quantum layers are instantiated using the [`build_quantum_layer`](../../mmrotate/models/utils/quantum_layer.py#L152) builder function, which accepts a configuration dictionary specifying `'type'` and module parameters:
+Quantum layers are instantiated using the [`build_quantum_layer`](../../mmrotate/models/utils/quantum_layer.py#L150) builder function, which accepts a configuration dictionary specifying `'type'` and module parameters:
 
 ```python
 from mmrotate.models.utils import build_quantum_layer

@@ -1,10 +1,21 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
 
-import pennylane as qml
 import torch
 import torch.nn as nn
 from mmcv.runner import BaseModule
+
+# PennyLane 0.32.0 contains an artificial version guard (Torch>=1.8.1)
+# in pennylane/devices/default_qubit_torch.py, though Torch 1.8.0 works
+# identically. Temporarily adjust torch.__version__ during module import.
+_orig_torch_version = torch.__version__
+if _orig_torch_version.startswith('1.8.0'):
+    torch.__version__ = '1.8.1'
+
+import pennylane as qml  # isort:skip # noqa: E402
+import pennylane.devices.default_qubit_torch  # isort:skip # noqa: E402, F401
+
+torch.__version__ = _orig_torch_version
 
 
 class QuantumLayer(BaseModule):

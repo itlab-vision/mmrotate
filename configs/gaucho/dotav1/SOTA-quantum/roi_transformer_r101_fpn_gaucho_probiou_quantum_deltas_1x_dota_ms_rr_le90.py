@@ -60,3 +60,6 @@ model = dict(
                 tau=1.0,
                 loss_weight=1.0))
     ]))
+
+runner = dict(type='EpochBasedRunner', max_epochs=12)
+evaluation = dict(interval=6, metric='mAP')

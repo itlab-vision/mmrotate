@@ -307,8 +307,7 @@ bbox_coder=dict(
             num_qubits=5,
             reps=2,
             residual=True,
-            scale_input=True,
-            chunk_size=128),
+            scale_input=True),
         # 2. Quantum refinement on Cholesky deltas
         deltas=dict(
             type='QuantumLayer',
@@ -317,8 +316,7 @@ bbox_coder=dict(
             num_qubits=5,
             reps=2,
             residual=True,
-            scale_input=True,
-            chunk_size=128)))
+            scale_input=True)))
 ```
 
 #### Example: Regression Head Integration

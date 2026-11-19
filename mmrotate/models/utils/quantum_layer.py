@@ -11,54 +11,6 @@ from qiskit_machine_learning.connectors import TorchConnector
 from qiskit_machine_learning.neural_networks import SamplerQNN
 
 
-def create_encoding_circuit(num_qubits):
-    """Create angle encoding quantum circuit.
-
-    Args:
-        num_qubits (int): Number of qubits.
-
-    Returns:
-        tuple[QuantumCircuit, ParameterVector]: Created circuit and input
-            parameters.
-    """
-    qc = QuantumCircuit(num_qubits)
-    input_params = ParameterVector('x', length=num_qubits)
-    for i in range(num_qubits):
-        qc.ry(input_params[i], i)
-    return qc, input_params
-
-
-def create_variational_circuit(num_qubits, reps=2):
-    """Create parameterized variational quantum circuit with angle encoding.
-
-    Args:
-        num_qubits (int): Number of qubits.
-        reps (int): Number of variational layer repetitions. Defaults to 2.
-
-    Returns:
-        tuple[QuantumCircuit, ParameterVector, list]: Complete circuit, input
-            parameters, and weight parameters.
-    """
-    qc, input_params = create_encoding_circuit(num_qubits)
-    ansatz = QuantumCircuit(num_qubits)
-    params = ParameterVector('Ψ', num_qubits * reps)
-
-    for r in range(reps):
-        for i in range(num_qubits):
-            ansatz.ry(params[i * reps + r], i)
-
-        if r != reps - 1:
-            for i in range(num_qubits - 1):
-                ansatz.cx(i, i + 1)
-            if num_qubits > 2:
-                ansatz.cx(num_qubits - 1, 0)
-
-    weight_params = ansatz.parameters
-    qc.compose(ansatz, inplace=True)
-    qc.measure_all()
-    return qc, input_params, weight_params
-
-
 class QuantumLayer(BaseModule):
     """Hybrid Quantum-Classical Neural Network Layer.
 
@@ -120,10 +72,49 @@ class QuantumLayer(BaseModule):
             nn.init.normal_(self.out.weight, mean=0.0, std=1e-3)
             nn.init.zeros_(self.out.bias)
 
+    def _create_encoding_circuit(self):
+        """Create angle encoding quantum circuit.
+
+        Returns:
+            tuple[QuantumCircuit, ParameterVector]: Created circuit and input
+                parameters.
+        """
+        qc = QuantumCircuit(self.num_qubits)
+        input_params = ParameterVector('x', length=self.num_qubits)
+        for i in range(self.num_qubits):
+            qc.ry(input_params[i], i)
+        return qc, input_params
+
+    def _create_variational_circuit(self):
+        """Create parameterized variational quantum circuit with angle
+        encoding.
+
+        Returns:
+            tuple[QuantumCircuit, ParameterVector, list]: Complete circuit,
+                input parameters, and weight parameters.
+        """
+        qc, input_params = self._create_encoding_circuit()
+        ansatz = QuantumCircuit(self.num_qubits)
+        params = ParameterVector('Ψ', self.num_qubits * self.reps)
+
+        for r in range(self.reps):
+            for i in range(self.num_qubits):
+                ansatz.ry(params[i * self.reps + r], i)
+
+            if r != self.reps - 1:
+                for i in range(self.num_qubits - 1):
+                    ansatz.cx(i, i + 1)
+                if self.num_qubits > 2:
+                    ansatz.cx(self.num_qubits - 1, 0)
+
+        weight_params = ansatz.parameters
+        qc.compose(ansatz, inplace=True)
+        qc.measure_all()
+        return qc, input_params, weight_params
+
     def _build_quantum_module(self):
         """Build quantum circuit and initialize PyTorch connector."""
-        qc, in_params, w_params = create_variational_circuit(
-            num_qubits=self.num_qubits, reps=self.reps)
+        qc, in_params, w_params = self._create_variational_circuit()
 
         # Use V1 Sampler compatible with SamplerQNN
         sampler = Sampler()

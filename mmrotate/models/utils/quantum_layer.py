@@ -4,16 +4,11 @@ import math
 import torch
 import torch.nn as nn
 from mmcv.runner import BaseModule
-
-try:
-    from qiskit import QuantumCircuit
-    from qiskit.circuit import ParameterVector
-    from qiskit_machine_learning.neural_networks import SamplerQNN
-    from qiskit_machine_learning.connectors import TorchConnector
-    from qiskit.primitives import Sampler
-    HAS_QISKIT = True
-except ImportError:
-    HAS_QISKIT = False
+from qiskit import QuantumCircuit
+from qiskit.circuit import ParameterVector
+from qiskit.primitives import Sampler
+from qiskit_machine_learning.connectors import TorchConnector
+from qiskit_machine_learning.neural_networks import SamplerQNN
 
 
 def create_encoding_circuit(num_qubits):
@@ -94,11 +89,6 @@ class QuantumLayer(BaseModule):
                  chunk_size=128,
                  init_cfg=None):
         super(QuantumLayer, self).__init__(init_cfg=init_cfg)
-        if not HAS_QISKIT:
-            raise ImportError(
-                'Qiskit and Qiskit-Machine-Learning are required to use '
-                'QuantumLayer.')
-
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.num_qubits = num_qubits

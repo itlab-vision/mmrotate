@@ -26,8 +26,8 @@ class QuantumLayer(BaseModule):
         residual (bool): Whether to use residual connection. Defaults to True.
         scale_input (bool): Whether to apply tanh(x) * (pi / 2) to scale inputs
             into [-pi/2, pi/2] rotation range. Defaults to True.
-        chunk_size (int): Max chunk size to evaluate in SamplerQNN to avoid
-            memory bottlenecks. Defaults to 128.
+        chunk_size (int, optional): Max chunk size to evaluate in SamplerQNN
+            to avoid memory bottlenecks.
         init_cfg (dict or list[dict], optional): Initialization config dict.
     """
 
@@ -38,7 +38,7 @@ class QuantumLayer(BaseModule):
                  reps=2,
                  residual=True,
                  scale_input=True,
-                 chunk_size=128,
+                 chunk_size=None,
                  init_cfg=None):
         super(QuantumLayer, self).__init__(init_cfg=init_cfg)
         self.input_dim = input_dim

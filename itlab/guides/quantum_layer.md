@@ -47,8 +47,7 @@ layer = build_quantum_layer(dict(
     num_qubits=5,        # Number of qubits
     reps=2,              # Depth / repetitions of variational layers
     residual=True,       # Whether to add a residual connection
-    scale_input=True,    # Scales encoded angles to [-pi/2, pi/2]
-    chunk_size=128))     # Batch chunk size for quantum evaluation
+    scale_input=True))   # Scales encoded angles to [-pi/2, pi/2]
 ```
 
 The input and output dimensions are independent of the number of qubits. The input projection maps `input_dim` to `num_qubits`, while the output projection maps the `2^num_qubits` measurement values to `output_dim`.

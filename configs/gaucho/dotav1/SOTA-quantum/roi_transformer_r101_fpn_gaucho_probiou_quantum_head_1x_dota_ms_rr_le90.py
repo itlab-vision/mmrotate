@@ -11,8 +11,7 @@ quantum_layer_cfg = dict(
     num_qubits=5,
     reps=2,
     residual=True,
-    scale_input=True,
-    chunk_size=128)
+    scale_input=True)
 
 model = dict(
     roi_head=dict(bbox_head=[

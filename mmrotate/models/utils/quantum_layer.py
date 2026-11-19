@@ -3,6 +3,7 @@ import math
 
 import torch
 import torch.nn as nn
+from mmcv.cnn import build_norm_layer
 from mmcv.runner import BaseModule
 from qiskit import QuantumCircuit
 from qiskit.circuit import ParameterVector
@@ -28,6 +29,7 @@ class QuantumLayer(BaseModule):
             into [-pi/2, pi/2] rotation range. Defaults to True.
         q_scale (float, optional): Initial scale factor for quantum output.
             If specified, adds a learnable scalar parameter. Defaults to 0.05.
+        norm_cfg (dict, optional): Config dict for normalization layer.
         chunk_size (int, optional): Max chunk size to evaluate in SamplerQNN
             to avoid memory bottlenecks.
         init_cfg (dict or list[dict], optional): Initialization config dict.
@@ -41,6 +43,7 @@ class QuantumLayer(BaseModule):
                  residual=True,
                  scale_input=True,
                  q_scale=0.05,
+                 norm_cfg=None,
                  chunk_size=None,
                  init_cfg=None):
         super(QuantumLayer, self).__init__(init_cfg=init_cfg)
@@ -50,6 +53,7 @@ class QuantumLayer(BaseModule):
         self.reps = reps
         self.residual = residual
         self.scale_input = scale_input
+        self.norm_cfg = norm_cfg
         self.chunk_size = chunk_size
 
         if q_scale is not None:
@@ -63,6 +67,12 @@ class QuantumLayer(BaseModule):
             self.input_layer = nn.Identity()
         else:
             self.input_layer = nn.Linear(input_dim, num_qubits)
+
+        # Optional normalization layer
+        if norm_cfg is not None:
+            self.norm_name, self.norm = build_norm_layer(norm_cfg, num_qubits)
+        else:
+            self.norm_name, self.norm = None, None
 
         # Create quantum module
         self._build_quantum_module()
@@ -178,6 +188,9 @@ class QuantumLayer(BaseModule):
 
         # Project input features to the number of qubits
         x_in = self.input_layer(x_2d)
+
+        if self.norm is not None:
+            x_in = self.norm(x_in)
 
         pi = getattr(torch, 'pi', math.pi)
         if self.scale_input:

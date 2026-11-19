@@ -257,7 +257,7 @@ ______________________________________________________________________
 
 ### 5.1. Overview
 
-In GauCho, geometric box representations and Cholesky transformation parameters are compact 5-dimensional vectors (`[x, y, w, h, a]` and `[dx, dy, dα, dβ, dγ]`). GauCho integrates the hybrid [`QuantumLayer`](../../mmrotate/models/utils/quantum_layer.py#L69) module to refine these 5D vectors by learning joint correlations across all parameters simultaneously.
+In GauCho, geometric box representations and Cholesky transformation parameters are compact 5-dimensional vectors (`[x, y, w, h, a]` and `[dx, dy, dα, dβ, dγ]`). GauCho integrates the hybrid [`QuantumLayer`](../../mmrotate/models/utils/quantum_layer.py#L22) module to refine these 5D vectors by learning joint correlations across all parameters simultaneously.
 
 > For full details on module architecture, circuit design, and parameters, see the [Quantum Layer Module Guide](../guides/quantum_layer.md).
 

@@ -26,6 +26,8 @@ class QuantumLayer(BaseModule):
         residual (bool): Whether to use residual connection. Defaults to True.
         scale_input (bool): Whether to apply tanh(x) * (pi / 2) to scale inputs
             into [-pi/2, pi/2] rotation range. Defaults to True.
+        q_scale (float, optional): Initial scale factor for quantum output.
+            If specified, adds a learnable scalar parameter. Defaults to 0.05.
         chunk_size (int, optional): Max chunk size to evaluate in SamplerQNN
             to avoid memory bottlenecks.
         init_cfg (dict or list[dict], optional): Initialization config dict.
@@ -38,6 +40,7 @@ class QuantumLayer(BaseModule):
                  reps=2,
                  residual=True,
                  scale_input=True,
+                 q_scale=0.05,
                  chunk_size=None,
                  init_cfg=None):
         super(QuantumLayer, self).__init__(init_cfg=init_cfg)
@@ -48,6 +51,12 @@ class QuantumLayer(BaseModule):
         self.residual = residual
         self.scale_input = scale_input
         self.chunk_size = chunk_size
+
+        if q_scale is not None:
+            self.q_scale = nn.Parameter(
+                torch.tensor(float(q_scale), dtype=torch.float32))
+        else:
+            self.q_scale = None
 
         # Project input features to the number of qubits
         if input_dim == num_qubits:
@@ -179,6 +188,9 @@ class QuantumLayer(BaseModule):
 
         # Project quantum output to the required output dimension
         out_2d = self.out(q_out)
+
+        if self.q_scale is not None:
+            out_2d = self.q_scale * out_2d
 
         if self.residual:
             out_2d = self.residual_layer(x_2d) + out_2d

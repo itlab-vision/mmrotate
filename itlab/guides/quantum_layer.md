@@ -53,7 +53,8 @@ layer = build_quantum_layer(dict(
     residual=True,       # Whether to add a residual connection
     scale_input=True,    # Scales encoded angles to [-pi/2, pi/2]
     q_scale=0.05,        # Learnable scale parameter (defaults to 0.05)
-    norm_cfg=None))      # Normalization layer config (defaults to None)
+    norm_cfg=None,       # Normalization layer config (defaults to None)
+    device_cfg=None))    # Device config dict (defaults to 'default.qubit' with 'backprop')
 ```
 
 The input and output dimensions are independent of the number of qubits. The input projection maps `input_dim` to `num_qubits`, while the output projection maps the `2^num_qubits` measurement values to `output_dim`.
@@ -96,4 +97,61 @@ layer_bn = build_quantum_layer(dict(
     residual=True,
     q_scale=0.05,
     norm_cfg=dict(type='BN1d')))
+```
+
+______________________________________________________________________
+
+## 3. Execution Devices: Simulator Training vs Quantum Hardware Inference
+
+PennyLane allows decoupling model training from quantum hardware deployment:
+
+- **Training:** Run on local GPU/CPU using fast classical autodifferentiation (`diff_method='backprop'`, `type='default.qubit'`, `shots=None`). This avoids quantum hardware queue times and evaluates exact analytical gradients.
+- **Inference:** Deploy the trained model to physical quantum hardware (such as IBM Quantum QPUs via `pennylane-qiskit`) without gradients (`diff_method=None`, `shots=1024`).
+
+### Device Configuration (`device_cfg`)
+
+All quantum execution settings are passed via the `device_cfg` dictionary:
+
+- `type` (str): PennyLane backend device. Defaults to `'default.qubit'`. For IBM QPUs or cloud simulators, use `'qiskit.remote'`.
+- `diff_method` (str, optional): Differentiation method. Set to `'backprop'` during training. For inference, set to `None` to disable gradient calculation overhead.
+- `shots` (int, optional): Number of circuit evaluations. Defaults to `None` (analytic statevector simulation). Real hardware requires finite shots (e.g. `1024` or `4096`).
+- Additional keyword arguments (e.g. `backend='ibm_brisbane'`) are forwarded directly to `qml.device()`.
+
+### Training vs Test Configurations
+
+In OpenMMLab, training and evaluation pipelines are separated into distinct configuration files:
+
+- **Training:** Uses the simulator with analytical backpropagation for fast training on GPU/CPU.
+- **Evaluation on hardware:** Uses `qiskit.remote` with finite shots and `diff_method=None` for running inference on real IBM Quantum QPUs.
+
+```python
+# 1. Training configuration (GPU simulator with backprop)
+quantum_layer_cfg = dict(
+    type='QuantumLayer',
+    input_dim=5,
+    output_dim=5,
+    num_qubits=5,
+    reps=2,
+    residual=True,
+    scale_input=True,
+    q_scale=0.05,
+    device_cfg=dict(
+        type='default.qubit',
+        diff_method='backprop'))
+
+# 2. Hardware test configuration (Physical QPU inference via pennylane-qiskit)
+quantum_layer_cfg = dict(
+    type='QuantumLayer',
+    input_dim=5,
+    output_dim=5,
+    num_qubits=5,
+    reps=2,
+    residual=True,
+    scale_input=True,
+    q_scale=0.05,
+    device_cfg=dict(
+        type='qiskit.remote',
+        backend='ibm_brisbane',
+        shots=1024,
+        diff_method=None))
 ```

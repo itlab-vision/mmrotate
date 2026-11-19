@@ -27,17 +27,32 @@ class QuantumLayer(BaseModule):
     by measurement in the computational basis and classical output projection.
 
     Args:
-        input_dim (int): Input feature dimension. Defaults to 5.
-        output_dim (int): Output feature dimension. Defaults to 5.
-        num_qubits (int): Number of qubits. Defaults to 5.
-        reps (int): Repetitions of variational layers. Defaults to 2.
-        residual (bool): Whether to use residual connection. Defaults to True.
-        scale_input (bool): Whether to apply tanh(x) * (pi / 2) to scale inputs
-            into [-pi/2, pi/2] rotation range. Defaults to True.
+        input_dim (int, optional): Input feature dimension. Defaults to 5.
+        output_dim (int, optional): Output feature dimension. Defaults to 5.
+        num_qubits (int, optional): Number of qubits. Defaults to 5.
+        reps (int, optional): Repetitions of variational layers. Defaults to 2.
+        residual (bool, optional): Whether to use residual connection.
+            Defaults to True.
+        scale_input (bool, optional): Whether to apply tanh(x) * (pi / 2) to
+            scale inputs into [-pi/2, pi/2] rotation range. Defaults to True.
         q_scale (float, optional): Initial scale factor for quantum output.
-            If specified, adds a learnable scalar parameter. Defaults to 0.05.
+            If None, scaling is omitted. Defaults to 0.05.
         norm_cfg (dict, optional): Config dict for normalization layer.
+            Defaults to None.
+        device_cfg (dict, optional): Configuration for PennyLane quantum
+            device. Supports the following keys:
+
+            - ``type`` (str): Device backend name. Defaults to 'default.qubit'.
+            - ``diff_method`` (str, optional): Differentiation method.
+              Defaults to 'backprop'.
+            - ``shots`` (int, optional): Number of measurement shots.
+              Defaults to None (analytic statevector mode).
+            - Extra keys (e.g. ``backend``) are forwarded directly to
+              ``qml.device``.
+
+            Defaults to None (uses 'default.qubit' with 'backprop').
         init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
     """
 
     def __init__(self,
@@ -49,6 +64,7 @@ class QuantumLayer(BaseModule):
                  scale_input=True,
                  q_scale=0.05,
                  norm_cfg=None,
+                 device_cfg=None,
                  init_cfg=None):
         super(QuantumLayer, self).__init__(init_cfg=init_cfg)
         self.input_dim = input_dim
@@ -58,6 +74,12 @@ class QuantumLayer(BaseModule):
         self.residual = residual
         self.scale_input = scale_input
         self.norm_cfg = norm_cfg
+
+        # Resolve quantum device configuration with explicit defaults
+        self.device_cfg = dict(
+            type='default.qubit', diff_method='backprop', shots=None)
+        if device_cfg is not None:
+            self.device_cfg.update(device_cfg)
 
         if q_scale is not None:
             self.q_scale = nn.Parameter(
@@ -108,9 +130,15 @@ class QuantumLayer(BaseModule):
         """
         num_qubits = self.num_qubits
         reps = self.reps
-        dev = qml.device('default.qubit', wires=num_qubits)
 
-        @qml.qnode(dev, interface='torch', diff_method='backprop')
+        dev_kwargs = self.device_cfg.copy()
+        dev_type = dev_kwargs.pop('type')
+        diff_method = dev_kwargs.pop('diff_method')
+        shots = dev_kwargs.pop('shots')
+
+        dev = qml.device(dev_type, wires=num_qubits, shots=shots, **dev_kwargs)
+
+        @qml.qnode(dev, interface='torch', diff_method=diff_method)
         def circuit(inputs, weights):
             # 1. Angle encoding layer: RY(x_i)
             for i in range(num_qubits):
@@ -169,7 +197,10 @@ class QuantumLayer(BaseModule):
             x_in = torch.mul(torch.tanh(x_in), pi / 2)
 
         # Evaluate quantum circuit
-        q_out = self.quantum_circuit(x_in, self.weights).type_as(x_in)
+        q_out = torch.as_tensor(
+            self.quantum_circuit(x_in, self.weights),
+            dtype=x_in.dtype,
+            device=x_in.device)
 
         # Project quantum output to the required output dimension
         out_2d = self.out(q_out)
